@@ -1,0 +1,63 @@
+title: PHP Framework Docs
+description: PHP Framework documentation
+url: "https://macropay-solutions.github.io"
+baseurl: "/php-framework-docs"
+favicon_ico: "/favicon.png"
+color_scheme: dark
+
+remote_theme: just-the-docs/just-the-docs
+
+collections:
+  docs:
+    output: true
+    permalink: /:title.html
+
+
+just_the_docs:
+  collections:
+    docs:
+      name: "PHP Framework Documentation"
+      nav_fold: false
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-readme-index
+  - jekyll-optional-front-matter
+  - jekyll-titles-from-headings
+
+
+jekyll-titles-from-headings:
+  enabled: true
+  strip_title: true
+  collections: true
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+  - scope:
+      path: "**/*.md"
+    values:
+      render_with_liquid: false
+      nav_exclude: false
+  - scope:
+      path: "readme.md"
+    values:
+      permalink: /
+      title: "Home"
+      nav_order: 1
+
+markdown: kramdown
+highlighter: rouge
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .github
+  - LICENSE

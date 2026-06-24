@@ -1,0 +1,172 @@
+name: Deploy Multi-Version Jekyll Site to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["1.x"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout production
+        uses: actions/checkout@v4
+        with:
+          ref: production
+          path: site_production
+
+      - name: Checkout 1.x
+        uses: actions/checkout@v4
+        with:
+          ref: 1.x
+          path: site_v1
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+
+      - name: Setup Pages Configuration
+        id: pages
+        uses: actions/configure-pages@v5
+
+      # Phase 1: Compile production into its own /production/ folder
+      - name: Build production Docs
+        run: |
+          cd site_production
+          bundle install
+          bundle exec jekyll build --destination _site --baseurl "${{ steps.pages.outputs.base_path }}/production"
+        env:
+          JEKYLL_ENV: production
+
+      # Phase 2: Compile 1.x into its own /1.x/ folder
+      - name: Build 1.x Docs
+        run: |
+          cd site_v1
+          bundle install
+          bundle exec jekyll build --destination _site --baseurl "${{ steps.pages.outputs.base_path }}/1.x"
+        env:
+          JEKYLL_ENV: production
+
+      # Phase 3: Stitch folders and build the Circuit-Breaking Central Router
+      - name: Merge Folders & Create Gateway
+        run: |
+          mkdir -p unified_site/production
+          mkdir -p unified_site/1.x
+          
+          cp -r site_production/_site/* unified_site/production/
+          cp -r site_v1/_site/* unified_site/1.x/
+          
+          # 1. CREATE THE CENTRAL ROUTER
+          # The 'EOF' quotes protect the Regex from being corrupted by Bash!
+          cat << 'EOF' > unified_site/index.html
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <title>Redirecting to PHP Framework Docs...</title>
+              <script>
+                  (function() {
+                      const basePath = "${{ steps.pages.outputs.base_path }}";
+                      const urlParams = new URLSearchParams(window.location.search);
+                      const brokenRoute = urlParams.get('route');
+
+                      const LATEST_VERSION = "production"; 
+          
+                      if (brokenRoute) {
+                          const decodedRoute = decodeURIComponent(brokenRoute);
+
+                          // SAFE REGEX: Uses [0-9] to completely bypass Bash escaping bugs
+                          const versionMatch = decodedRoute.match(/\/([0-9]+\.x)\//);
+
+                          if (versionMatch) {
+                              // CIRCUIT BREAKER
+                              const targetVersion = versionMatch[1];
+                              window.location.href = basePath + "/" + targetVersion + "/";
+                          } else {
+                              // PATH PURIFIER: Strip the repo name out so it doesn't duplicate!
+                              let cleanPath = decodedRoute;
+                              if (basePath && cleanPath.startsWith(basePath)) {
+                                  cleanPath = cleanPath.substring(basePath.length);
+                              }
+                              cleanPath = cleanPath.replace(/^\/+/, "");
+          
+                              window.location.href = basePath + "/" + LATEST_VERSION + "/" + cleanPath;
+                          }
+                      } else {
+                          window.location.href = basePath + "/" + LATEST_VERSION + "/" + window.location.hash;
+                      }
+                  })();
+              </script>
+          </head>
+          <body>
+              <p style="font-family:sans-serif; text-align:center; margin-top:50px; color:#64748b;">
+                  Loading PHP Framework Documentation Engine...
+              </p>
+          </body>
+          </html>
+          EOF
+
+          cat << 'EOF' > unified_site/robots.txt
+          User-agent: *
+          Disallow: /?route=*
+          Allow: /production/
+          Allow: /1.x/
+          EOF
+
+          # 2. CREATE THE 404 PASS-THROUGH COLLECTOR
+          cat << 'EOF' > unified_site/404.html
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <title>Page Not Found</title>
+              <script>
+                  (function() {
+                      const basePath = "${{ steps.pages.outputs.base_path }}";
+          
+                      const brokenPath = window.location.pathname + window.location.search + window.location.hash;
+
+                      window.location.href = basePath + "/?route=" + encodeURIComponent(brokenPath);
+                  })();
+              </script>
+          </head>
+          <body>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Unified Static Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: unified_site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
