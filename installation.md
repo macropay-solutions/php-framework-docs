@@ -49,4 +49,4 @@ All the configuration options for the PHP Framework are stored in the `.env` fil
 
 #### Application Key
 
-The next thing you should do after installing PHP Framework is set your application key to a random string. Typically, this string should be 32 characters long. The key can be set in the `.env` environment file. If you have not renamed the `.env.example` file to `.env`, you should do that now. **If the application key is not set, your user encrypted data will not be secure!**
+The application key is automatically generated and injected into your `.env` file during the `composer create-project` process.
