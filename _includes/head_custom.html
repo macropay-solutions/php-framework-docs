@@ -1,0 +1,14 @@
+<script>
+    document.addEventListener('click', function(e) {
+        const anchor = e.target.closest('a');
+        if (anchor) {
+            const href = anchor.getAttribute('href');
+            const baseUrl = '{{ site.baseurl }}';
+
+            if (href && href.startsWith('/') && !href.startsWith(baseUrl)) {
+                e.preventDefault();
+                window.location.href = baseUrl + href;
+            }
+        }
+    });
+</script>
