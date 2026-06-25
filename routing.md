@@ -156,7 +156,7 @@ You may constrain the format of your route parameters by defining a regular expr
 <a name="named-routes"></a>
 ## Named Routes
 
-Named routes allow the convenient generation of URLs or redirects for specific routes. You may specify a name for a route using the `as` array key when defining the route:
+Named routes allow the convenient generation of URLs for specific routes. You may specify a name for a route using the `as` array key when defining the route:
 
     $router->get('profile', ['as' => 'profile', 'uses' => 'UserController@showProfile']);
 
@@ -168,13 +168,10 @@ You may also specify route names for controller actions:
 
 #### Generating URLs To Named Routes
 
-Once you have assigned a name to a given route, you may use the route's name when generating URLs or redirects via the global `route` function:
+Once you have assigned a name to a given route, you may use the route's name when generating URLs via the global `route` function:
 
-    // Generating URLs...
     $url = route('profile');
-
-    // Generating Redirects...
-    return redirect()->route('profile');
+    $url = route('profile', ['id' => 3]);
 
 If the named route defines parameters, you may pass the parameters as the second argument to the `route` function. The given parameters will automatically be inserted into the URL in their correct positions:
 
