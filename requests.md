@@ -182,6 +182,17 @@ Restrict data retrieval explicitly to query string values using the `query` meth
 This will return a valid string or false (it uses `filter_var` in the background). See `\App\Request::getFiltered` for more details.
 Also when the field is missing it will return empty string not null!
 
+#### Native JSON Ingestion (Zero-Overhead)
+
+PHP-Kernel intercepts `application/json` or `+json` Content-Types at the absolute lowest level (`Request::capture()`). 
+
+It directly parses `php://input` natively and hydrates the base request object before the framework even fully boots. This bypasses Symfony's internal logic entirely, meaning JSON payload values are instantly available with zero processing overhead using the standard data retrieval methods:
+
+    $name = $request->get('user_name');
+    $name = $request->getFiltered('user_name');
+
+You do not need to use the dedicated `$request->json()` method; JSON payloads are treated natively as standard input.
+
 #### Form Array and JSON Traversal fallback
 
 When working with explicitly verified array data structure inputs or JSON payloads where dot-notation traversal is mandatory, utilize `input` carefully:
