@@ -455,13 +455,30 @@ This implies you need to:
 ```
 
 > [!NOTE]
-> If you set `$modelShouldUsePhpAttributes` to false, you need to define the eloquent-mutators without the [Attribute::make](/eloquent-mutators) to avoid runtime reflection and use the old way:
+> If you set `$modelShouldUsePhpAttributes` to false, you should define your accessors and mutators using the high-performance segregated maps instead of the legacy `get{Column}Attribute` methods or `Attribute::make`.
 > 
-> Eloquent accessors for columns used in relations are called with param null when a relation is instantiated so, they must be defined with ?string param and return type even if the column is not nullable in DB.
+> This leverages an O(1) static lookup, completely bypassing dynamic string manipulation overhead. Eloquent accessors for columns used in relations are called with param null when a relation is instantiated so, they must be defined with ?string param and return type even if the column is not nullable in DB.
 
-    public function getColAttribute(?string $value): ?string
+    /**
+     * Define high-performance segregated accessors.
+     */
+    protected function segregatedAccessorsMap(): array
     {
-        return \is_string($value) ? \strtolower($value) : null;
+        return [
+            'first_name' => fn(?string $value): ?string => $value !== null ? \ucfirst($value) : null,
+            'full_name'  => fn(): string => $this->first_name . ' ' . $this->last_name,
+        ];
+    }
+
+    /**
+     * Define high-performance segregated mutators.
+     */
+    protected function segregatedMutatorsMap(): array
+    {
+        return [
+            'email' => fn(...$args): mixed => $this->setEmailAttribute(...$args), // to use the method mutator
+            'password' => fn(...$args): mixed => $this->hashPassword(...$args),
+        ];
     }
 
 
