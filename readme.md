@@ -3,7 +3,7 @@ title: Home
 layout: default
 ---
 
-# PHP Rramework Documentation 1.x
+# PHP Framework Documentation 1.x
 
 > [PHP framework v1.x Documentation](https://macropay-solutions.github.io/php-framework-docs/1.x/).
 
