@@ -767,7 +767,7 @@ Once the custom intermediate table attribute has been specified, you may access 
 
     $users = User::getQuery()->with('podcasts')->get();
 
-    foreach ($users->flatMap(fn ($user) => $user->r->podcasts) as $podcast) {
+    foreach ($users->flatMap(fn($user) => $user->r->podcasts) as $podcast) {
         echo $podcast->r->subscription->a->created_at;
     }
 
