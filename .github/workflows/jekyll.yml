@@ -104,13 +104,25 @@ jobs:
 
                           // DEAD-END CIRCUIT BREAKER
                           // Dynamically checks for LATEST_VERSION or any numbered branch
-                          const versionRegex = new RegExp("^(" + LATEST_VERSION + "|[0-9]+\\.x)/");
+                          const versionRegex = new RegExp("^(" + LATEST_VERSION + "|[0-9]+\\.x)(?:/|$)");
                           const versionMatch = cleanPath.match(versionRegex);
 
                           if (versionMatch) {
-                              // The file is genuinely missing from a valid version. Fallback to version root.
                               const targetVersion = versionMatch[1];
-                              window.location.href = basePath + "/" + targetVersion + "/";
+                              
+                              // If the path IS exactly the version root and it 404'd, the entire version is missing!
+                              if (cleanPath === targetVersion || cleanPath === targetVersion + "/" || cleanPath === targetVersion + "/index.html") {
+                                  if (targetVersion === LATEST_VERSION) {
+                                      // Even the LATEST_VERSION is missing. Stop the loop completely.
+                                      document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px; font-family:sans-serif; color:#64748b;'>Documentation currently unavailable.</h2>";
+                                      return;
+                                  }
+                                  // Fallback to the latest version root
+                                  window.location.href = basePath + "/" + LATEST_VERSION + "/";
+                              } else {
+                                  // The file is missing, but the version folder might exist. Fallback to this version's root.
+                                  window.location.href = basePath + "/" + targetVersion + "/";
+                              }
                           } else {
                               // No version folder detected. Assume they want the latest version.
                               // DETECT EXISTING VERSION PREFIX DYNAMICALLY
