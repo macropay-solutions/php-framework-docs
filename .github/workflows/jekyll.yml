@@ -110,6 +110,12 @@ jobs:
                               }
                               cleanPath = cleanPath.replace(/^\/+/, "");
           
+                              // DETECT EXISTING VERSION PREFIX DYNAMICALLY
+                              if (cleanPath.startsWith(LATEST_VERSION + "/") || cleanPath.match(/^[0-9]+\.x\//)) {
+                                  window.location.href = basePath + "/" + cleanPath;
+                                  return;
+                              }
+
                               window.location.href = basePath + "/" + LATEST_VERSION + "/" + cleanPath;
                           }
                       } else {
