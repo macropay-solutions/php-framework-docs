@@ -481,6 +481,8 @@ This implies you need to:
         ];
     }
 
+See more in [Eloquent Mutators](/eloquent-mutators)
+
 
 <a name="retrieving-models"></a>
 ## Retrieving Models
@@ -945,7 +947,7 @@ If you already have a model instance, you may use the `fill` method to populate 
 
     $flight->fill(['name' => 'Amsterdam to Frankfurt']);
 
-<a name="mass-assignment-json-columns"></a>
+<a name="mass-assignment-and-json-columns"></a>
 #### Mass Assignment and JSON Columns
 
 When assigning JSON columns, each column's mass assignable key must be specified in your model's `$fillable` array. For security, Kernel does not support updating nested JSON attributes when using the `guarded` property:
