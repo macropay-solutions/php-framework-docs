@@ -125,6 +125,10 @@ Legacy `get{Attribute}Attribute` methods are also automatically "promoted" to th
 <a name="attribute-casting"></a>
 ## Attribute Casting
 
+> [!WARNING]  
+> **Avoid using casts for maximum performance.** Native Eloquent casting iterates through the casts and executes dynamic type-checking overhead during every single model hydration. For high-speed environments, it is highly recommended to abandon the `casts` entirely and manually cast your values (e.g., `(bool)$value` or `\json_decode($value, true)`) only when needed in your code.
+
+
 Attribute casting provides functionality similar to accessors and mutators without requiring you to define any additional methods on your model. Instead, your model's `$casts` property provides a convenient method of converting attributes to common data types.
 
 The `$casts` property should be an array where the key is the name of the attribute being cast and the value is the type you wish to cast the column to. The supported cast types are:
