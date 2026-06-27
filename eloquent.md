@@ -467,8 +467,12 @@ This implies you need to:
     protected function segregatedMutatorsMap(): array
     {
         return [
-            'email' => fn(...$args): mixed => $this->setEmailAttribute(...$args), // to use the method mutator
-            'password' => fn(...$args): mixed => $this->hashPassword(...$args),
+            'email' => function (string $value): void {
+                $this->attributes['email'] = \strtolower($value);
+            },
+            'password' => function (string $value): void {
+                $this->attributes['password'] = \password_hash($value, PASSWORD_BCRYPT);
+            },
         ];
     }
 
