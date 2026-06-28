@@ -398,14 +398,6 @@ use Illuminate\Database\Eloquent\Model;
 
   /**
    * Override it in your model/baseModel instead of dynamically changing it to false!
-   * @see \Illuminate\Database\Eloquent\Attributes\ObservedBy;
-   * @see \Illuminate\Database\Eloquent\Attributes\ScopedBy;
-   * @see \Illuminate\Database\Eloquent\Casts\Attribute;
-   */
-  protected static bool $modelShouldUsePhpAttributes = true;
-
-  /**
-   * Override it in your model/baseModel instead of dynamically changing it to false!
    * When overridden with false, the extra traits that you might use must be manually booted and initialized
    *  in the boot method
    * @see static::bootTraits()
@@ -455,10 +447,9 @@ This implies you need to:
 ```
 
 > [!NOTE]
-> If you set `$modelShouldUsePhpAttributes` to false, you should define your accessors and mutators using the high-performance segregated maps instead of the legacy `get{Column}Attribute` methods or `Attribute::make`.
-> 
-> This leverages an O(1) static lookup, completely bypassing dynamic string manipulation overhead. Eloquent accessors for columns used in relations are called with param null when a relation is instantiated so, they must be defined with ?string param and return type even if the column is not nullable in DB.
-
+> To maximize execution speed, you should define your accessors and mutators using the high-performance segregated maps instead of the legacy `get{Column}Attribute` or `set{Column}Attribute` methods.
+>
+> This leverages an O(1) static lookup, completely bypassing dynamic string manipulation overhead. Eloquent accessors for columns used in relations are called with `null` when a relation is instantiated, so they must be defined with nullable parameters (e.g., `?string`) and nullable return types, even if the column is not nullable in the database.
     /**
      * Define high-performance segregated accessors.
      */
@@ -476,8 +467,12 @@ This implies you need to:
     protected function segregatedMutatorsMap(): array
     {
         return [
-            'email' => fn(...$args): mixed => $this->setEmailAttribute(...$args), // to use the method mutator
-            'password' => fn(...$args): mixed => $this->hashPassword(...$args),
+            'email' => function (string $value): void {
+                $this->attributes['email'] = \strtolower($value);
+            },
+            'password' => function (string $value): void {
+                $this->attributes['password'] = \password_hash($value, PASSWORD_BCRYPT);
+            },
         ];
     }
 
@@ -1554,14 +1549,6 @@ Instead of using custom event classes, you may register closures that execute wh
             });
         }
     }
-
-If needed, you may utilize [queueable anonymous event listeners](/events#queuable-anonymous-event-listeners) when registering model events. This will instruct Kernel to execute the model event listener in the background using your application's [queue](/queues):
-
-    use function Illuminate\Events\queueable;
-
-    static::created(queueable(function (User $user) {
-        // ...
-    }));
 
 <a name="observers"></a>
 ### Observers

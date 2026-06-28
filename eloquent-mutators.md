@@ -10,7 +10,6 @@ context: eloquent-mutators
 - [Accessors and Mutators](#accessors-and-mutators)
   - [Defining Accessors](#defining-accessors)
   - [Defining Mutators](#defining-mutators)
-  - [Reusing Existing Methods](#reusing-existing-methods)
 - [Attribute Casting](#attribute-casting)
   - [Array and JSON Casting](#array-and-json-casting)
   - [Date Casting](#date-casting)
@@ -104,23 +103,6 @@ To use our mutator, we only need to set the `first_name` attribute via the `a` a
     $user = User::getQuery()->find(1);
 
     $user->a->first_name = 'Sally';
-
-<a name="reusing-existing-methods"></a>
-### Reusing Existing Methods
-
-If you already have logic defined in legacy methods, you can easily promote them to the segregated map. However, you **must** wrap them in an anonymous function to ensure the framework can safely rebind the scope dynamically across multiple model instances.
-
-    protected function segregatedAccessorsMap(): array
-    {
-        return [
-            'first_name' => fn(...$args): mixed => $this->getFirstNameAttribute(...$args),
-        ];
-    }
-
-> [!WARNING]  
-> Because Framework caches these maps statically to achieve O(1) speeds, using `$this->method(...)` creates a closure that is permanently locked to the exact memory address of the first model that boots. Always use standard anonymous functions so the engine can dynamically rebind `$this` to the correct row during database hydration.
-
-Legacy `get{Attribute}Attribute` methods are also automatically "promoted" to these internal caches lazily, so your application benefits from the performance boost even if you don't rewrite your code.
 
 <a name="attribute-casting"></a>
 ## Attribute Casting
