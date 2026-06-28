@@ -31,7 +31,7 @@ You will define All the routes for your application in the `routes/web.php` file
 
     namespace App\Http\Controllers;
 
-    use Illuminate\Http\Request;
+    use MacropaySolutions\Kernel\Http\Request;
 
     class HomeController extends \MacropaySolutions\Framework\Routing\Controller
     {

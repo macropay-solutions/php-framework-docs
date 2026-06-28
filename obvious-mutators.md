@@ -1,10 +1,10 @@
 ---
-title: Eloquent Mutators & Casting
+title: Obvious Mutators & Casting
 description: Guide to transforming data using accessors, mutators, and attribute casting in PHP Framework.
-context: eloquent-mutators
+context: obvious-mutators
 ---
 
-# Eloquent: Mutators & Casting
+# Obvious: Mutators & Casting
 
 - [Introduction](#introduction)
 - [Accessors and Mutators](#accessors-and-mutators)
@@ -26,7 +26,7 @@ context: eloquent-mutators
 <a name="introduction"></a>
 ## Introduction
 
-Accessors, mutators, and attribute casting allow you to transform Eloquent attribute values when you retrieve or set them on model instances. For example, you may want to use the [Framework encrypter](/encryption) to encrypt a value while it is stored in the database, and then automatically decrypt the attribute when you access it on an Eloquent model. Or, you may want to convert a JSON string that is stored in your database to an array when it is accessed via your Eloquent model.
+Accessors, mutators, and attribute casting allow you to transform Obvious attribute values when you retrieve or set them on model instances. For example, you may want to use the [Framework encrypter](/encryption) to encrypt a value while it is stored in the database, and then automatically decrypt the attribute when you access it on an Obvious model. Or, you may want to convert a JSON string that is stored in your database to an array when it is accessed via your Obvious model.
 
 <a name="accessors-and-mutators"></a>
 ## Accessors and Mutators
@@ -36,13 +36,13 @@ Framework provides a high-performance architecture for accessors and mutators us
 <a name="defining-accessors"></a>
 ### Defining Accessors
 
-An accessor transforms an Eloquent attribute value when it is accessed. To define accessors, override the `segregatedAccessorsMap` method on your model. This method should return an array where the keys are attribute names and the values are closures:
+An accessor transforms an Obvious attribute value when it is accessed. To define accessors, override the `segregatedAccessorsMap` method on your model. This method should return an array where the keys are attribute names and the values are closures:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -73,13 +73,13 @@ As you can see, the original value of the column is passed to the accessor closu
 <a name="defining-mutators"></a>
 ### Defining Mutators
 
-A mutator transforms an Eloquent attribute value when it is set. To define mutators, override the `segregatedMutatorsMap` method. These closures receive the value being set and interact directly with the model's internal attributes array:
+A mutator transforms an Obvious attribute value when it is set. To define mutators, override the `segregatedMutatorsMap` method. These closures receive the value being set and interact directly with the model's internal attributes array:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -96,7 +96,7 @@ A mutator transforms an Eloquent attribute value when it is set. To define mutat
         }
     }
 
-To use our mutator, we only need to set the `first_name` attribute via the `a` accessor on an Eloquent model:
+To use our mutator, we only need to set the `first_name` attribute via the `a` accessor on an Obvious model:
 
     use App\Models\User;
 
@@ -108,7 +108,7 @@ To use our mutator, we only need to set the `first_name` attribute via the `a` a
 ## Attribute Casting
 
 > [!WARNING]  
-> **Avoid using casts for maximum performance.** Native Eloquent casting iterates through the casts and executes dynamic type-checking overhead during every single model hydration. For high-speed environments, it is highly recommended to abandon the `casts` entirely and manually cast your values (e.g., `(bool)$value` or `\json_decode($value, true)`) only when needed in your code.
+> **Avoid using casts for maximum performance.** Native Obvious casting iterates through the casts and executes dynamic type-checking overhead during every single model hydration. For high-speed environments, it is highly recommended to abandon the `casts` entirely and manually cast your values (e.g., `(bool)$value` or `\json_decode($value, true)`) only when needed in your code.
 
 
 Attribute casting provides functionality similar to accessors and mutators without requiring you to define any additional methods on your model. Instead, your model's `$casts` property provides a convenient method of converting attributes to common data types.
@@ -147,7 +147,7 @@ To demonstrate attribute casting, let's cast the `is_admin` attribute, which is 
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -182,14 +182,14 @@ If you need to add a new, temporary cast at runtime, you may use the `mergeCasts
 <a name="stringable-casting"></a>
 #### Stringable Casting
 
-You may use the `Illuminate\Database\Eloquent\Casts\AsStringable` cast class to cast a model attribute to a [fluent `Illuminate\Support\Stringable` object](/strings#fluent-strings-method-list):
+You may use the `MacropaySolutions\Kernel\Database\Obvious\Casts\AsStringable` cast class to cast a model attribute to a [fluent `MacropaySolutions\Kernel\Support\Stringable` object](/strings#fluent-strings-method-list):
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Casts\AsStringable;
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Casts\AsStringable;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -206,13 +206,13 @@ You may use the `Illuminate\Database\Eloquent\Casts\AsStringable` cast class to 
 <a name="array-and-json-casting"></a>
 ### Array and JSON Casting
 
-The `array` cast is particularly useful when working with columns that are stored as serialized JSON. For example, if your database has a `JSON` or `TEXT` field type that contains serialized JSON, adding the `array` cast to that attribute will automatically deserialize the attribute to a PHP array when you access it on your Eloquent model:
+The `array` cast is particularly useful when working with columns that are stored as serialized JSON. For example, if your database has a `JSON` or `TEXT` field type that contains serialized JSON, adding the `array` cast to that attribute will automatically deserialize the attribute to a PHP array when you access it on your Obvious model:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -240,7 +240,7 @@ Once the cast is defined, you may access the `options` attribute and it will aut
 
     $user->save();
 
-To update a single field of a JSON attribute with a more terse syntax, you may [make the attribute mass assignable](/eloquent#mass-assignment-json-columns) and use the `->` operator when calling the `update` method:
+To update a single field of a JSON attribute with a more terse syntax, you may [make the attribute mass assignable](/obvious#mass-assignment-json-columns) and use the `->` operator when calling the `update` method:
 
     $user = User::getQuery()->find(1);
 
@@ -257,7 +257,7 @@ Although the standard `array` cast is sufficient for many applications, it does 
 
 To solve this, Framework offers an `AsArrayObject` cast that casts your JSON attribute to an [ArrayObject](https://www.php.net/manual/en/class.arrayobject.php) class. This feature is implemented using Framework's [custom cast](#custom-casts) implementation, which allows Framework to intelligently cache and transform the mutated object such that individual offsets may be modified without triggering a PHP error. To use the `AsArrayObject` cast, simply assign it to an attribute:
 
-    use Illuminate\Database\Eloquent\Casts\AsArrayObject;
+    use MacropaySolutions\Kernel\Database\Obvious\Casts\AsArrayObject;
 
     /**
      * The attributes that should be cast.
@@ -270,7 +270,7 @@ To solve this, Framework offers an `AsArrayObject` cast that casts your JSON att
 
 Similarly, Framework offers an `AsCollection` cast that casts your JSON attribute to a Framework [Collection](/collections) instance:
 
-    use Illuminate\Database\Eloquent\Casts\AsCollection;
+    use MacropaySolutions\Kernel\Database\Obvious\Casts\AsCollection;
 
     /**
      * The attributes that should be cast.
@@ -284,7 +284,7 @@ Similarly, Framework offers an `AsCollection` cast that casts your JSON attribut
 If you would like the `AsCollection` cast to instantiate a custom collection class instead of Framework's base collection class, you may provide the collection class name as a cast argument:
 
     use App\Collections\OptionCollection;
-    use Illuminate\Database\Eloquent\Casts\AsCollection;
+    use MacropaySolutions\Kernel\Database\Obvious\Casts\AsCollection;
 
     /**
      * The attributes that should be cast.
@@ -298,9 +298,9 @@ If you would like the `AsCollection` cast to instantiate a custom collection cla
 <a name="date-casting"></a>
 ### Date Casting
 
-By default, Eloquent will cast the `created_at` and `updated_at` columns to instances of [Carbon](https://github.com/briannesbitt/Carbon), which extends the PHP `DateTime` class and provides an assortment of helpful methods. You may cast additional date attributes by defining additional date casts within your model's `$casts` property array. Typically, dates should be cast using the `datetime` or `immutable_datetime` cast types.
+By default, Obvious will cast the `created_at` and `updated_at` columns to instances of [Carbon](https://github.com/briannesbitt/Carbon), which extends the PHP `DateTime` class and provides an assortment of helpful methods. You may cast additional date attributes by defining additional date casts within your model's `$casts` property array. Typically, dates should be cast using the `datetime` or `immutable_datetime` cast types.
 
-When defining a `date` or `datetime` cast, you may also specify the date's format. This format will be used when the [model is serialized to an array or JSON](/eloquent-serialization):
+When defining a `date` or `datetime` cast, you may also specify the date's format. This format will be used when the [model is serialized to an array or JSON](/obvious-serialization):
 
     /**
      * The attributes that should be cast.
@@ -342,7 +342,7 @@ If a custom format is applied to the `date` or `datetime` cast, such as `datetim
 <a name="enum-casting"></a>
 ### Enum Casting
 
-Eloquent also allows you to cast your attribute values to PHP [Enums](https://www.php.net/manual/en/language.enumerations.backed.php). To accomplish this, you may specify the attribute and enum you wish to cast in your model's `$casts` property array:
+Obvious also allows you to cast your attribute values to PHP [Enums](https://www.php.net/manual/en/language.enumerations.backed.php). To accomplish this, you may specify the attribute and enum you wish to cast in your model's `$casts` property array:
 
     use App\Enums\ServerStatus;
 
@@ -369,7 +369,7 @@ Once you have defined the cast on your model, the specified attribute will be au
 Sometimes you may need your model to store an array of enum values within a single column. To accomplish this, you may utilize the `AsEnumArrayObject` or `AsEnumCollection` casts provided by Framework:
 
     use App\Enums\ServerStatus;
-    use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
+    use MacropaySolutions\Kernel\Database\Obvious\Casts\AsEnumCollection;
 
     /**
      * The attributes that should be cast.
@@ -420,7 +420,7 @@ The `last_posted_at` attribute on the results of this query will be a simple str
 ## Custom Casts
 
 > [!WARNING]  
-> **Avoid using casts for maximum performance.** Native Eloquent casting iterates through the casts and executes dynamic type-checking overhead during every single model hydration. For high-speed environments, it is highly recommended to abandon the `casts` entirely and manually cast your values (e.g., `(bool)$value` or `\json_decode($value, true)`) only when needed in your code.
+> **Avoid using casts for maximum performance.** Native Obvious casting iterates through the casts and executes dynamic type-checking overhead during every single model hydration. For high-speed environments, it is highly recommended to abandon the `casts` entirely and manually cast your values (e.g., `(bool)$value` or `\json_decode($value, true)`) only when needed in your code.
 
 Framework has a variety of built-in, helpful cast types; however, you may occasionally need to define your own cast types. To create a cast, execute the `make:cast` Run command. The new cast class will be placed in your `app/Casts` directory:
 
@@ -434,8 +434,8 @@ All custom cast classes implement the `CastsAttributes` interface. Classes that 
 
     namespace App\Casts;
 
-    use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Contracts\Database\Obvious\CastsAttributes;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class Json implements CastsAttributes
     {
@@ -468,7 +468,7 @@ Once you have defined a custom cast type, you may attach it to a model attribute
     namespace App\Models;
 
     use App\Casts\Json;
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -494,8 +494,8 @@ As an example, we will define a custom cast class that casts multiple model valu
     namespace App\Casts;
 
     use App\ValueObjects\Address as AddressValueObject;
-    use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Contracts\Database\Obvious\CastsAttributes;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
     use InvalidArgumentException;
 
     class Address implements CastsAttributes
@@ -543,12 +543,12 @@ When casting to value objects, any changes made to the value object will automat
     $user->save();
 
 > [!NOTE]  
-> If you plan to serialize your Eloquent models containing value objects to JSON or arrays, you should implement the `Illuminate\Contracts\Support\Arrayable` and `JsonSerializable` interfaces on the value object.
+> If you plan to serialize your Obvious models containing value objects to JSON or arrays, you should implement the `MacropaySolutions\Kernel\Contracts\Support\Arrayable` and `JsonSerializable` interfaces on the value object.
 
 <a name="value-object-caching"></a>
 #### Value Object Caching
 
-When attributes that are cast to value objects are resolved, they are cached by Eloquent. Therefore, the same object instance will be returned if the attribute is accessed again.
+When attributes that are cast to value objects are resolved, they are cached by Obvious. Therefore, the same object instance will be returned if the attribute is accessed again.
 
 If you would like to disable the object caching behavior of custom cast classes, you may declare a public `withoutObjectCaching` property on your custom cast class:
 
@@ -564,9 +564,9 @@ class Address implements CastsAttributes
 <a name="array-json-serialization"></a>
 ### Array / JSON Serialization
 
-When an Eloquent model is converted to an array or JSON using the `toArray` and `toJson` methods, your custom cast value objects will typically be serialized as well as long as they implement the `Illuminate\Contracts\Support\Arrayable` and `JsonSerializable` interfaces. However, when using value objects provided by third-party libraries, you may not have the ability to add these interfaces to the object.
+When an Obvious model is converted to an array or JSON using the `toArray` and `toJson` methods, your custom cast value objects will typically be serialized as well as long as they implement the `MacropaySolutions\Kernel\Contracts\Support\Arrayable` and `JsonSerializable` interfaces. However, when using value objects provided by third-party libraries, you may not have the ability to add these interfaces to the object.
 
-Therefore, you may specify that your custom cast class will be responsible for serializing the value object. To do so, your custom cast class should implement the `Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes` interface. This interface states that your class should contain a `serialize` method which should return the serialized form of your value object:
+Therefore, you may specify that your custom cast class will be responsible for serializing the value object. To do so, your custom cast class should implement the `MacropaySolutions\Kernel\Contracts\Database\Obvious\SerializesCastableAttributes` interface. This interface states that your class should contain a `serialize` method which should return the serialized form of your value object:
 
     /**
      * Get the serialized representation of the value.
@@ -595,8 +595,8 @@ A classic example of an inbound only cast is a "hashing" cast. For example, we m
 
     namespace App\Casts;
 
-    use Illuminate\Contracts\Database\Eloquent\CastsInboundAttributes;
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Contracts\Database\Obvious\CastsInboundAttributes;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class Hash implements CastsInboundAttributes
     {
@@ -637,7 +637,7 @@ When attaching a custom cast to a model, cast parameters may be specified by sep
 <a name="castables"></a>
 ### Castables
 
-You may want to allow your application's value objects to define their own custom cast classes. Instead of attaching the custom cast class to your model, you may alternatively attach a value object class that implements the `Illuminate\Contracts\Database\Eloquent\Castable` interface:
+You may want to allow your application's value objects to define their own custom cast classes. Instead of attaching the custom cast class to your model, you may alternatively attach a value object class that implements the `MacropaySolutions\Kernel\Contracts\Database\Obvious\Castable` interface:
 
     use App\ValueObjects\Address;
 
@@ -651,7 +651,7 @@ Objects that implement the `Castable` interface must define a `castUsing` method
 
     namespace App\ValueObjects;
 
-    use Illuminate\Contracts\Database\Eloquent\Castable;
+    use MacropaySolutions\Kernel\Contracts\Database\Obvious\Castable;
     use App\Casts\Address as AddressCast;
 
     class Address implements Castable
@@ -684,9 +684,9 @@ By combining "castables" with PHP's [anonymous classes](https://www.php.net/manu
 
     namespace App\ValueObjects;
 
-    use Illuminate\Contracts\Database\Eloquent\Castable;
-    use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Contracts\Database\Obvious\Castable;
+    use MacropaySolutions\Kernel\Contracts\Database\Obvious\CastsAttributes;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class Address implements Castable
     {

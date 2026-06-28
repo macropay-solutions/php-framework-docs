@@ -1,10 +1,10 @@
 ---
-title: Eloquent Collections
-description: Guide to working with Eloquent collections and custom collections in PHP Framework.
-context: eloquent-collections
+title: Obvious Collections
+description: Guide to working with Obvious collections and custom collections in PHP Framework.
+context: obvious-collections
 ---
 
-# Eloquent: Collections
+# Obvious: Collections
 
 - [Introduction](#introduction)
 - [Available Methods](#available-methods)
@@ -13,7 +13,7 @@ context: eloquent-collections
 <a name="introduction"></a>
 ## Introduction
 
-All Eloquent methods that return more than one model result will return instances of the `Illuminate\Database\Eloquent\Collection` class, including results retrieved via the `get` method or accessed via a relationship. The Eloquent collection object extends Framework's [base collection](/collections), so it naturally inherits dozens of methods used to fluently work with the underlying array of Eloquent models. Be sure to review the Framework collection documentation to learn all about these helpful methods!
+All Obvious methods that return more than one model result will return instances of the `MacropaySolutions\Kernel\Database\Obvious\Collection` class, including results retrieved via the `get` method or accessed via a relationship. The Obvious collection object extends Framework's [base collection](/collections), so it naturally inherits dozens of methods used to fluently work with the underlying array of Obvious models. Be sure to review the Framework collection documentation to learn all about these helpful methods!
 
 All collections also serve as iterators, allowing you to loop over them as if they were simple PHP arrays:
 
@@ -33,17 +33,17 @@ However, as previously mentioned, collections are much more powerful than arrays
         return $user->a->name;
     });
 
-<a name="eloquent-collection-conversion"></a>
-#### Eloquent Collection Conversion
+<a name="obvious-collection-conversion"></a>
+#### Obvious Collection Conversion
 
-While most Eloquent collection methods return a new instance of an Eloquent collection, the `collapse`, `flatten`, `flip`, `keys`, `pluck`, and `zip` methods return a [base collection](/collections) instance. Likewise, if a `map` operation returns a collection that does not contain any Eloquent models, it will be converted to a base collection instance.
+While most Obvious collection methods return a new instance of an Obvious collection, the `collapse`, `flatten`, `flip`, `keys`, `pluck`, and `zip` methods return a [base collection](/collections) instance. Likewise, if a `map` operation returns a collection that does not contain any Obvious models, it will be converted to a base collection instance.
 
 <a name="available-methods"></a>
 ## Available Methods
 
-All Eloquent collections extend the base [Framework collection](/collections#available-methods) object; therefore, they inherit all the powerful methods provided by the base collection class.
+All Obvious collections extend the base [Framework collection](/collections#available-methods) object; therefore, they inherit all the powerful methods provided by the base collection class.
 
-In addition, the `Illuminate\Database\Eloquent\Collection` class provides a superset of methods to aid with managing your model collections. Most methods return `Illuminate\Database\Eloquent\Collection` instances; however, some methods, like `modelKeys`, return an `Illuminate\Support\Collection` instance.
+In addition, the `MacropaySolutions\Kernel\Database\Obvious\Collection` class provides a superset of methods to aid with managing your model collections. Most methods return `MacropaySolutions\Kernel\Database\Obvious\Collection` instances; however, some methods, like `modelKeys`, return an `MacropaySolutions\Kernel\Support\Collection` instance.
 
 <style>
     .collection-method-list > p {
@@ -91,7 +91,7 @@ In addition, the `Illuminate\Database\Eloquent\Collection` class provides a supe
 <a name="method-append"></a>
 #### `append($attributes)` {.collection-method .first-collection-method}
 
-The `append` method may be used to indicate that an attribute should be [appended](/eloquent-serialization#appending-values-to-json) for every model in the collection. This method accepts an array of attributes or a single attribute:
+The `append` method may be used to indicate that an attribute should be [appended](/obvious-serialization#appending-values-to-json) for every model in the collection. This method accepts an array of attributes or a single attribute:
 
     $users->append('team');
     
@@ -183,14 +183,14 @@ The `modelKeys` method returns the primary keys for all models in the collection
 <a name="method-makeVisible"></a>
 #### `makeVisible($attributes)` {.collection-method}
 
-The `makeVisible` method [makes attributes visible](/eloquent-serialization#hiding-attributes-from-json) that are typically "hidden" on each model in the collection:
+The `makeVisible` method [makes attributes visible](/obvious-serialization#hiding-attributes-from-json) that are typically "hidden" on each model in the collection:
 
     $users = $users->makeVisible(['address', 'phone_number']);
 
 <a name="method-makeHidden"></a>
 #### `makeHidden($attributes)` {.collection-method}
 
-The `makeHidden` method [hides attributes](/eloquent-serialization#hiding-attributes-from-json) that are typically "visible" on each model in the collection:
+The `makeHidden` method [hides attributes](/obvious-serialization#hiding-attributes-from-json) that are typically "visible" on each model in the collection:
 
     $users = $users->makeHidden(['address', 'phone_number']);
 
@@ -204,21 +204,21 @@ The `only` method returns all the models that have the given primary keys:
 <a name="method-setVisible"></a>
 #### `setVisible($attributes)` {.collection-method}
 
-The `setVisible` method [temporarily overrides](/eloquent-serialization#temporarily-modifying-attribute-visibility) all the visible attributes on each model in the collection:
+The `setVisible` method [temporarily overrides](/obvious-serialization#temporarily-modifying-attribute-visibility) all the visible attributes on each model in the collection:
 
     $users = $users->setVisible(['id', 'name']);
 
 <a name="method-setHidden"></a>
 #### `setHidden($attributes)` {.collection-method}
 
-The `setHidden` method [temporarily overrides](/eloquent-serialization#temporarily-modifying-attribute-visibility) all the hidden attributes on each model in the collection:
+The `setHidden` method [temporarily overrides](/obvious-serialization#temporarily-modifying-attribute-visibility) all the hidden attributes on each model in the collection:
 
     $users = $users->setHidden(['email', 'password', 'remember_token']);
 
 <a name="method-toquery"></a>
 #### `toQuery()` {.collection-method}
 
-The `toQuery` method returns an Eloquent query builder instance containing a `whereIn` constraint on the collection model's primary keys:
+The `toQuery` method returns an Obvious query builder instance containing a `whereIn` constraint on the collection model's primary keys:
 
     use App\Models\User;
 
@@ -245,16 +245,16 @@ If you would like to use a custom `Collection` object when interacting with a gi
     namespace App\Models;
 
     use App\Support\UserCollection;
-    use Illuminate\Database\Eloquent\Collection;
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Collection;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
         /**
-         * Create a new Eloquent Collection instance.
+         * Create a new Obvious Collection instance.
          *
-         * @param  array<int, \Illuminate\Database\Eloquent\Model>  $models
-         * @return \Illuminate\Database\Eloquent\Collection<int, \Illuminate\Database\Eloquent\Model>
+         * @param  array<int, \MacropaySolutions\Kernel\Database\Obvious\Model>  $models
+         * @return \MacropaySolutions\Kernel\Database\Obvious\Collection<int, \MacropaySolutions\Kernel\Database\Obvious\Model>
          */
         public function newCollection(array $models = []): Collection
         {
@@ -262,4 +262,4 @@ If you would like to use a custom `Collection` object when interacting with a gi
         }
     }
 
-Once you have defined a `newCollection` method, you will receive an instance of your custom collection anytime Eloquent would normally return an `Illuminate\Database\Eloquent\Collection` instance. If you would like to use a custom collection for every model in your application, you should define the `newCollection` method on a base model class that is extended by all of your application's models.
+Once you have defined a `newCollection` method, you will receive an instance of your custom collection anytime Obvious would normally return an `MacropaySolutions\Kernel\Database\Obvious\Collection` instance. If you would like to use a custom collection for every model in your application, you should define the `newCollection` method on a base model class that is extended by all of your application's models.

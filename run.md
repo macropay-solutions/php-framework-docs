@@ -72,7 +72,7 @@ Let's take a look at an example command. Note that we are able to request any de
 
     use App\Models\User;
     use App\Support\DripEmailer;
-    use Illuminate\Console\Command;
+    use MacropaySolutions\Kernel\Console\Command;
 
     class SendEmails extends Command
     {
@@ -108,14 +108,14 @@ Let's take a look at an example command. Note that we are able to request any de
 > [!WARNING]  
 > To utilize this feature, your application must be using the `memcached`, `redis`, `dynamodb`, `database`, `file`, or `array` cache driver as your application's default cache driver. In addition, all servers must be communicating with the same central cache server.
 
-Sometimes you may wish to ensure that only one instance of a command can run at a time. To accomplish this, you may implement the `Illuminate\Contracts\Console\Isolatable` interface on your command class:
+Sometimes you may wish to ensure that only one instance of a command can run at a time. To accomplish this, you may implement the `MacropaySolutions\Kernel\Contracts\Console\Isolatable` interface on your command class:
 
     <?php
 
     namespace App\Console\Commands;
 
-    use Illuminate\Console\Command;
-    use Illuminate\Contracts\Console\Isolatable;
+    use MacropaySolutions\Kernel\Console\Command;
+    use MacropaySolutions\Kernel\Contracts\Console\Isolatable;
 
     class SendEmails extends Command implements Isolatable
     {
@@ -298,8 +298,8 @@ If your command contains required arguments, the user will receive an error mess
 
     namespace App\Console\Commands;
 
-    use Illuminate\Console\Command;
-    use Illuminate\Contracts\Console\PromptsForMissingInput;
+    use MacropaySolutions\Kernel\Console\Command;
+    use MacropaySolutions\Kernel\Contracts\Console\PromptsForMissingInput;
 
     class SendEmails extends Command implements PromptsForMissingInput
     {
@@ -574,7 +574,7 @@ The `call` method accepts either the command's signature name or class name as i
 
     namespace App\Controllers;
 
-    use Illuminate\Contracts\Console\Kernel;
+    use MacropaySolutions\Kernel\Contracts\Console\Kernel;
 
     class MailController
     {
@@ -591,14 +591,14 @@ The `call` method accepts either the command's signature name or class name as i
 
 Alternatively, you may pass the entire Run command to the `call` method as a single string. If you are in a context where you cannot easily inject the kernel, you may resolve it directly from the application container:
 
-    \app(\Illuminate\Contracts\Console\Kernel::class)->call('mail:send 1 --queue=default');
+    \app(\MacropaySolutions\Kernel\Contracts\Console\Kernel::class)->call('mail:send 1 --queue=default');
 
 <a name="passing-array-values"></a>
 #### Passing Array Values
 
 If your command defines an option that accepts an array, you may pass an array of values to that option:
 
-    \app(\Illuminate\Contracts\Console\Kernel::class)->call('mail:send', [
+    \app(\MacropaySolutions\Kernel\Contracts\Console\Kernel::class)->call('mail:send', [
         '--id' => [5, 13]
     ]);
 
@@ -607,7 +607,7 @@ If your command defines an option that accepts an array, you may pass an array o
 
 If you need to specify the value of an option that does not accept string values, such as the `--force` flag on the `migrate:refresh` command, you should pass `true` or `false` as the value of the option:
 
-    $exitCode = \app(\Illuminate\Contracts\Console\Kernel::class)->call('migrate:refresh', [
+    $exitCode = \app(\MacropaySolutions\Kernel\Contracts\Console\Kernel::class)->call('migrate:refresh', [
         '--force' => true,
     ]);
 
@@ -676,7 +676,7 @@ The published stubs will be located within a `stubs` directory in the root of yo
 <a name="events"></a>
 ## Events
 
-Run dispatches three events when running commands: `Illuminate\Console\Events\RunStarting`, `Illuminate\Console\Events\CommandStarting`, and `Illuminate\Console\Events\CommandFinished`. The `RunStarting` event is dispatched immediately when Run starts running. Next, the `CommandStarting` event is dispatched immediately before a command runs. Finally, the `CommandFinished` event is dispatched once a command finishes executing.
+Run dispatches three events when running commands: `MacropaySolutions\Kernel\Console\Events\RunStarting`, `MacropaySolutions\Kernel\Console\Events\CommandStarting`, and `MacropaySolutions\Kernel\Console\Events\CommandFinished`. The `RunStarting` event is dispatched immediately when Run starts running. Next, the `CommandStarting` event is dispatched immediately before a command runs. Finally, the `CommandFinished` event is dispatched once a command finishes executing.
 
 ## Built-in Commands
 
@@ -713,7 +713,7 @@ These are the built-in commands depending on the composer flag `--no-dev`:
   'commands:clear' => 'command.commands.clear',
   'db:seed' => 'command.seed',
   'schedule:finish' => 'command.schedule.finish',
-  'schedule:run' => 'Illuminate\\Console\\Scheduling\\ScheduleRunCommand',
+  'schedule:run' => 'MacropaySolutions\Kernel\\Console\\Scheduling\\ScheduleRunCommand',
   'schedule:work' => 'command.schedule.work',
   'db:wipe' => 'command.wipe',
   'schema:dump' => 'command.schema.dump',
@@ -785,7 +785,7 @@ These are the built-in commands depending on the composer flag `--no-dev`:
   'commands:cache' => 'command.commands.cache',
   'commands:clear' => 'command.commands.clear',
   'schedule:finish' => 'command.schedule.finish',
-  'schedule:run' => 'Illuminate\\Console\\Scheduling\\ScheduleRunCommand',
+  'schedule:run' => 'MacropaySolutions\Kernel\\Console\\Scheduling\\ScheduleRunCommand',
   'schedule:work' => 'command.schedule.work',
   'config:cache' => 'App\\Console\\Commands\\ConfigCacheCommand',
   'config:clear' => 'App\\Console\\Commands\\ConfigClearCommand',
@@ -798,9 +798,9 @@ These are the built-in commands depending on the composer flag `--no-dev`:
 
 ## Prohibited Commands
 
-`\Illuminate\Console\Prohibitable` trait prohibits by default any command that uses it from running in production, unless coded otherwise via `CommandFQN::prohibit(false);`
+`\MacropaySolutions\Kernel\Console\Prohibitable` trait prohibits by default any command that uses it from running in production, unless coded otherwise via `CommandFQN::prohibit(false);`
 
-    FreshCommand   \Illuminate\Database\Console\Migrations
-    ResetCommand   \Illuminate\Database\Console\Migrations
-    RefreshCommand   \Illuminate\Database\Console\Migrations
-    SeedCommand   \Illuminate\Database\Console\Seeds
+    FreshCommand   \MacropaySolutions\Kernel\Database\Console\Migrations
+    ResetCommand   \MacropaySolutions\Kernel\Database\Console\Migrations
+    RefreshCommand   \MacropaySolutions\Kernel\Database\Console\Migrations
+    SeedCommand   \MacropaySolutions\Kernel\Database\Console\Seeds
