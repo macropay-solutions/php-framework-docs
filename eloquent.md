@@ -1550,14 +1550,6 @@ Instead of using custom event classes, you may register closures that execute wh
         }
     }
 
-If needed, you may utilize [queueable anonymous event listeners](/events#queuable-anonymous-event-listeners) when registering model events. This will instruct Kernel to execute the model event listener in the background using your application's [queue](/queues):
-
-    use function Illuminate\Events\queueable;
-
-    static::created(queueable(function (User $user) {
-        // ...
-    }));
-
 <a name="observers"></a>
 ### Observers
 
