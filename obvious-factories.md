@@ -1,10 +1,10 @@
 ---
-title: Eloquent Factories
+title: Obvious Factories
 description: Guide to defining, creating, and using model factories for testing and seeding in PHP Framework.
-context: eloquent-factories
+context: obvious-factories
 ---
 
-# Eloquent: Factories
+# Obvious: Factories
 
 - [Introduction](#introduction)
 - [Defining Model Factories](#defining-model-factories)
@@ -26,14 +26,14 @@ context: eloquent-factories
 <a name="introduction"></a>
 ## Introduction
 
-When testing your application or seeding your database, you may need to insert a few records into your database. Instead of manually specifying the value of each column, Framework allows you to define a set of default attributes for each of your [Eloquent models](/eloquent) using model factories.
+When testing your application or seeding your database, you may need to insert a few records into your database. Instead of manually specifying the value of each column, Framework allows you to define a set of default attributes for each of your [Obvious models](/obvious) using model factories.
 
 To see an example of how to write a factory, take a look at the `database/factories/UserFactory.php` file in your application. This factory is included with all new Framework applications and contains the following factory definition:
 
     namespace Database\Factories;
 
-    use Illuminate\Support\Str;
-    use Illuminate\Database\Eloquent\Factories\Factory;
+    use MacropaySolutions\Kernel\Support\Str;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
 
     class UserFactory extends Factory
     {
@@ -78,11 +78,11 @@ The new factory class will be placed in your `database/factories` directory.
 <a name="factory-and-model-discovery-conventions"></a>
 #### Model and Factory Discovery Conventions
 
-Once you have defined your factories, you may use the static `factory` method provided to your models by the `Illuminate\Database\Eloquent\Factories\HasFactory` trait in order to instantiate a factory instance for that model.
+Once you have defined your factories, you may use the static `factory` method provided to your models by the `MacropaySolutions\Kernel\Database\Obvious\Factories\HasFactory` trait in order to instantiate a factory instance for that model.
 
 The `HasFactory` trait's `factory` method will use conventions to determine the proper factory for the model the trait is assigned to. Specifically, the method will look for a factory in the `Database\Factories` namespace that has a class name matching the model name and is suffixed with `Factory`. If these conventions do not apply to your particular application or factory, you may overwrite the `newFactory` method on your model to return an instance of the model's corresponding factory directly:
 
-    use Illuminate\Database\Eloquent\Factories\Factory;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
     use Database\Factories\Administration\FlightFactory;
 
     /**
@@ -96,14 +96,14 @@ The `HasFactory` trait's `factory` method will use conventions to determine the 
 Then, define a `model` property on the corresponding factory:
 
     use App\Administration\Flight;
-    use Illuminate\Database\Eloquent\Factories\Factory;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
 
     class FlightFactory extends Factory
     {
         /**
          * The name of the factory's corresponding model.
          *
-         * @var class-string<\Illuminate\Database\Eloquent\Model>
+         * @var class-string<\MacropaySolutions\Kernel\Database\Obvious\Model>
          */
         protected $model = Flight::class;
     }
@@ -115,7 +115,7 @@ State manipulation methods allow you to define discrete modifications that can b
 
 State transformation methods typically call the `state` method provided by Framework's base factory class. The `state` method accepts a closure which will receive the array of raw attributes defined for the factory and should return an array of attributes to modify:
 
-    use Illuminate\Database\Eloquent\Factories\Factory;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
 
     /**
      * Indicate that the user is suspended.
@@ -132,7 +132,7 @@ State transformation methods typically call the `state` method provided by Frame
 <a name="trashed-state"></a>
 #### "Trashed" State
 
-If your Eloquent model can be [soft deleted](/eloquent#soft-deleting), you may invoke the built-in `trashed` state method to indicate that the created model should already be "soft deleted". You do not need to manually define the `trashed` state as it is automatically available to all factories:
+If your Obvious model can be [soft deleted](/obvious#soft-deleting), you may invoke the built-in `trashed` state method to indicate that the created model should already be "soft deleted". You do not need to manually define the `trashed` state as it is automatically available to all factories:
 
     use App\Models\User;
 
@@ -146,7 +146,7 @@ Factory callbacks are registered using the `afterMaking` and `afterCreating` met
     namespace Database\Factories;
 
     use App\Models\User;
-    use Illuminate\Database\Eloquent\Factories\Factory;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
 
     class UserFactory extends Factory
     {
@@ -168,7 +168,7 @@ Factory callbacks are registered using the `afterMaking` and `afterCreating` met
 You may also register factory callbacks within state methods to perform additional tasks that are specific to a given state:
 
     use App\Models\User;
-    use Illuminate\Database\Eloquent\Factories\Factory;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
 
     /**
      * Indicate that the user is suspended.
@@ -192,7 +192,7 @@ You may also register factory callbacks within state methods to perform addition
 <a name="instantiating-models"></a>
 ### Instantiating Models
 
-Once you have defined your factories, you may use the static `factory` method provided to your models by the `Illuminate\Database\Eloquent\Factories\HasFactory` trait in order to instantiate a factory instance for that model. Let's take a look at a few examples of creating models. First, we'll use the `make` method to create models without persisting them to the database:
+Once you have defined your factories, you may use the static `factory` method provided to your models by the `MacropaySolutions\Kernel\Database\Obvious\Factories\HasFactory` trait in order to instantiate a factory instance for that model. Let's take a look at a few examples of creating models. First, we'll use the `make` method to create models without persisting them to the database:
 
     use App\Models\User;
 
@@ -225,12 +225,12 @@ Alternatively, the `state` method may be called directly on the factory instance
     ])->make();
 
 > [!NOTE]  
-> [Mass assignment protection](/eloquent#mass-assignment) is automatically disabled when creating models using factories.
+> [Mass assignment protection](/obvious#mass-assignment) is automatically disabled when creating models using factories.
 
 <a name="persisting-models"></a>
 ### Persisting Models
 
-The `create` method instantiates model instances and persists them to the database using Eloquent's `save` method:
+The `create` method instantiates model instances and persists them to the database using Obvious's `save` method:
 
     use App\Models\User;
 
@@ -252,7 +252,7 @@ You may override the factory's default model attributes by passing an array of a
 Sometimes you may wish to alternate the value of a given model attribute for each created model. You may accomplish this by defining a state transformation as a sequence. For example, you may wish to alternate the value of an `admin` column between `Y` and `N` for each created user:
 
     use App\Models\User;
-    use Illuminate\Database\Eloquent\Factories\Sequence;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Sequence;
 
     $users = User::factory()
                     ->count(10)
@@ -266,7 +266,7 @@ In this example, five users will be created with an `admin` value of `Y` and fiv
 
 If necessary, you may include a closure as a sequence value. The closure will be invoked each time the sequence needs a new value:
 
-    use Illuminate\Database\Eloquent\Factories\Sequence;
+    use MacropaySolutions\Kernel\Database\Obvious\Factories\Sequence;
 
     $users = User::factory()
                     ->count(10)
@@ -298,7 +298,7 @@ For convenience, sequences may also be applied using the `sequence` method, whic
 <a name="has-many-relationships"></a>
 ### Has Many Relationships
 
-Next, let's explore building Eloquent model relationships using Framework's fluent factory methods. First, let's assume our application has an `App\Models\User` model and an `App\Models\Post` model. Also, let's assume that the `User` model defines a `hasMany` relationship with `Post`. We can create a user that has three posts using the `has` method provided by the Framework's factories. The `has` method accepts a factory instance:
+Next, let's explore building Obvious model relationships using Framework's fluent factory methods. First, let's assume our application has an `App\Models\User` model and an `App\Models\Post` model. Also, let's assume that the `User` model defines a `hasMany` relationship with `Post`. We can create a user that has three posts using the `has` method provided by the Framework's factories. The `has` method accepts a factory instance:
 
     use App\Models\Post;
     use App\Models\User;
@@ -449,7 +449,7 @@ For convenience, you may use Framework's magic factory relationship methods to d
 <a name="polymorphic-relationships"></a>
 ### Polymorphic Relationships
 
-[Polymorphic relationships](/eloquent-relationships#polymorphic-relationships) may also be created using factories. Polymorphic "morph many" relationships are created in the same way as typical "has many" relationships. For example, if an `App\Models\Post` model has a `morphMany` relationship with an `App\Models\Comment` model:
+[Polymorphic relationships](/obvious-relationships#polymorphic-relationships) may also be created using factories. Polymorphic "morph many" relationships are created in the same way as typical "has many" relationships. For example, if an `App\Models\Post` model has a `morphMany` relationship with an `App\Models\Comment` model:
 
     use App\Models\Post;
 

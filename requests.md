@@ -22,13 +22,13 @@ context: requests
 <a name="accessing-the-request"></a>
 ## Accessing The Request
 
-Obtain the current HTTP request instance via dependency injection by type-hinting `Illuminate\Http\Request` on your controller method. The service container injects the instance automatically:
+Obtain the current HTTP request instance via dependency injection by type-hinting `MacropaySolutions\Kernel\Http\Request` on your controller method. The service container injects the instance automatically:
 
     <?php
 
     namespace App\Http\Controllers;
 
-    use Illuminate\Http\Request;
+    use MacropaySolutions\Kernel\Http\Request;
 
     class UserController extends \MacropaySolutions\Framework\Routing\Controller
     {
@@ -52,7 +52,7 @@ If the controller method requires input from a route parameter, list the route a
 <a name="basic-request-information"></a>
 ### Basic Request Information
 
-The `Illuminate\Http\Request` instance extends `Symfony\Component\HttpFoundation\Request` to analyze incoming execution context.
+The `MacropaySolutions\Kernel\Http\Request` instance extends `Symfony\Component\HttpFoundation\Request` to analyze incoming execution context.
 
 #### Retrieving The Request URI and Host
 
@@ -264,7 +264,7 @@ Retrieve processed incoming cookie attributes directly from the request instance
 
 #### Retrieving and Validating Uploaded Files
 
-Access file inputs from the request wrapper via the `file` method. This extracts an `Illuminate\Http\UploadedFile` instance:
+Access file inputs from the request wrapper via the `file` method. This extracts an `MacropaySolutions\Kernel\Http\UploadedFile` instance:
 
     $file = $request->file('photo');
 
@@ -283,7 +283,7 @@ Extract target properties from the instance directly:
 
 #### Storing Uploaded Files
 
-If the system utilizes the native `Illuminate\Filesystem` service configuration provider layers, file objects can be dispatched straight to target storage adapters (local, public, or cloud systems like S3) using the `store` engine:
+If the system utilizes the native `MacropaySolutions\Kernel\Filesystem` service configuration provider layers, file objects can be dispatched straight to target storage adapters (local, public, or cloud systems like S3) using the `store` engine:
 
     $path = $request->file('photo')->store('images');
     $path = $request->file('photo')->store('images', 's3');
@@ -308,7 +308,7 @@ When running applications behind network load balancers terminating TLS certific
 
     namespace App\Http\Middleware;
 
-    use Illuminate\Http\Request;
+    use MacropaySolutions\Kernel\Http\Request;
 
     class TrustProxies
     {

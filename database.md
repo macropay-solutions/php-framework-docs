@@ -13,7 +13,7 @@ context: database
     - [Using Multiple Database Connections](#using-multiple-database-connections)
     - [Listening for Query Events](#listening-for-query-events)
     - [Monitoring Cumulative Query Time](#monitoring-cumulative-query-time)
-    - [Eloquent ORM](#eloquent-orm)
+    - [Obvious ORM](#obvious-orm)
 - [Database Transactions](#database-transactions)
 - [Migrations](#migrations)
 - [Connecting to the Database CLI](#connecting-to-the-database-cli)
@@ -28,7 +28,7 @@ context: database
 <a name="introduction"></a>
 ## Introduction
 
-Almost every modern web application interacts with a database. PHP-Framework makes interacting with databases extremely simple across a variety of supported databases using raw SQL, a fluent query builder, and the Eloquent ORM. Currently, PHP-Framework provides first-party support for five databases:
+Almost every modern web application interacts with a database. PHP-Framework makes interacting with databases extremely simple across a variety of supported databases using raw SQL, a fluent query builder, and the Obvious ORM. Currently, PHP-Framework provides first-party support for five databases:
 
 <div class="content-list" markdown="1">
 
@@ -76,7 +76,7 @@ For convenience, PHP-Framework supports these URLs as an alternative to configur
 <a name="read-and-write-connections"></a>
 ### Read and Write Connections
 
-Sometimes you may wish to use one database connection for SELECT statements, and another for INSERT, UPDATE, and DELETE statements. PHP-Framework makes this a breeze, and the proper connections will always be used whether you are using raw queries, the query builder, or the Eloquent ORM.
+Sometimes you may wish to use one database connection for SELECT statements, and another for INSERT, UPDATE, and DELETE statements. PHP-Framework makes this a breeze, and the proper connections will always be used whether you are using raw queries, the query builder, or the Obvious ORM.
 
 To see how read / write connections should be configured, let's look at this example:
 
@@ -223,8 +223,8 @@ If you would like to specify a closure that is invoked for each SQL query execut
 
     namespace App\Providers;
 
-    use Illuminate\Database\Events\QueryExecuted;
-    use Illuminate\Support\ServiceProvider;
+    use MacropaySolutions\Kernel\Database\Events\QueryExecuted;
+    use MacropaySolutions\Kernel\Support\ServiceProvider;
 
     class AppServiceProvider extends ServiceProvider
     {
@@ -250,12 +250,12 @@ PHP-Framework can invoke a closure or callback of your choice when it spends too
         });
     }
 
-<a name="eloquent-orm"></a>
-#### Eloquent ORM
+<a name="obvious-orm"></a>
+#### Obvious ORM
 
-If you would like to use the Eloquent ORM, you should uncomment the `$app->withEloquent()` call in your `bootstrap/app.php` file.
+If you would like to use the Obvious ORM, you should uncomment the `$app->withObvious()` call in your `bootstrap/app.php` file.
 
-Of course, you may easily use the full Eloquent ORM with PHP-Framework. To learn how to use Eloquent, check out the [Eloquent ORM documentation](/eloquent).
+Of course, you may easily use the full Obvious ORM with PHP-Framework. To learn how to use Obvious, check out the [Obvious ORM documentation](/obvious).
 
 <a name="database-transactions"></a>
 ## Database Transactions
@@ -318,7 +318,7 @@ Using the `db:show` and `db:table` commands, you can get valuable insight into y
 <a name="monitoring-your-databases"></a>
 ## Monitoring Your Databases
 
-Using the `db:monitor` command, you can instruct PHP-Framework to dispatch an `Illuminate\Database\Events\DatabaseBusy` event if your database is managing more than a specified number of open connections.
+Using the `db:monitor` command, you can instruct PHP-Framework to dispatch an `MacropaySolutions\Kernel\Database\Events\DatabaseBusy` event if your database is managing more than a specified number of open connections.
 
     php run db:monitor --databases=mysql,pgsql --max=100
 
@@ -327,7 +327,7 @@ Using the `db:monitor` command, you can instruct PHP-Framework to dispatch an `I
 <a name="database-testing"></a>
 ## Database Testing
 
-PHP-Framework provides a variety of helpful tools and assertions to make it easier to test your database-driven applications. In addition, model factories and seeders make it painless to create test database records using your application's Eloquent models and relationships.
+PHP-Framework provides a variety of helpful tools and assertions to make it easier to test your database-driven applications. In addition, model factories and seeders make it painless to create test database records using your application's Obvious models and relationships.
 
 <a name="resetting-the-database-after-each-test"></a>
 ### Resetting the Database After Each Test
@@ -359,7 +359,7 @@ If you would like to totally reset the database, you may use the `DatabaseMigrat
 <a name="model-factories"></a>
 ### Model Factories
 
-When testing, you may need to insert a few records into your database before executing your test. PHP-Framework allows you to define a set of default attributes for each of your Eloquent models using model factories. Once you have defined a model factory, you may utilize the factory within your test to create models:
+When testing, you may need to insert a few records into your database before executing your test. PHP-Framework allows you to define a set of default attributes for each of your Obvious models using model factories. Once you have defined a model factory, you may utilize the factory within your test to create models:
 
     use App\Models\User;
 
@@ -412,13 +412,13 @@ Assert that a table in the database does not contain records matching the given 
 
 #### assertSoftDeleted
 
-The `assertSoftDeleted` method may be used to assert a given Eloquent model has been "soft deleted":
+The `assertSoftDeleted` method may be used to assert a given Obvious model has been "soft deleted":
 
     $this->assertSoftDeleted($user);
 
 #### assertNotSoftDeleted
 
-The `assertNotSoftDeleted` method may be used to assert a given Eloquent model hasn't been "soft deleted":
+The `assertNotSoftDeleted` method may be used to assert a given Obvious model hasn't been "soft deleted":
 
     $this->assertNotSoftDeleted($user);
 

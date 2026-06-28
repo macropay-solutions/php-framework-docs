@@ -39,7 +39,7 @@ Let's look at a simple example:
 
     use App\Http\Controllers\Controller;
     use App\Services\OrdersService;
-    use Illuminate\View\View;
+    use MacropaySolutions\Kernel\View\View;
 
     class OrderController extends Controller
     {
@@ -96,11 +96,11 @@ Thankfully, many of the classes you will be writing when building an application
 <a name="when-to-use-the-container"></a>
 ### When to Utilize the Container
 
-Thanks to zero configuration resolution, you will often type-hint dependencies on controllers, event listeners, and elsewhere without ever manually interacting with the container. For example, you might type-hint the `Illuminate\Http\Request` object on your controller definition so that you can easily access the current request. Even though we never have to interact with the container to write this code, it is managing the injection of these dependencies behind the scenes:
+Thanks to zero configuration resolution, you will often type-hint dependencies on controllers, event listeners, and elsewhere without ever manually interacting with the container. For example, you might type-hint the `MacropaySolutions\Kernel\Http\Request` object on your controller definition so that you can easily access the current request. Even though we never have to interact with the container to write this code, it is managing the injection of these dependencies behind the scenes:
 
     namespace App\Http\Controllers;
 
-    use Illuminate\Http\Request;
+    use MacropaySolutions\Kernel\Http\Request;
 
     class HomeController
     {
@@ -129,7 +129,7 @@ Within a service provider, you always have access to the container via the `$thi
 
     use App\Services\Transistor;
     use App\Services\PodcastParser;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     $this->app->bind(Transistor::class, function (Application $app) {
         return new Transistor($app->make(PodcastParser::class));
@@ -140,7 +140,7 @@ Note that we receive the container itself as an argument to the resolver. We can
 As mentioned, you will typically be interacting with the container within service providers; however, if you would like to interact with the container outside of a service provider, you may do so via the `app()` helper:
 
     use App\Services\Transistor;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     \app()->bind(Transistor::class, function (Application $app) {
         // ...
@@ -162,7 +162,7 @@ The `singleton` method binds a class or interface into the container that should
 
     use App\Services\Transistor;
     use App\Services\PodcastParser;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     $this->app->singleton(Transistor::class, function (Application $app) {
         return new Transistor($app->make(PodcastParser::class));
@@ -181,7 +181,7 @@ The `scoped` method binds a class or interface into the container that should on
 
     use App\Services\Transistor;
     use App\Services\PodcastParser;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     $this->app->scoped(Transistor::class, function (Application $app) {
         return new Transistor($app->make(PodcastParser::class));
@@ -228,12 +228,12 @@ This statement tells the container that it should inject the `RedisEventPusher` 
 >
 > **High-Performance Alternative:** If you need to inject a specific implementation based on the consuming class, use the [Explicit Bindings Map](#1-the-explicit-bindings-map) method inside your `app/Application.php` to keep the container's execution path optimized.
 
-Sometimes you may have two classes that utilize the same interface, but you wish to inject different implementations into each class. For example, two controllers may depend on different implementations of the `Illuminate\Contracts\Filesystem\Filesystem` [contract](/contracts). Framework provides a simple, fluent interface for defining this behavior:
+Sometimes you may have two classes that utilize the same interface, but you wish to inject different implementations into each class. For example, two controllers may depend on different implementations of the `MacropaySolutions\Kernel\Contracts\Filesystem\Filesystem` [contract](/contracts). Framework provides a simple, fluent interface for defining this behavior:
 
     use App\Http\Controllers\PhotoController;
     use App\Http\Controllers\UploadController;
     use App\Http\Controllers\VideoController;
-    use Illuminate\Contracts\Filesystem\Filesystem;
+    use MacropaySolutions\Kernel\Contracts\Filesystem\Filesystem;
 
     $this->app->when(PhotoController::class)
               ->needs(Filesystem::class)
@@ -261,7 +261,7 @@ The fastest way to bypass contextual lookup is by overriding the `$bindings` arr
             // Explicitly wire PhotoController to use LocalFilesystem
             \App\Http\Controllers\PhotoController::class => [
                 'concrete' => function (
-                    \Illuminate\Contracts\Container\Container $container,
+                    \MacropaySolutions\Kernel\Contracts\Container\Container $container,
                     array $parameters = []
                 ): \App\Http\Controllers\PhotoController {
                     return new \App\Http\Controllers\PhotoController(
@@ -274,7 +274,7 @@ The fastest way to bypass contextual lookup is by overriding the `$bindings` arr
             // Explicitly wire VideoController to use S3Filesystem
             \App\Http\Controllers\VideoController::class => [
                 'concrete' => function (
-                    \Illuminate\Contracts\Container\Container $container,
+                    \MacropaySolutions\Kernel\Contracts\Container\Container $container,
                     array $parameters = []
                 ): \App\Http\Controllers\VideoController {
                     return new \App\Http\Controllers\VideoController(
@@ -292,7 +292,7 @@ If you prefer to configure your bindings within standard Service Providers, you 
 
     use App\Http\Controllers\PhotoController;
     use App\Services\Filesystem\LocalFilesystem;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     $this->app->bind(PhotoController::class, function (Application $app) {
         return new PhotoController($app->make(LocalFilesystem::class));
@@ -349,7 +349,7 @@ Occasionally, you may have a class that receives an array of typed objects using
 
     use App\Models\Filter;
     use App\Services\Logger;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     class Firewall
     {
@@ -463,9 +463,9 @@ If you are outside a service provider in a location of your code that does not h
 
     $transistor = \app(Transistor::class);
 
-If you would like to have the Framework container instance itself injected into a class that is being resolved by the container, you may type-hint the `Illuminate\Container\Container` class on your class's constructor:
+If you would like to have the Framework container instance itself injected into a class that is being resolved by the container, you may type-hint the `MacropaySolutions\Kernel\Container\Container` class on your class's constructor:
 
-    use Illuminate\Container\Container;
+    use MacropaySolutions\Kernel\Container\Container;
 
     /**
      * Create a new class instance.
@@ -477,7 +477,7 @@ If you would like to have the Framework container instance itself injected into 
 > [!NOTE]
 >You can use the `di` helper **exclusively with list parameters** when resolving from the container if you want to make sure it will not introduce issues if called before the application is fully booted.
 
-Because most of the macroable classes are resolved from the container in PHP-Kernel, there are some corner cases like `Illuminate\Console\Scheduling\Schedule` which, if resolved from the container, would generate a circular dependency that leads to a segmentation fault or memory exhaustion in `\Illuminate\Foundation\Console\Kernel::defineConsoleSchedule`.
+Because most of the macroable classes are resolved from the container in PHP-Kernel, there are some corner cases like `MacropaySolutions\Kernel\Console\Scheduling\Schedule` which, if resolved from the container, would generate a circular dependency that leads to a segmentation fault or memory exhaustion in `\MacropaySolutions\Kernel\Foundation\Console\Kernel::defineConsoleSchedule`.
 This can happen also to developers leading to lost debug time.
 
 To shorten the detection of such cases, we introduced a check, configurable via `app.circular_dependency_memory_limit`:
@@ -497,7 +497,7 @@ Internally, the Framework container relies heavily on short string aliases (like
 
 To safely break this chicken-and-egg cycle without sacrificing the flexibility of the alias registry, you may use the `makeWithoutAlias` method. This method forces the container to evaluate the concrete class directly through the reflection and cache pipeline, completely bypassing the forward and reverse alias lookup arrays:
 
-    use Illuminate\Mail\Mailer;
+    use MacropaySolutions\Kernel\Mail\Mailer;
 
     // Triggers the alias factory closure, potentially causing an infinite boot loop...
     $mailer = $this->app->make(Mailer::class, $parameters);
@@ -592,7 +592,7 @@ The service container fires events at various stages of an object's resolution l
 The `beforeResolving` method fires right before the container begins looking up or instantiating a target class. It receives the abstract name and any parameters passed to the build sequence:
 
     use App\Services\Transistor;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     $this->app->beforeResolving(Transistor::class, function (string $abstract, array $parameters, Application $app) {
         // Executed immediately before the container starts building "Transistor"...
@@ -603,7 +603,7 @@ The `beforeResolving` method fires right before the container begins looking up 
 The `resolving` method fires immediately after the object has been successfully instantiated but before any extender decorators are applied. It passes the fully constructed instance and the container:
 
     use App\Services\Transistor;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     $this->app->resolving(Transistor::class, function (Transistor $transistor, Application $app) {
         // Called when the container resolves objects of type "Transistor"...
@@ -618,7 +618,7 @@ The `resolving` method fires immediately after the object has been successfully 
 The `afterResolving` method fires at the absolute tail end of the resolution pipeline, right after all class configuration, object instantiation, and factory extensions (`extend()`) have finished processing:
 
     use App\Services\Transistor;
-    use Illuminate\Contracts\Foundation\Application;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     $this->app->afterResolving(Transistor::class, function (Transistor $transistor, Application $app) {
         // Called after the instance is completely built and decorated...

@@ -88,8 +88,8 @@ Within both of these methods, you may use the PHP Framework schema builder to ex
 
     <?php
 
-    use Illuminate\Database\Migrations\Migration;
-    use Illuminate\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Migrations\Migration;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
 
     return new class extends Migration
     {
@@ -255,7 +255,7 @@ php run migrate:fresh --database=admin
 
 To create a new database table, use the `create` method on the `Schema` manager. The `create` method accepts two arguments: the first is the name of the table, while the second is a closure which receives a `Blueprint` object that may be used to define the new table:
 
-    use Illuminate\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
 
     \app('db')->connection()->getSchemaBuilder()->create('users', function (Blueprint $table) {
         $table->id();
@@ -326,7 +326,7 @@ If you would like to add a "comment" to a database table, you may invoke the `co
 
 The `table` method on the `Schema` manager may be used to update existing tables. Like the `create` method, the `table` method accepts two arguments: the name of the table and a closure that receives a `Blueprint` instance you may use to add columns or indexes to the table:
 
-    use Illuminate\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
 
     \app('db')->connection()->getSchemaBuilder()->table('users', function (Blueprint $table) {
         $table->integer('votes');
@@ -355,9 +355,9 @@ Before renaming a table, you should verify that any foreign key constraints on t
 <a name="creating-columns"></a>
 ### Creating Columns
 
-The `table` method on the `Schema` manager may be used to update existing tables. Like the `create` method, the `table` method accepts two arguments: the name of the table and a closure that receives a `Illuminate\Database\Schema\Blueprint` instance you may use to add columns to the table:
+The `table` method on the `Schema` manager may be used to update existing tables. Like the `create` method, the `table` method accepts two arguments: the name of the table and a closure that receives a `MacropaySolutions\Kernel\Database\Schema\Blueprint` instance you may use to add columns to the table:
 
-    use Illuminate\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
 
     \app('db')->connection()->getSchemaBuilder()->table('users', function (Blueprint $table) {
         $table->integer('votes');
@@ -903,7 +903,7 @@ The `year` method creates a `YEAR` equivalent column:
 
 In addition to the column types listed above, there are several column "modifiers" you may use when adding a column to a database table. For example, to make the column "nullable", you may use the `nullable` method:
 
-    use Illuminate\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
 
     \app('db')->connection()->getSchemaBuilder()->table('users', function (Blueprint $table) {
         $table->string('email')->nullable();
@@ -935,13 +935,13 @@ Modifier  |  Description
 <a name="default-expressions"></a>
 #### Default Expressions
 
-The `default` modifier accepts a value or an `Illuminate\Database\Query\Expression` instance. Using an `Expression` instance will prevent the core database layer from wrapping the value in quotes and allow you to use database-specific functions. One situation where this is particularly useful is when you need to assign default values to JSON columns:
+The `default` modifier accepts a value or an `MacropaySolutions\Kernel\Database\Query\Expression` instance. Using an `Expression` instance will prevent the core database layer from wrapping the value in quotes and allow you to use database-specific functions. One situation where this is particularly useful is when you need to assign default values to JSON columns:
 
     <?php
 
-    use Illuminate\Database\Schema\Blueprint;
-    use Illuminate\Database\Query\Expression;
-    use Illuminate\Database\Migrations\Migration;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Query\Expression;
+    use MacropaySolutions\Kernel\Database\Migrations\Migration;
 
     return new class extends Migration
     {
@@ -997,7 +997,7 @@ If your application is utilizing an SQLite database, you must install the `doctr
 If you plan to modify columns created using the `timestamp` method, you must also add the following configuration to your application's `config/database.php` configuration file:
 
 ```php
-use Illuminate\Database\DBAL\TimestampType;
+use MacropaySolutions\Kernel\Database\DBAL\TimestampType;
 
 'dbal' => [
     'types' => [
@@ -1072,7 +1072,7 @@ Command  |  Description
 
 The PHP Framework schema builder supports several types of indexes. The following example creates a new `email` column and specifies that its values should be unique. To create the index, we can chain the `unique` method onto the column definition:
 
-    use Illuminate\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
 
     \app('db')->connection()->getSchemaBuilder()->table('users', function (Blueprint $table) {
         $table->string('email')->unique();
@@ -1155,7 +1155,7 @@ If you pass an array of columns into a method that drops indexes, the convention
 
 The framework also provides support for creating foreign key constraints, which are used to force referential integrity at the database level. For example, let's define a `user_id` column on the `posts` table that references the `id` column on a `users` table:
 
-    use Illuminate\Database\Schema\Blueprint;
+    use MacropaySolutions\Kernel\Database\Schema\Blueprint;
 
     \app('db')->connection()->getSchemaBuilder()->table('posts', function (Blueprint $table) {
         $table->unsignedBigInteger('user_id');
@@ -1231,13 +1231,13 @@ You may enable or disable foreign key constraints within your migrations by usin
 <a name="events"></a>
 ## Events
 
-For convenience, each migration operation will dispatch an event. All the following events extend the base `Illuminate\Database\Events\MigrationEvent` class:
+For convenience, each migration operation will dispatch an event. All the following events extend the base `MacropaySolutions\Kernel\Database\Events\MigrationEvent` class:
 
  Class | Description
 -------|-------
-| `Illuminate\Database\Events\MigrationsStarted` | A batch of migrations is about to be executed. |
-| `Illuminate\Database\Events\MigrationsEnded` | A batch of migrations has finished executing. |
-| `Illuminate\Database\Events\MigrationStarted` | A single migration is about to be executed. |
-| `Illuminate\Database\Events\MigrationEnded` | A single migration has finished executing. |
-| `Illuminate\Database\Events\SchemaDumped` | A database schema dump has completed. |
-| `Illuminate\Database\Events\SchemaLoaded` | An existing database schema dump has loaded. |
+| `MacropaySolutions\Kernel\Database\Events\MigrationsStarted` | A batch of migrations is about to be executed. |
+| `MacropaySolutions\Kernel\Database\Events\MigrationsEnded` | A batch of migrations has finished executing. |
+| `MacropaySolutions\Kernel\Database\Events\MigrationStarted` | A single migration is about to be executed. |
+| `MacropaySolutions\Kernel\Database\Events\MigrationEnded` | A single migration has finished executing. |
+| `MacropaySolutions\Kernel\Database\Events\SchemaDumped` | A database schema dump has completed. |
+| `MacropaySolutions\Kernel\Database\Events\SchemaLoaded` | An existing database schema dump has loaded. |

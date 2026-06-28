@@ -1,10 +1,10 @@
 ---
-title: Eloquent Relationships
+title: Obvious Relationships
 description: Guide to defining, querying, and managing database relationships in PHP Framework.
-context: eloquent-relationships
+context: obvious-relationships
 ---
 
-# Eloquent: Relationships
+# Obvious: Relationships
 
 - [Introduction](#introduction)
 - [Defining Relationships](#defining-relationships)
@@ -49,7 +49,7 @@ context: eloquent-relationships
 <a name="introduction"></a>
 ## Introduction
 
-Database tables are often related to one another. For example, a blog post may have many comments or an order could be related to the user who placed it. Eloquent makes managing and working with these relationships easy, and supports a variety of common relationships:
+Database tables are often related to one another. For example, a blog post may have many comments or an order could be related to the user who placed it. Obvious makes managing and working with these relationships easy, and supports a variety of common relationships:
 
 <div class="content-list" markdown="1">
 
@@ -67,7 +67,7 @@ Database tables are often related to one another. For example, a blog post may h
 <a name="defining-relationships"></a>
 ## Defining Relationships
 
-Eloquent relationships are defined as methods on your Eloquent model classes **OR as closures**. Since relationships also serve as powerful [query builders](/queries), defining relationships provides powerful method chaining and querying capabilities. For example, we may chain additional query constraints on this `posts` relationship:
+Obvious relationships are defined as methods on your Obvious model classes **OR as closures**. Since relationships also serve as powerful [query builders](/queries), defining relationships provides powerful method chaining and querying capabilities. For example, we may chain additional query constraints on this `posts` relationship:
 
     $user->r->posts()->where('active', 1)->get();
 
@@ -132,19 +132,19 @@ This will also auto-promote the method to this segregated logic. PHP attributes 
 
 **The reflection usage is OPT IN!** If the developer does not call the above methods, no reflection is involved.
 
-But, before diving too deep into using relationships, let's learn how to define each type of relationship supported by Eloquent.
+But, before diving too deep into using relationships, let's learn how to define each type of relationship supported by Obvious.
 
 <a name="one-to-one"></a>
 ### One to One
 
-A one-to-one relationship is a very basic type of database relationship. For example, a `User` model might be associated with one `Phone` model. To define this relationship, we will place a `phone` method on the `User` model. The `phone` method should call the `hasOne` method and return its result. The `hasOne` method is available to your model via the model's `Illuminate\Database\Eloquent\Model` base class:
+A one-to-one relationship is a very basic type of database relationship. For example, a `User` model might be associated with one `Phone` model. To define this relationship, we will place a `phone` method on the `User` model. The `phone` method should call the `hasOne` method and return its result. The `hasOne` method is available to your model via the model's `MacropaySolutions\Kernel\Database\Obvious\Model` base class:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\HasOne;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\HasOne;
 
     class User extends Model
     {
@@ -157,15 +157,15 @@ A one-to-one relationship is a very basic type of database relationship. For exa
         }
     }
 
-The first argument passed to the `hasOne` method is the name of the related model class. Once the relationship is defined, we may retrieve the related record using Eloquent's dynamic properties. Dynamic properties allow you to access relationship methods as if they were properties defined on the model:
+The first argument passed to the `hasOne` method is the name of the related model class. Once the relationship is defined, we may retrieve the related record using Obvious's dynamic properties. Dynamic properties allow you to access relationship methods as if they were properties defined on the model:
 
     $phone = User::getQuery()->find(1)->r->phone;
 
-Eloquent determines the foreign key of the relationship based on the parent model name. In this case, the `Phone` model is automatically assumed to have a `user_id` foreign key. If you wish to override this convention, you may pass a second argument to the `hasOne` method:
+Obvious determines the foreign key of the relationship based on the parent model name. In this case, the `Phone` model is automatically assumed to have a `user_id` foreign key. If you wish to override this convention, you may pass a second argument to the `hasOne` method:
 
     return $this->hasOne(Phone::class, 'foreign_key');
 
-Additionally, Eloquent assumes that the foreign key should have a value matching the primary key column of the parent. In other words, Eloquent will look for the value of the user's `id` column in the `user_id` column of the `Phone` record. If you would like the relationship to use a primary key value other than `id` or your model's `$primaryKey` property, you may pass a third argument to the `hasOne` method:
+Additionally, Obvious assumes that the foreign key should have a value matching the primary key column of the parent. In other words, Obvious will look for the value of the user's `id` column in the `user_id` column of the `Phone` record. If you would like the relationship to use a primary key value other than `id` or your model's `$primaryKey` property, you may pass a third argument to the `hasOne` method:
 
     return $this->hasOne(Phone::class, 'foreign_key', 'local_key');
 
@@ -178,8 +178,8 @@ So, we can access the `Phone` model from our `User` model. Next, let's define a 
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsTo;
 
     class Phone extends Model
     {
@@ -192,9 +192,9 @@ So, we can access the `Phone` model from our `User` model. Next, let's define a 
         }
     }
 
-When invoking the `user` method, Eloquent will attempt to find a `User` model that has an `id` which matches the `user_id` column on the `Phone` model.
+When invoking the `user` method, Obvious will attempt to find a `User` model that has an `id` which matches the `user_id` column on the `Phone` model.
 
-Eloquent determines the foreign key name by examining the name of the relationship method and suffixing the method name with `_id`. So, in this case, Eloquent assumes that the `Phone` model has a `user_id` column. However, if the foreign key on the `Phone` model is not `user_id`, you may pass a custom key name as the second argument to the `belongsTo` method:
+Obvious determines the foreign key name by examining the name of the relationship method and suffixing the method name with `_id`. So, in this case, Obvious assumes that the `Phone` model has a `user_id` column. However, if the foreign key on the `Phone` model is not `user_id`, you may pass a custom key name as the second argument to the `belongsTo` method:
 
     /**
      * Get the user that owns the phone.
@@ -217,14 +217,14 @@ If the parent model does not use `id` as its primary key, or you wish to find th
 <a name="one-to-many"></a>
 ### One to Many
 
-A one-to-many relationship is used to define relationships where a single model is the parent to one or more child models. For example, a blog post may have an infinite number of comments. Like all other Eloquent relationships, one-to-many relationships are defined by defining a method on your Eloquent model:
+A one-to-many relationship is used to define relationships where a single model is the parent to one or more child models. For example, a blog post may have an infinite number of comments. Like all other Obvious relationships, one-to-many relationships are defined by defining a method on your Obvious model:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\HasMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\HasMany;
 
     class Post extends Model
     {
@@ -237,9 +237,9 @@ A one-to-many relationship is used to define relationships where a single model 
         }
     }
 
-Remember, Eloquent will automatically determine the proper foreign key column for the `Comment` model. By convention, Eloquent will take the "snake case" name of the parent model and suffix it with `_id`. So, in this example, Eloquent will assume the foreign key column on the `Comment` model is `post_id`.
+Remember, Obvious will automatically determine the proper foreign key column for the `Comment` model. By convention, Obvious will take the "snake case" name of the parent model and suffix it with `_id`. So, in this example, Obvious will assume the foreign key column on the `Comment` model is `post_id`.
 
-Once the relationship method has been defined, we can access the [collection](/eloquent-collections) of related comments by accessing the `comments` property. Remember, since Eloquent provides "dynamic relationship properties", we can access relationship methods as if they were defined as properties on the model:
+Once the relationship method has been defined, we can access the [collection](/obvious-collections) of related comments by accessing the `comments` property. Remember, since Obvious provides "dynamic relationship properties", we can access relationship methods as if they were defined as properties on the model:
 
     use App\Models\Post;
 
@@ -270,8 +270,8 @@ Now that we can access all of a post's comments, let's define a relationship to 
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsTo;
 
     class Comment extends Model
     {
@@ -292,9 +292,9 @@ Once the relationship has been defined, we can retrieve a comment's parent post 
 
     return $comment->r->post->a->title;
 
-In the example above, Eloquent will attempt to find a `Post` model that has an `id` which matches the `post_id` column on the `Comment` model.
+In the example above, Obvious will attempt to find a `Post` model that has an `id` which matches the `post_id` column on the `Comment` model.
 
-Eloquent determines the default foreign key name by examining the name of the relationship method and suffixing the method name with a `_` followed by the name of the parent model's primary key column. So, in this example, Eloquent will assume the `Post` model's foreign key on the `comments` table is `post_id`.
+Obvious determines the default foreign key name by examining the name of the relationship method and suffixing the method name with a `_` followed by the name of the parent model's primary key column. So, in this example, Obvious will assume the `Post` model's foreign key on the `comments` table is `post_id`.
 
 However, if the foreign key for your relationship does not follow these conventions, you may pass a custom foreign key name as the second argument to the `belongsTo` method:
 
@@ -354,7 +354,7 @@ To populate the default model with attributes, you may pass an array or closure 
 <a name="querying-belongs-to-relationships"></a>
 #### Querying Belongs To Relationships
 
-When querying for the children of a "belongs to" relationship, you may manually build the `where` clause to retrieve the corresponding Eloquent models:
+When querying for the children of a "belongs to" relationship, you may manually build the `where` clause to retrieve the corresponding Obvious models:
 
     use App\Models\Post;
 
@@ -364,7 +364,7 @@ However, you may find it more convenient to use the `whereBelongsTo` method, whi
 
     $posts = Post::getQuery()->whereBelongsTo($user)->get();
 
-You may also provide a [collection](/eloquent-collections) instance to the `whereBelongsTo` method. When doing so, Framework will retrieve models that belong to any of the parent models within the collection:
+You may also provide a [collection](/obvious-collections) instance to the `whereBelongsTo` method. When doing so, Framework will retrieve models that belong to any of the parent models within the collection:
 
     $users = User::getQuery()->where('vip', true)->get();
 
@@ -490,8 +490,8 @@ Now that we have examined the table structure for the relationship, let's define
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\HasOneThrough;
 
     class Mechanic extends Model
     {
@@ -519,7 +519,7 @@ return $this->throughCars()->hasOwner();
 <a name="has-one-through-key-conventions"></a>
 #### Key Conventions
 
-Typical Eloquent foreign key conventions will be used when performing the relationship's queries. If you would like to customize the keys of the relationship, you may pass them as the third and fourth arguments to the `hasOneThrough` method. The third argument is the name of the foreign key on the intermediate model. The fourth argument is the name of the foreign key on the final model. The fifth argument is the local key, while the sixth argument is the local key of the intermediate model:
+Typical Obvious foreign key conventions will be used when performing the relationship's queries. If you would like to customize the keys of the relationship, you may pass them as the third and fourth arguments to the `hasOneThrough` method. The third argument is the name of the foreign key on the intermediate model. The fourth argument is the name of the foreign key on the final model. The fifth argument is the local key, while the sixth argument is the local key of the intermediate model:
 
     class Mechanic extends Model
     {
@@ -574,8 +574,8 @@ Now that we have examined the table structure for the relationship, let's define
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\HasManyThrough;
 
     class Project extends Model
     {
@@ -600,12 +600,12 @@ return $this->through('environments')->has('deployments');
 return $this->throughEnvironments()->hasDeployments();
 ```
 
-Though the `Deployment` model's table does not contain a `project_id` column, the `hasManyThrough` relation provides access to a project's deployments via `$project->deployments`. To retrieve these models, Eloquent inspects the `project_id` column on the intermediate `Environment` model's table. After finding the relevant environment IDs, they are used to query the `Deployment` model's table.
+Though the `Deployment` model's table does not contain a `project_id` column, the `hasManyThrough` relation provides access to a project's deployments via `$project->deployments`. To retrieve these models, Obvious inspects the `project_id` column on the intermediate `Environment` model's table. After finding the relevant environment IDs, they are used to query the `Deployment` model's table.
 
 <a name="has-many-through-key-conventions"></a>
 #### Key Conventions
 
-Typical Eloquent foreign key conventions will be used when performing the relationship's queries. If you would like to customize the keys of the relationship, you may pass them as the third and fourth arguments to the `hasManyThrough` method. The third argument is the name of the foreign key on the intermediate model. The fourth argument is the name of the foreign key on the final model. The fifth argument is the local key, while the sixth argument is the local key of the intermediate model:
+Typical Obvious foreign key conventions will be used when performing the relationship's queries. If you would like to customize the keys of the relationship, you may pass them as the third and fourth arguments to the `hasManyThrough` method. The third argument is the name of the foreign key on the intermediate model. The fourth argument is the name of the foreign key on the final model. The fifth argument is the local key, while the sixth argument is the local key of the intermediate model:
 
     class Project extends Model
     {
@@ -659,14 +659,14 @@ Remember, since a role can belong to many users, we cannot simply place a `user_
 <a name="many-to-many-model-structure"></a>
 #### Model Structure
 
-Many-to-many relationships are defined by writing a method that returns the result of the `belongsToMany` method. The `belongsToMany` method is provided by the `Illuminate\Database\Eloquent\Model` base class that is used by all of your application's Eloquent models. For example, let's define a `roles` method on our `User` model. The first argument passed to this method is the name of the related model class:
+Many-to-many relationships are defined by writing a method that returns the result of the `belongsToMany` method. The `belongsToMany` method is provided by the `MacropaySolutions\Kernel\Database\Obvious\Model` base class that is used by all of your application's Obvious models. For example, let's define a `roles` method on our `User` model. The first argument passed to this method is the name of the related model class:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsToMany;
 
     class User extends Model
     {
@@ -693,7 +693,7 @@ Since all relationships also serve as query builders, you may add further constr
 
     $roles = User::getQuery()->find(1)->r->roles()->orderBy('name')->get();
 
-To determine the table name of the relationship's intermediate table, Eloquent will join the two related model names in alphabetical order. However, you are free to override this convention. You may do so by passing a second argument to the `belongsToMany` method:
+To determine the table name of the relationship's intermediate table, Obvious will join the two related model names in alphabetical order. However, you are free to override this convention. You may do so by passing a second argument to the `belongsToMany` method:
 
     return $this->belongsToMany(Role::class, 'role_user');
 
@@ -710,8 +710,8 @@ To define the "inverse" of a many-to-many relationship, you should define a meth
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsToMany;
 
     class Role extends Model
     {
@@ -729,7 +729,7 @@ As you can see, the relationship is defined exactly the same as its `User` model
 <a name="retrieving-intermediate-table-columns"></a>
 ### Retrieving Intermediate Table Columns
 
-As you have already learned, working with many-to-many relations requires the presence of an intermediate table. Eloquent provides some very helpful ways of interacting with this table. For example, let's assume our `User` model has many `Role` models that it is related to. After accessing this relationship, we may access the intermediate table using the `pivot` attribute on the models:
+As you have already learned, working with many-to-many relations requires the presence of an intermediate table. Obvious provides some very helpful ways of interacting with this table. For example, let's assume our `User` model has many `Role` models that it is related to. After accessing this relationship, we may access the intermediate table using the `pivot` attribute on the models:
 
     use App\Models\User;
 
@@ -745,12 +745,12 @@ By default, only the model keys will be present on the `pivot` model. If your in
 
     return $this->belongsToMany(Role::class)->withPivot('active', 'created_by');
 
-If you would like your intermediate table to have `created_at` and `updated_at` timestamps that are automatically maintained by Eloquent, call the `withTimestamps` method when defining the relationship:
+If you would like your intermediate table to have `created_at` and `updated_at` timestamps that are automatically maintained by Obvious, call the `withTimestamps` method when defining the relationship:
 
     return $this->belongsToMany(Role::class)->withTimestamps();
 
 > [!WARNING]  
-> Intermediate tables that utilize Eloquent's automatically maintained timestamps are required to have both `created_at` and `updated_at` timestamp columns.
+> Intermediate tables that utilize Obvious's automatically maintained timestamps are required to have both `created_at` and `updated_at` timestamp columns.
 
 <a name="customizing-the-pivot-attribute-name"></a>
 #### Customizing the `pivot` Attribute Name
@@ -815,14 +815,14 @@ You can order the results returned by `belongsToMany` relationship queries using
 
 If you would like to define a custom model to represent the intermediate table of your many-to-many relationship, you may call the `using` method when defining the relationship. Custom pivot models give you the opportunity to define additional behavior on the pivot model, such as methods and casts.
 
-Custom many-to-many pivot models should extend the `Illuminate\Database\Eloquent\Relations\Pivot` class while custom polymorphic many-to-many pivot models should extend the `Illuminate\Database\Eloquent\Relations\MorphPivot` class. For example, we may define a `Role` model which uses a custom `RoleUser` pivot model:
+Custom many-to-many pivot models should extend the `MacropaySolutions\Kernel\Database\Obvious\Relations\Pivot` class while custom polymorphic many-to-many pivot models should extend the `MacropaySolutions\Kernel\Database\Obvious\Relations\MorphPivot` class. For example, we may define a `Role` model which uses a custom `RoleUser` pivot model:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsToMany;
 
     class Role extends Model
     {
@@ -835,13 +835,13 @@ Custom many-to-many pivot models should extend the `Illuminate\Database\Eloquent
         }
     }
 
-When defining the `RoleUser` model, you should extend the `Illuminate\Database\Eloquent\Relations\Pivot` class:
+When defining the `RoleUser` model, you should extend the `MacropaySolutions\Kernel\Database\Obvious\Relations\Pivot` class:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Relations\Pivot;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\Pivot;
 
     class RoleUser extends Pivot
     {
@@ -849,7 +849,7 @@ When defining the `RoleUser` model, you should extend the `Illuminate\Database\E
     }
 
 > [!WARNING]  
-> Pivot models may not use the `SoftDeletes` trait. If you need to soft delete pivot records consider converting your pivot model to an actual Eloquent model.
+> Pivot models may not use the `SoftDeletes` trait. If you need to soft delete pivot records consider converting your pivot model to an actual Obvious model.
 
 <a name="custom-pivot-models-and-incrementing-ids"></a>
 #### Custom Pivot Models and Incrementing IDs
@@ -890,7 +890,7 @@ A one-to-one polymorphic relation is similar to a typical one-to-one relation; h
         imageable_id - integer
         imageable_type - string
 
-Note the `imageable_id` and `imageable_type` columns on the `images` table. The `imageable_id` column will contain the ID value of the post or user, while the `imageable_type` column will contain the class name of the parent model. The `imageable_type` column is used by Eloquent to determine which "type" of parent model to return when accessing the `imageable` relation. In this case, the column would contain either `App\Models\Post` or `App\Models\User`.
+Note the `imageable_id` and `imageable_type` columns on the `images` table. The `imageable_id` column will contain the ID value of the post or user, while the `imageable_type` column will contain the class name of the parent model. The `imageable_type` column is used by Obvious to determine which "type" of parent model to return when accessing the `imageable` relation. In this case, the column would contain either `App\Models\Post` or `App\Models\User`.
 
 <a name="one-to-one-polymorphic-model-structure"></a>
 #### Model Structure
@@ -901,8 +901,8 @@ Next, let's examine the model definitions needed to build this relationship:
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
     class Image extends Model
     {
@@ -915,8 +915,8 @@ Next, let's examine the model definitions needed to build this relationship:
         }
     }
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphOne;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphOne;
 
     class Post extends Model
     {
@@ -929,8 +929,8 @@ Next, let's examine the model definitions needed to build this relationship:
         }
     }
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphOne;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphOne;
 
     class User extends Model
     {
@@ -1010,8 +1010,8 @@ Next, let's examine the model definitions needed to build this relationship:
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
     class Comment extends Model
     {
@@ -1024,8 +1024,8 @@ Next, let's examine the model definitions needed to build this relationship:
         }
     }
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphMany;
 
     class Post extends Model
     {
@@ -1038,8 +1038,8 @@ Next, let's examine the model definitions needed to build this relationship:
         }
     }
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphMany;
 
     class Video extends Model
     {
@@ -1150,7 +1150,7 @@ Many-to-many polymorphic relations are slightly more complicated than "morph one
 <a name="many-to-many-polymorphic-model-structure"></a>
 #### Model Structure
 
-Next, we're ready to define the relationships on the models. The `Post` and `Video` models will both contain a `tags` method that calls the `morphToMany` method provided by the base Eloquent model class.
+Next, we're ready to define the relationships on the models. The `Post` and `Video` models will both contain a `tags` method that calls the `morphToMany` method provided by the base Obvious model class.
 
 The `morphToMany` method accepts the name of the related model as well as the "relationship name". Based on the name we assigned to our intermediate table name and the keys it contains, we will refer to the relationship as "taggable":
 
@@ -1158,8 +1158,8 @@ The `morphToMany` method accepts the name of the related model as well as the "r
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphToMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphToMany;
 
     class Post extends Model
     {
@@ -1183,8 +1183,8 @@ The `morphedByMany` method accepts the name of the related model as well as the 
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphToMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphToMany;
 
     class Tag extends Model
     {
@@ -1239,7 +1239,7 @@ By default, Framework will use the fully qualified class name to store the "type
 
 For example, instead of using the model names as the "type", we may use simple strings such as `post` and `video`. By doing so, the polymorphic "type" column values in our database will remain valid even if the models are renamed:
 
-    use Illuminate\Database\Eloquent\Relations\Relation;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\Relation;
 
     Relation::enforceMorphMap([
         'post' => 'App\Models\Post',
@@ -1250,7 +1250,7 @@ You may call the `enforceMorphMap` method in the `boot` method of your `App\Prov
 
 You may determine the morph alias of a given model at runtime using the model's `getMorphClass` method. Conversely, you may determine the fully-qualified class name associated with a morph alias using the `Relation::getMorphedModel` method:
 
-    use Illuminate\Database\Eloquent\Relations\Relation;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\Relation;
 
     $alias = $post->getMorphClass();
 
@@ -1262,9 +1262,9 @@ You may determine the morph alias of a given model at runtime using the model's 
 <a name="dynamic-relationships"></a>
 ### Dynamic Relationships
 
-You may use the `resolveRelationUsing` method to define relations between Eloquent models at runtime. While not typically recommended for normal application development, this may occasionally be useful when developing Framework packages.
+You may use the `resolveRelationUsing` method to define relations between Obvious models at runtime. While not typically recommended for normal application development, this may occasionally be useful when developing Framework packages.
 
-The `resolveRelationUsing` method accepts the desired relationship name as its first argument. The second argument passed to the method should be a closure that accepts the model instance and returns a valid Eloquent relationship definition. Typically, you should configure dynamic relationships within the boot method of a [service provider](/providers):
+The `resolveRelationUsing` method accepts the desired relationship name as its first argument. The second argument passed to the method should be a closure that accepts the model instance and returns a valid Obvious relationship definition. Typically, you should configure dynamic relationships within the boot method of a [service provider](/providers):
 
     use App\Models\Order;
     use App\Models\Customer;
@@ -1274,12 +1274,12 @@ The `resolveRelationUsing` method accepts the desired relationship name as its f
     });
 
 > [!WARNING]  
-> When defining dynamic relationships, always provide explicit key name arguments to the Eloquent relationship methods.
+> When defining dynamic relationships, always provide explicit key name arguments to the Obvious relationship methods.
 
 <a name="querying-relations"></a>
 ## Querying Relations
 
-Since all Eloquent relationships are defined via methods, you may call those methods to obtain an instance of the relationship without actually executing a query to load the related models. In addition, all types of Eloquent relationships also serve as [query builders](/queries), allowing you to continue to chain constraints onto the relationship query before finally executing the SQL query against your database.
+Since all Obvious relationships are defined via methods, you may call those methods to obtain an instance of the relationship without actually executing a query to load the related models. In addition, all types of Obvious relationships also serve as [query builders](/queries), allowing you to continue to chain constraints onto the relationship query before finally executing the SQL query against your database.
 
 For example, imagine a blog application in which a `User` model has many associated `Post` models:
 
@@ -1287,8 +1287,8 @@ For example, imagine a blog application in which a `User` model has many associa
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\HasMany;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\HasMany;
 
     class User extends Model
     {
@@ -1331,7 +1331,7 @@ where user_id = ? and active = 1 or votes >= 100
 
 In most situations, you should use [logical groups](/queries#logical-grouping) to group the conditional checks between parentheses:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     $user->r->posts()
             ->where(function (Builder $query) {
@@ -1351,7 +1351,7 @@ where user_id = ? and (active = 1 or votes >= 100)
 <a name="relationship-methods-vs-dynamic-properties"></a>
 ### Relationship Methods vs. Dynamic Properties
 
-If you do not need to add additional constraints to an Eloquent relationship query, you may access the relationship as if it were a property. For example, continuing to use our `User` and `Post` example models, we may access all of a user's posts like so:
+If you do not need to add additional constraints to an Obvious relationship query, you may access the relationship as if it were a property. For example, continuing to use our `User` and `Post` example models, we may access all of a user's posts like so:
 
     use App\Models\User;
 
@@ -1385,7 +1385,7 @@ Nested `has` statements may be constructed using "dot" notation. For example, yo
 
 If you need even more power, you may use the `whereHas` and `orWhereHas` methods to define additional query constraints on your `has` queries, such as inspecting the content of a comment:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     // Retrieve posts with at least one comment containing words like code%...
     $posts = Post::getQuery()->whereHas('comments', function (Builder $query) {
@@ -1398,7 +1398,7 @@ If you need even more power, you may use the `whereHas` and `orWhereHas` methods
     }, '>=', 10)->get();
 
 > [!WARNING]  
-> Eloquent does not currently support querying for relationship existence across databases. The relationships must exist within the same database.
+> Obvious does not currently support querying for relationship existence across databases. The relationships must exist within the same database.
 
 <a name="inline-relationship-existence-queries"></a>
 #### Inline Relationship Existence Queries
@@ -1426,7 +1426,7 @@ When retrieving model records, you may wish to limit your results based on the a
 
 If you need even more power, you may use the `whereDoesntHave` and `orWhereDoesntHave` methods to add additional query constraints to your `doesntHave` queries, such as inspecting the content of a comment:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     $posts = Post::getQuery()->whereDoesntHave('comments', function (Builder $query) {
         $query->where('content', 'like', 'code%');
@@ -1434,7 +1434,7 @@ If you need even more power, you may use the `whereDoesntHave` and `orWhereDoesn
 
 You may use "dot" notation to execute a query against a nested relationship. For example, the following query will retrieve all posts that do not have comments; however, posts that have comments from authors that are not banned will be included in the results:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     $posts = Post::getQuery()->whereDoesntHave('comments.author', function (Builder $query) {
         $query->where('banned', 0);
@@ -1448,7 +1448,7 @@ To query the existence of "morph to" relationships, you may use the `whereHasMor
     use App\Models\Comment;
     use App\Models\Post;
     use App\Models\Video;
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     // Retrieve comments associated to posts or videos with a title like code%...
     $comments = Comment::getQuery()->whereHasMorph(
@@ -1470,7 +1470,7 @@ To query the existence of "morph to" relationships, you may use the `whereHasMor
 
 You may occasionally need to add query constraints based on the "type" of the related polymorphic model. The closure passed to the `whereHasMorph` method may receive a `$type` value as its second argument. This argument allows you to inspect the "type" of the query that is being built:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     $comments = Comment::getQuery()->whereHasMorph(
         'commentable',
@@ -1487,7 +1487,7 @@ You may occasionally need to add query constraints based on the "type" of the re
 
 Instead of passing an array of possible polymorphic models, you may provide `*` as a wildcard value. This will instruct Framework to retrieve all the possible polymorphic types from the database. Framework will execute an additional query in order to perform this operation:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     $comments = Comment::getQuery()->whereHasMorph('commentable', '*', function (Builder $query) {
         $query->where('title', 'like', 'foo%');
@@ -1511,7 +1511,7 @@ Sometimes you may want to count the number of related models for a given relatio
 
 By passing an array to the `withCount` method, you may add the "counts" for multiple relations as well as add additional constraints to the queries:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     $posts = Post::getQuery()->withCount(['votes', 'comments' => function (Builder $query) {
         $query->where('content', 'like', 'code%');
@@ -1522,7 +1522,7 @@ By passing an array to the `withCount` method, you may add the "counts" for mult
 
 You may also alias the relationship count result, allowing multiple counts on the same relationship:
 
-    use Illuminate\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     $posts = Post::getQuery()->withCount([
         'comments',
@@ -1561,7 +1561,7 @@ If you're combining `withCount` with a `select` statement, ensure that you call 
 <a name="other-aggregate-functions"></a>
 ### Other Aggregate Functions
 
-In addition to the `withCount` method, Eloquent provides `withMin`, `withMax`, `withAvg`, `withSum`, and `withExists` methods. These methods will place a `{relation}_{function}_{column}` attribute on your resulting models:
+In addition to the `withCount` method, Obvious provides `withMin`, `withMax`, `withAvg`, `withSum`, and `withExists` methods. These methods will place a `{relation}_{function}_{column}` attribute on your resulting models:
 
     use App\Models\Post;
 
@@ -1579,7 +1579,7 @@ If you wish to access the result of the aggregate function using another name, y
         echo $post->a->total_comments;
     }
 
-Like the `loadCount` method, deferred versions of these methods are also available. These additional aggregate operations may be performed on Eloquent models that have already been retrieved:
+Like the `loadCount` method, deferred versions of these methods are also available. These additional aggregate operations may be performed on Obvious models that have already been retrieved:
 
     $post = Post::getQuery()->first();
 
@@ -1600,7 +1600,7 @@ In this example, let's assume that `Photo` and `Post` models may create `Activit
 
 Now, let's imagine we want to retrieve `ActivityFeed` instances and eager load the `parentable` parent models for each `ActivityFeed` instance. In addition, we want to retrieve the number of tags that are associated with each parent photo and the number of comments that are associated with each parent post:
 
-    use Illuminate\Database\Eloquent\Relations\MorphTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
     $activities = ActivityFeed::getQuery()->with([
         'parentable' => function (MorphTo $morphTo) {
@@ -1625,14 +1625,14 @@ Let's assume we have already retrieved a set of `ActivityFeed` models and now we
 <a name="eager-loading"></a>
 ## Eager Loading
 
-When accessing Eloquent relationships as properties, the related models are "lazy loaded". This means the relationship data is not actually loaded until you first access the property. However, Eloquent can "eager load" relationships at the time you query the parent model. Eager loading alleviates the "N + 1" query problem. To illustrate the N + 1 query problem, consider a `Book` model that "belongs to" to an `Author` model:
+When accessing Obvious relationships as properties, the related models are "lazy loaded". This means the relationship data is not actually loaded until you first access the property. However, Obvious can "eager load" relationships at the time you query the parent model. Eager loading alleviates the "N + 1" query problem. To illustrate the N + 1 query problem, consider a `Book` model that "belongs to" to an `Author` model:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsTo;
 
     class Book extends Model
     {
@@ -1703,8 +1703,8 @@ If you would like to eager load a `morphTo` relationship, as well as nested rela
 
     <?php
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
     class ActivityFeed extends Model
     {
@@ -1721,7 +1721,7 @@ In this example, let's assume `Event`, `Photo`, and `Post` models may create `Ac
 
 Using these model definitions and relationships, we may retrieve `ActivityFeed` model instances and eager load all `parentable` models and their respective nested relationships:
 
-    use Illuminate\Database\Eloquent\Relations\MorphTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
     $activities = ActivityFeed::getQuery()
         ->with(['parentable' => function (MorphTo $morphTo) {
@@ -1735,7 +1735,7 @@ Using these model definitions and relationships, we may retrieve `ActivityFeed` 
 <a name="eager-loading-specific-columns"></a>
 #### Eager Loading Specific Columns
 
-You may not always need every column from the relationships you are retrieving. For this reason, Eloquent allows you to specify which columns of the relationship you would like to retrieve:
+You may not always need every column from the relationships you are retrieving. For this reason, Obvious allows you to specify which columns of the relationship you would like to retrieve:
 
     $books = Book::getQuery()->with('author:id,name,book_id')->get();
 
@@ -1751,8 +1751,8 @@ Sometimes you might want to always load some relationships when retrieving a mod
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsTo;
 
     class Book extends Model
     {
@@ -1794,13 +1794,13 @@ If you would like to override all items within the `$with` property for a single
 Sometimes you may wish to eager load a relationship but also specify additional query conditions for the eager loading query. You can accomplish this by passing an array of relationships to the `with` method where the array key is a relationship name and the array value is a closure that adds additional constraints to the eager loading query:
 
     use App\Models\User;
-    use Illuminate\Contracts\Database\Eloquent\Builder;
+    use MacropaySolutions\Kernel\Contracts\Database\Obvious\Builder;
 
     $users = User::getQuery()->with(['posts' => function (Builder $query) {
         $query->where('title', 'like', '%code%');
     }])->get();
 
-In this example, Eloquent will only eager load posts where the post's `title` column contains the word `code`. You may call other [query builder](/queries) methods to further customize the eager loading operation:
+In this example, Obvious will only eager load posts where the post's `title` column contains the word `code`. You may call other [query builder](/queries) methods to further customize the eager loading operation:
 
     $users = User::getQuery()->with(['posts' => function (Builder $query) {
         $query->orderBy('created_at', 'desc');
@@ -1812,9 +1812,9 @@ In this example, Eloquent will only eager load posts where the post's `title` co
 <a name="constraining-eager-loading-of-morph-to-relationships"></a>
 #### Constraining Eager Loading of `morphTo` Relationships
 
-If you are eager loading a `morphTo` relationship, Eloquent will run multiple queries to fetch each type of related model. You may add additional constraints to each of these queries using the `MorphTo` relation's `constrain` method:
+If you are eager loading a `morphTo` relationship, Obvious will run multiple queries to fetch each type of related model. You may add additional constraints to each of these queries using the `MorphTo` relation's `constrain` method:
 
-    use Illuminate\Database\Eloquent\Relations\MorphTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
     $comments = Comment::getQuery()->with(['commentable' => function (MorphTo $morphTo) {
         $morphTo->constrain([
@@ -1827,7 +1827,7 @@ If you are eager loading a `morphTo` relationship, Eloquent will run multiple qu
         ]);
     }])->get();
 
-In this example, Eloquent will only eager load posts that have not been hidden and videos that have a `type` value of "educational".
+In this example, Obvious will only eager load posts that have not been hidden and videos that have a `type` value of "educational".
 
 <a name="constraining-eager-loads-with-relationship-existence"></a>
 #### Constraining Eager Loads With Relationship Existence
@@ -1872,8 +1872,8 @@ This method accepts the name of the `morphTo` relationship as its first argument
 
     <?php
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\MorphTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
     class ActivityFeed extends Model
     {
@@ -1901,12 +1901,12 @@ Using these model definitions and relationships, we may retrieve `ActivityFeed` 
 <a name="preventing-lazy-loading"></a>
 ### Preventing Lazy Loading
 
-As previously discussed, eager loading relationships can often provide significant performance benefits to your application. Therefore, if you would like, you may instruct Framework to always prevent the lazy loading of relationships. To accomplish this, you may invoke the `preventLazyLoading` method offered by the base Eloquent model class. Typically, you should call this method within the `boot` method of your application's `AppServiceProvider` class.
+As previously discussed, eager loading relationships can often provide significant performance benefits to your application. Therefore, if you would like, you may instruct Framework to always prevent the lazy loading of relationships. To accomplish this, you may invoke the `preventLazyLoading` method offered by the base Obvious model class. Typically, you should call this method within the `boot` method of your application's `AppServiceProvider` class.
 
 The `preventLazyLoading` method accepts an optional boolean argument that indicates if lazy loading should be prevented. For example, you may wish to only disable lazy loading in non-production environments so that your production environment will continue to function normally even if a lazy loaded relationship is accidentally present in production code:
 
 ```php
-use Illuminate\Database\Eloquent\Model;
+use MacropaySolutions\Kernel\Database\Obvious\Model;
 
 /**
  * Bootstrap any application services.
@@ -1917,7 +1917,7 @@ public function boot(): void
 }
 ```
 
-After preventing lazy loading, Eloquent will throw a `Illuminate\Database\LazyLoadingViolationException` exception when your application attempts to lazy load any Eloquent relationship.
+After preventing lazy loading, Obvious will throw a `MacropaySolutions\Kernel\Database\LazyLoadingViolationException` exception when your application attempts to lazy load any Obvious relationship.
 
 You may customize the behavior of lazy loading violations using the `handleLazyLoadingViolationsUsing` method. For example, using this method, you may instruct lazy loading violations to only be logged instead of interrupting the application's execution with exceptions:
 
@@ -1935,7 +1935,7 @@ Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation)
 <a name="the-save-method"></a>
 ### The `save` Method
 
-Eloquent provides convenient methods for adding new models to relationships. For example, perhaps you need to add a new comment to a post. Instead of manually setting the `post_id` attribute on the `Comment` model you may insert the comment using the relationship's `save` method:
+Obvious provides convenient methods for adding new models to relationships. For example, perhaps you need to add a new comment to a post. Instead of manually setting the `post_id` attribute on the `Comment` model you may insert the comment using the relationship's `save` method:
 
     use App\Models\Comment;
     use App\Models\Post;
@@ -1985,7 +1985,7 @@ The `pushQuietly` method may be used to save a model and its associated relation
 <a name="the-create-method"></a>
 ### The `create` Method
 
-In addition to the `save` and `saveMany` methods, you may also use the `create` method, which accepts an array of attributes, creates a model, and inserts it into the database. The difference between `save` and `create` is that `save` accepts a full Eloquent model instance while `create` accepts a plain PHP `array`. The newly created model will be returned by the `create` method:
+In addition to the `save` and `saveMany` methods, you may also use the `create` method, which accepts an array of attributes, creates a model, and inserts it into the database. The difference between `save` and `create` is that `save` accepts a full Obvious model instance while `create` accepts a plain PHP `array`. The newly created model will be returned by the `create` method:
 
     use App\Models\Post;
 
@@ -2017,10 +2017,10 @@ The `createQuietly` and `createManyQuietly` methods may be used to create a mode
         ['title' => 'Second post.'],
     ]);
 
-You may also use the `findOrNew`, `firstOrNew`, `firstOrCreate`, and `updateOrCreate` methods to [create and update models on relationships](/eloquent#upserts).
+You may also use the `findOrNew`, `firstOrNew`, `firstOrCreate`, and `updateOrCreate` methods to [create and update models on relationships](/obvious#upserts).
 
 > [!NOTE]  
-> Before using the `create` method, be sure to review the [mass assignment](/eloquent#mass-assignment) documentation.
+> Before using the `create` method, be sure to review the [mass assignment](/obvious#mass-assignment) documentation.
 
 <a name="updating-belongs-to-relationships"></a>
 ### Belongs To Relationships
@@ -2047,7 +2047,7 @@ To remove a parent model from a child model, you may use the `dissociate` method
 <a name="attaching-detaching"></a>
 #### Attaching / Detaching
 
-Eloquent also provides methods to make working with many-to-many relationships more convenient. For example, let's imagine a user can have many roles and a role can have many users. You may use the `attach` method to attach a role to a user by inserting a record in the relationship's intermediate table:
+Obvious also provides methods to make working with many-to-many relationships more convenient. For example, let's imagine a user can have many roles and a role can have many users. You may use the `attach` method to attach a role to a user by inserting a record in the relationship's intermediate table:
 
     use App\Models\User;
 
@@ -2133,8 +2133,8 @@ For example, when a `Comment` model is updated, you may want to automatically "t
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsTo;
 
     class Comment extends Model
     {
@@ -2155,4 +2155,4 @@ For example, when a `Comment` model is updated, you may want to automatically "t
     }
 
 > [!WARNING]  
-> Parent model timestamps will only be updated if the child model is updated using Eloquent's `save` method.
+> Parent model timestamps will only be updated if the child model is updated using Obvious's `save` method.

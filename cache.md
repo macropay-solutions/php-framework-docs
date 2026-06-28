@@ -106,13 +106,13 @@ This table should also have a string partition key with a name that corresponds 
 <a name="obtaining-a-cache-instance"></a>
 ### Obtaining a Cache Instance
 
-To obtain a cache store instance, you may resolve it directly via dependency injection or via the application container. The `Illuminate\Contracts\Cache\Repository` contract provides convenient access to the underlying implementations:
+To obtain a cache store instance, you may resolve it directly via dependency injection or via the application container. The `MacropaySolutions\Kernel\Contracts\Cache\Repository` contract provides convenient access to the underlying implementations:
 
     <?php
 
     namespace App\Controllers;
 
-    use Illuminate\Contracts\Cache\Repository as CacheRepository;
+    use MacropaySolutions\Kernel\Contracts\Cache\Repository as CacheRepository;
 
     class UserController
     {
@@ -281,7 +281,7 @@ If you provide an array of key / value pairs and an expiration time to the funct
 
     cache(['key' => 'value'], now()->addMinutes(10));
 
-When the `cache` function is called without any arguments, it returns an instance of the `Illuminate\Contracts\Cache\Factory` implementation, allowing you to call other caching methods:
+When the `cache` function is called without any arguments, it returns an instance of the `MacropaySolutions\Kernel\Contracts\Cache\Factory` implementation, allowing you to call other caching methods:
 
     cache()->remember('users', $seconds, function () {
         return \app('db')->table('users')->get();
@@ -319,50 +319,16 @@ Forcing a flat token blacklist into a relational tagged cache ecosystem introduc
 * **The Conflict:** To optimize memory, highly efficient tagging engines enforce short TTL caps (e.g., 2 hours) so tracking indices can expire and reset. However, a secure JWT blacklist requires a long, unclipped lifespan (e.g., 14 days) to keep logged-out tokens invalidated.
 * **The Threat:** Forcing JWT through a tagging driver clips its 14-day lifetime down to the short business cap. Once that cap hits, the cache evicts the blacklist entry. Because the token's cryptographic signature is still valid, **logged-out or stolen tokens are resurrected, exposing the app to Token Replay Attacks.**
 
-> **Note:** Raising the global cache cap to 14 days to fix this ruins your business caching, causing massive tracking pointer bloat and stopping sequence recycling.
+> [!WARNING]  
+> Raising the global cache cap to 14 days to fix this ruins your business caching, causing massive tracking pointer bloat and stopping sequence recycling.
 
 **The Performance Drain (Double Initialization Storm)**
-The default `tymon/jwt-auth` storage driver probes for tag support by executing a dummy check before actually running its write. This invokes `->tags()` **twice per request**. In an optimized tagging architecture, this forces redundant internal key sorting and metadata allocation on every single API gateway hit.
+By default, standard package storage drivers often probe for tagging support using dynamic `method_exists()` checks, forcing redundant internal key sorting and metadata allocation on every single API gateway hit.
 
 **The Resolution: Pure Flat Keyspace Decoupling**
-Do not use tags for the authentication layer. Subclass or override the package's storage provider to hardcode `supportsTags = false` and route around the tagging middleware entirely.
+Do not use tags for the authentication layer. Implement the package's storage contract directly, utilizing the framework's raw cache repository.
 
-This forces blacklisted token IDs to write directly to the raw cache pool as flat, un-tagged key-value pairs. The tokens securely retain their unclipped 14-day lifespan, the redundant allocation overhead is eliminated, and your business tags keep their tight lifecycles and clean atomic sequence recycling.
-
-```php
-<?php
-
-namespace App\Cache;
-
-use Tymon\JWTAuth\Providers\Storage\Illuminate as BaseIlluminateStorage;
-
-class JWTFlatStorage extends BaseIlluminateStorage
-{
-    /**
-     * Intercept the cache resolver and force it to run 100% flat.
-     * This bypasses your custom TaggedCache engine completely.
-     *
-     * @return \Illuminate\Contracts\Cache\Repository
-     */
-    protected function cache()
-    {
-        // Explicitly tell the package that tags are not supported.
-        // This forces it to fall through and return the raw, flat store repository.
-        $this->supportsTags = false;
-
-        return $this->cache;
-    }
-}
-```
-
-Register this interceptor in your config/jwt.php file:
-
-```PHP
-'providers' => [
-    // ...
-    'storage' => App\Cache\JWTFlatStorage::class,
-],
-```
+This forces blacklisted token IDs to write directly to the raw cache pool as flat, un-tagged key-value pairs. The tokens securely retain their unclipped 14-day lifespan, the redundant allocation overhead is completely eliminated, and your business tags keep their tight lifecycles.
 
 <a name="accessing-tagged-cache-items"></a>
 ### Accessing Tagged Cache Items
@@ -443,9 +409,9 @@ The `get` method also accepts a closure. After the closure is executed, Framewor
         // Lock acquired for 10 seconds and automatically released...
     });
 
-If the lock is not available at the moment you request it, you may instruct Framework to wait for a specified number of seconds. If the lock can not be acquired within the specified time limit, an `Illuminate\Contracts\Cache\LockTimeoutException` will be thrown:
+If the lock is not available at the moment you request it, you may instruct Framework to wait for a specified number of seconds. If the lock can not be acquired within the specified time limit, an `MacropaySolutions\Kernel\Contracts\Cache\LockTimeoutException` will be thrown:
 
-    use Illuminate\Contracts\Cache\LockTimeoutException;
+    use MacropaySolutions\Kernel\Contracts\Cache\LockTimeoutException;
 
     $lock = \app('cache')->lock('foo', 10);
 
@@ -513,13 +479,13 @@ If you would like to release a lock without respecting its current owner, you ma
 <a name="writing-the-driver"></a>
 ### Writing the Driver
 
-To create our custom cache driver, we first need to implement the `Illuminate\Contracts\Cache\Store` [contract](/contracts). So, a MongoDB cache implementation might look something like this:
+To create our custom cache driver, we first need to implement the `MacropaySolutions\Kernel\Contracts\Cache\Store` [contract](/contracts). So, a MongoDB cache implementation might look something like this:
 
     <?php
 
     namespace App\Extensions;
 
-    use Illuminate\Contracts\Cache\Store;
+    use MacropaySolutions\Kernel\Contracts\Cache\Store;
 
     class MongoStore implements Store
     {
@@ -535,7 +501,7 @@ To create our custom cache driver, we first need to implement the `Illuminate\Co
         public function getPrefix() {}
     }
 
-We just need to implement each of these methods using a MongoDB connection. For an example of how to implement each of these methods, take a look at the `Illuminate\Cache\MemcachedStore` in the [PHP-Kernel source code](https://github.com/macropay-solutions/php-kernel). Once our implementation is complete, we can finish our custom driver registration by extending the cache manager:
+We just need to implement each of these methods using a MongoDB connection. For an example of how to implement each of these methods, take a look at the `MacropaySolutions\Kernel\Cache\MemcachedStore` in the [PHP-Kernel source code](https://github.com/macropay-solutions/php-kernel). Once our implementation is complete, we can finish our custom driver registration by extending the cache manager:
 
     \app('cache')->extend('mongo', function ($app) {
         return \app('cache')->repository(new MongoStore);
@@ -554,7 +520,7 @@ To register the custom cache driver with Framework, we will use the `extend` met
     namespace App\Providers;
 
     use App\Extensions\MongoStore;
-    use Illuminate\Support\ServiceProvider;
+    use MacropaySolutions\Kernel\Support\ServiceProvider;
 
     class AppServiceProvider extends ServiceProvider
     {
@@ -579,7 +545,7 @@ To register the custom cache driver with Framework, we will use the `extend` met
         }
     }
 
-The first argument passed to the `extend` method is the name of the driver. This will correspond to your `driver` option in the `config/cache.php` configuration file. The second argument is a closure that should return an `Illuminate\Cache\Repository` instance. The closure will be passed an `$app` instance, which is an instance of the [service container](/container).
+The first argument passed to the `extend` method is the name of the driver. This will correspond to your `driver` option in the `config/cache.php` configuration file. The second argument is a closure that should return an `MacropaySolutions\Kernel\Cache\Repository` instance. The closure will be passed an `$app` instance, which is an instance of the [service container](/container).
 
 Once your extension is registered, update your `config/cache.php` configuration file's `driver` option to the name of your extension.
 
@@ -592,10 +558,10 @@ To execute code on every cache operation, you may listen for the [events](/event
     use App\Listeners\LogCacheMissed;
     use App\Listeners\LogKeyForgotten;
     use App\Listeners\LogKeyWritten;
-    use Illuminate\Cache\Events\CacheHit;
-    use Illuminate\Cache\Events\CacheMissed;
-    use Illuminate\Cache\Events\KeyForgotten;
-    use Illuminate\Cache\Events\KeyWritten;
+    use MacropaySolutions\Kernel\Cache\Events\CacheHit;
+    use MacropaySolutions\Kernel\Cache\Events\CacheMissed;
+    use MacropaySolutions\Kernel\Cache\Events\KeyForgotten;
+    use MacropaySolutions\Kernel\Cache\Events\KeyWritten;
     
     /**
      * The event listener mappings for the application.

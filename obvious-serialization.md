@@ -1,10 +1,10 @@
 ---
-title: Eloquent Serialization
-description: Guide to converting Eloquent models and collections to arrays or JSON in PHP Framework.
-context: eloquent-serialization
+title: Obvious Serialization
+description: Guide to converting Obvious models and collections to arrays or JSON in PHP Framework.
+context: obvious-serialization
 ---
 
-# Eloquent: Serialization
+# Obvious: Serialization
 
 - [Introduction](#introduction)
 - [Serializing Models and Collections](#serializing-models-and-collections)
@@ -17,7 +17,7 @@ context: eloquent-serialization
 <a name="introduction"></a>
 ## Introduction
 
-When building APIs using Framework, you will often need to convert your models and relationships to arrays or JSON. Eloquent includes convenient methods for making these conversions, as well as controlling which attributes are included in the serialized representation of your models.
+When building APIs using Framework, you will often need to convert your models and relationships to arrays or JSON. Obvious includes convenient methods for making these conversions, as well as controlling which attributes are included in the serialized representation of your models.
 
 
 <a name="serializing-models-and-collections"></a>
@@ -26,7 +26,7 @@ When building APIs using Framework, you will often need to convert your models a
 <a name="serializing-to-arrays"></a>
 ### Serializing to Arrays
 
-To convert a model and its loaded [relationships](/eloquent-relationships) to an array, you should use the `toArray` method. This method is recursive, so all attributes and all relations (including the relations of relations) will be converted to arrays:
+To convert a model and its loaded [relationships](/obvious-relationships) to an array, you should use the `toArray` method. This method is recursive, so all attributes and all relations (including the relations of relations) will be converted to arrays:
 
     use App\Models\User;
 
@@ -40,7 +40,7 @@ The `attributesToArray` method may be used to convert a model's attributes to an
 
     return $user->attributesToArray();
 
-You may also convert entire [collections](/eloquent-collections) of models to arrays by calling the `toArray` method on the collection instance:
+You may also convert entire [collections](/obvious-collections) of models to arrays by calling the `toArray` method on the collection instance:
 
     $users = User::getQuery()->all();
 
@@ -63,7 +63,7 @@ Alternatively, you may cast a model or collection to a string, which will automa
 
     return (string) User::getQuery()->find(1);
 
-Since models and collections are converted to JSON when cast to a string, you can return Eloquent objects directly from your application's routes or controllers. Framework will automatically serialize your Eloquent models and collections to JSON when they are returned from routes or controllers:
+Since models and collections are converted to JSON when cast to a string, you can return Obvious objects directly from your application's routes or controllers. Framework will automatically serialize your Obvious models and collections to JSON when they are returned from routes or controllers:
 
     Route::get('users', function () {
         return User::getQuery()->all();
@@ -72,7 +72,7 @@ Since models and collections are converted to JSON when cast to a string, you ca
 <a name="relationships"></a>
 #### Relationships
 
-When an Eloquent model is converted to JSON, its loaded relationships will automatically be included as attributes on the JSON object. Also, though Eloquent relationship methods are defined using "camel case" method names, a relationship's JSON attribute will be "snake case".
+When an Obvious model is converted to JSON, its loaded relationships will automatically be included as attributes on the JSON object. Also, though Obvious relationship methods are defined using "camel case" method names, a relationship's JSON attribute will be "snake case".
 
 <a name="hiding-attributes-from-json"></a>
 ## Hiding Attributes From JSON
@@ -83,7 +83,7 @@ Sometimes you may wish to limit the attributes, such as passwords, that are incl
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -96,7 +96,7 @@ Sometimes you may wish to limit the attributes, such as passwords, that are incl
     }
 
 > [!NOTE]  
-> To hide relationships, add the relationship's method name to your Eloquent model's `$hidden` property.
+> To hide relationships, add the relationship's method name to your Obvious model's `$hidden` property.
 
 Alternatively, you may use the `visible` property to define an "allow list" of attributes that should be included in your model's array and JSON representation. All attributes that are not present in the `$visible` array will be hidden when the model is converted to an array or JSON:
 
@@ -104,7 +104,7 @@ Alternatively, you may use the `visible` property to define an "allow list" of a
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -136,13 +136,13 @@ If you wish to temporarily override all the visible or hidden attributes, you ma
 <a name="appending-values-to-json"></a>
 ## Appending Values to JSON
 
-Occasionally, when converting models to arrays or JSON, you may wish to add attributes that do not have a corresponding column in your database. To do so, first define an [accessor](/eloquent-mutators) for the value:
+Occasionally, when converting models to arrays or JSON, you may wish to add attributes that do not have a corresponding column in your database. To do so, first define an [accessor](/obvious-mutators) for the value:
 
     <?php
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -163,7 +163,7 @@ If you would like the accessor to always be appended to your model's array and J
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Model;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
 
     class User extends Model
     {
@@ -205,7 +205,7 @@ You may customize the default serialization format by overriding the `serializeD
 <a name="customizing-the-date-format-per-attribute"></a>
 #### Customizing the Date Format per Attribute
 
-You may customize the serialization format of individual Eloquent date attributes by specifying the date format in the model's [cast declarations](/eloquent-mutators#attribute-casting):
+You may customize the serialization format of individual Obvious date attributes by specifying the date format in the model's [cast declarations](/obvious-mutators#attribute-casting):
 
     protected $casts = [
         'birthday' => 'date:Y-m-d',
