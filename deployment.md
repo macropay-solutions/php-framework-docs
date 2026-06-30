@@ -134,7 +134,7 @@ When using `--no-scripts` flag, be sure to call:
 ```shell
 composer dump-autoload
 ```
-or explicitly call all the cache commands from the composer.json->scripts->post-autoload-dump of the template you are using (Framework). This will improve the boot time of the application. See more below.
+or explicitly call all the cache commands from the composer.json->scripts->post-autoload-dump of the template you are using (PHP-Framework). This will improve the boot time of the application. See more below.
 
 <a name="caching-configuration"></a>
 ### Caching Configuration
@@ -145,7 +145,7 @@ When deploying your application to production, you should make sure that you run
 php run config:cache
 ```
 
-This command will combine all of Framework's configuration files into a single, cached file, which greatly reduces the number of trips the framework must make to the filesystem when loading your configuration values.
+This command will combine all of PHP-Framework's configuration files into a single, cached file, which greatly reduces the number of trips the framework must make to the filesystem when loading your configuration values.
 
 > [!WARNING]  
 > If you execute the `config:cache` command during your deployment process, you should be sure that you are only calling the `env` function from within your configuration files. Once the configuration has been cached, the `.env` file will not be loaded and all calls to the `env` function for `.env` variables will return `null`.
