@@ -189,6 +189,9 @@ Storable array callables seamlessly integrate with Framework's batching and chai
 
 #### Job Chaining Exceptions
 
+> [!WARNING]
+> **\app('bus')->chain() Shortcut Is Blocked:** Global execution via the `\app('bus')->chain()` helper shortcut is disabled completely and will throw a `RuntimeException` to avoid massive payload bloating, security issues, and breaks under strict message constraints.
+
 When chaining jobs onto an Array Callable, you cannot chain a standard instantiated Job object. You must chain other Array Callables.
 
 **❌ Incorrect (Throws Exception):**
@@ -876,9 +879,12 @@ Likewise, if the `after_commit` configuration option is set to `true`, you may i
 <a name="job-chaining"></a>
 ### Job Chaining
 
+> [!WARNING]
+> **\app('bus')->chain() Is Unsupported:** The `\app('bus')->chain()` method does not work and will throw a `RuntimeException`. Passing instantiated job objects inside an array forces the framework to recursively serialize downstream tasks inside each other. This bloats message payloads, creates PHP Object Injection (POI) attack surfaces, and will instantly cause failures on cloud message queues like AWS SQS due to their strict 1 MB payload limits.
+
 Job chaining allows you to specify a list of queued tasks that should be run in sequence after the primary task has executed successfully. If one task in the sequence fails, the rest of the tasks will not be run.
 
-You must use the `chain` method provided by the `Queueable` trait directly on your callable instance *before* dispatching it:
+Chaining must be configured using safe, primitive Storable Array Callables. You must chain tasks by calling the `chain` method provided by the `Queueable` trait directly on your callable instance *before* dispatching it:
 
     use App\Services\OptimizePodcast;
     use App\Services\ProcessPodcast;
@@ -2148,34 +2154,6 @@ You may use the `assertDispatchedWithoutChain` method to assert that a job was p
 
     \app('bus')->assertDispatchedWithoutChain(ShipOrder::class);
 
-<a name="testing-chained-batches"></a>
-#### Testing Chained Batches
-
-If your job chain [contains a batch of jobs](#chains-and-batches), you may assert that the chained batch matches your expectations by inserting a `\app('bus')->chainedBatch` definition within your chain assertion:
-
-    use App\Jobs\ShipOrder;
-    use App\Jobs\UpdateInventory;
-    use MacropaySolutions\Kernel\Bus\PendingBatch;
-
-    // Asserting a chained batch with traditional job objects...
-    \app('bus')->assertChained([
-        ShipOrder::new(),
-        \app('bus')->chainedBatch(function (PendingBatch $batch) {
-            return $batch->jobs->count() === 3;
-        }),
-        UpdateInventory::new(),
-    ]);
-
-    // Asserting a chained batch with Storable Array Callables...
-    \app('bus')->assertChained([
-        [ShipOrderService::class, 'handle'],
-        \app('bus')->chainedBatch(function (PendingBatch $batch) {
-            return $batch->jobs->count() === 3;
-        }),
-        [UpdateInventoryService::class, 'handle'],
-    ]);
-
-<a name="testing-job-batches"></a>
 ### Testing Job Batches
 
 The `assertBatched` method may be used to assert that a batch of jobs was dispatched. The closure given to the `assertBatched` method receives an instance of `MacropaySolutions\Kernel\Bus\PendingBatch`, which may be used to inspect the jobs within the batch:
