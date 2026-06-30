@@ -809,11 +809,9 @@ You may dispatch tasks using the `\dispatch` global helper method. The arguments
 
 If you would like to specify that a job should not be immediately available for processing by a queue worker, you may use the `delay` method when dispatching the job:
 
-    new \MacropaySolutions\Framework\Bus\PendingCallableDispatch(
-        \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
-            [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
-        )->delay(now()->addMinutes(10))
-    );
+    \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
+        [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
+    )->delay(now()->addMinutes(10))->dispatch();
 
 > [!WARNING]  
 > The Amazon SQS queue service has a maximum delay time of 15 minutes.
@@ -828,13 +826,13 @@ Alternatively, the `afterResponse` method delays dispatching a job until after t
 <a name="synchronous-dispatching"></a>
 ### Synchronous Dispatching
 
-If you would like to dispatch a job immediately (synchronously), you may use the `dispatch_now` method. When using this method, the job will not be queued and will be executed immediately within the current process:
+If you would like to dispatch a job immediately (synchronously), you may use the `dispatchSync` method. When using this method, the job will not be queued and will be executed immediately within the current process (Queueable jobs will be dispatched to the "sync" queue.):
 
     <?php
 
     use App\Jobs\ProcessPodcast;
 
-    \dispatch_now([ProcessPodcast::class, 'handle']);
+    \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create([ProcessPodcast::class, 'handle'])->dispatchSync();
 
 
 <a name="jobs-and-database-transactions"></a>
@@ -864,22 +862,18 @@ If you do not set the `after_commit` queue connection configuration option to `t
 
     use App\Jobs\ProcessPodcast;
 
-    new \MacropaySolutions\Framework\Bus\PendingCallableDispatch(
-        \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
-            [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
-        )->afterCommit()
-    );
+    \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
+        [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
+    )->afterCommit()->dispatch();
 
 
 Likewise, if the `after_commit` configuration option is set to `true`, you may indicate that a specific job should be dispatched immediately without waiting for any open database transactions to commit:
 
     use App\Jobs\ProcessPodcast;
 
-    new \MacropaySolutions\Framework\Bus\PendingCallableDispatch(
-        \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
-            [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
-        )->beforeCommit()
-    );
+    \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
+        [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
+    )->beforeCommit()->dispatch();
 
 <a name="job-chaining"></a>
 ### Job Chaining
@@ -898,9 +892,7 @@ You must use the `chain` method provided by the `Queueable` trait directly on yo
     $job->chain([
         [OptimizePodcast::class, 'handle', ['podcastId' => 1]],
         [ReleasePodcast::class, 'handle', ['podcastId' => 1]],
-    ]);
-
-    new \MacropaySolutions\Framework\Bus\PendingCallableDispatch($job);
+    ])->dispatch();
 
 > [!WARNING]  
 > If you have opted out of Strict Security Mode to use legacy object-based jobs, you may chain them in the exact same manner: `(new ProcessPodcast())->chain([...])`. However, you **cannot** chain Closures, as closure serialization is strictly forbidden by the framework.
@@ -918,9 +910,7 @@ If you would like to specify the connection and queue that should be used for th
     $job->chain([
         [OptimizePodcast::class, 'handle', ['podcastId' => 1]],
         [ReleasePodcast::class, 'handle', ['podcastId' => 1]],
-    ]);
-
-    \dispatch($job)->onConnection('redis')->onQueue('podcasts');
+    ])->dispatch()->onConnection('redis')->onQueue('podcasts');
 
 <a name="chain-failures"></a>
 #### Chain Failures
@@ -937,18 +927,14 @@ When chaining jobs, you may use the `catch` method to specify an Array Callable 
     $job->chain([
         [OptimizePodcast::class, 'handle', ['podcastId' => 1]],
         [ReleasePodcast::class, 'handle', ['podcastId' => 1]],
-    ])->onFailure([ProcessPodcast::class, 'handleChainFailure']);
-
-    new \MacropaySolutions\Framework\Bus\PendingCallableDispatch($job);
+    ])->onFailure([ProcessPodcast::class, 'handleChainFailure'])->dispatch();
 
 or
 
     $job->chain([
         [OptimizePodcast::class, 'handle', ['podcastId' => 1]],
         [ReleasePodcast::class, 'handle', ['podcastId' => 1]],
-    ]);
-
-    (new \MacropaySolutions\Framework\Bus\PendingCallableDispatch($job))->catch([ProcessPodcast::class, 'handleChainFailure']);
+    ])->dispatch()->catch([ProcessPodcast::class, 'handleChainFailure']);
 
 <a name="customizing-the-queue-and-connection"></a>
 ### Customizing The Queue and Connection
@@ -1542,7 +1528,7 @@ When chaining jobs onto an Array Callable, you cannot chain a standard instantia
         new SendWelcomeEmail(5) 
     ]);
     
-    \dispatch($job);
+    $job->dispatch();
 ```
 **✅ Correct (Using Array Callables):**
 ```php
@@ -1554,7 +1540,7 @@ When chaining jobs onto an Array Callable, you cannot chain a standard instantia
         [SendWelcomeEmail::class, 'handle', ['userId' => 5]]
     ]);
     
-    \dispatch($job);
+    $job->dispatch();
 ```
 Failure Callbacks (catch)
 Similarly, when defining failure callbacks on the dispatch, you must use the Array Callable syntax instead of standard Closures or invokable objects.
