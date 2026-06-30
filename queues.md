@@ -189,6 +189,9 @@ Storable array callables seamlessly integrate with Framework's batching and chai
 
 #### Job Chaining Exceptions
 
+> [!WARNING]
+> **\app('bus')->chain() Shortcut Is Blocked:** Global execution via the `\app('bus')->chain()` helper shortcut is disabled completely and will throw a `RuntimeException` to avoid massive payload bloating, security issues, and breaks under strict message constraints.
+
 When chaining jobs onto an Array Callable, you cannot chain a standard instantiated Job object. You must chain other Array Callables.
 
 **❌ Incorrect (Throws Exception):**
@@ -499,14 +502,12 @@ Framework allows you to ensure the privacy and integrity of a job's data via [en
 
 Job middleware allow you to wrap custom logic around the execution of queued jobs, reducing boilerplate in the jobs themselves. For example, consider the following `handle` method which leverages Framework's Redis rate limiting features to allow only one job to process every five seconds:
 
-    use MacropaySolutions\Kernel\Support\Facades\Redis;
-
     /**
      * Execute the job.
      */
     public function handle(): void
     {
-        Redis::throttle('key')->block(0)->allow(1)->every(5)->then(function () {
+        \app('redis')->throttle('key')->block(0)->allow(1)->every(5)->then(function () {
             info('Lock obtained...');
 
             // Handle job...
@@ -569,7 +570,7 @@ After creating job middleware, they may be attached to a job by returning them f
 <a name="rate-limiting"></a>
 ### Rate Limiting
 
-Although we just demonstrated how to write your own rate limiting job middleware, Framework actually includes a rate limiting middleware that you may utilize to rate limit jobs. Like [route rate limiters](/routing#defining-rate-limiters), job rate limiters are defined using the `RateLimiter` facade's `for` method.
+Although we just demonstrated how to write your own rate limiting job middleware, Framework actually includes a rate limiting middleware that you may utilize to rate limit jobs. Like [route rate limiters](/routing#defining-rate-limiters), job rate limiters are defined using the core `RateLimiter` class configuration.
 
 For example, you may wish to allow users to backup their data once per hour while imposing no such limit on premium customers. To accomplish this, you may define a `RateLimiter` in the `boot` method of your `AppServiceProvider`:
 
@@ -878,9 +879,12 @@ Likewise, if the `after_commit` configuration option is set to `true`, you may i
 <a name="job-chaining"></a>
 ### Job Chaining
 
+> [!WARNING]
+> **\app('bus')->chain() Is Unsupported:** The `\app('bus')->chain()` method does not work and will throw a `RuntimeException`. Passing instantiated job objects inside an array forces the framework to recursively serialize downstream tasks inside each other. This bloats message payloads, creates PHP Object Injection (POI) attack surfaces, and will instantly cause failures on cloud message queues like AWS SQS due to their strict 1 MB payload limits.
+
 Job chaining allows you to specify a list of queued tasks that should be run in sequence after the primary task has executed successfully. If one task in the sequence fails, the rest of the tasks will not be run.
 
-You must use the `chain` method provided by the `Queueable` trait directly on your callable instance *before* dispatching it:
+Chaining must be configured using safe, primitive Storable Array Callables. You must chain tasks by calling the `chain` method provided by the `Queueable` trait directly on your callable instance *before* dispatching it:
 
     use App\Services\OptimizePodcast;
     use App\Services\ProcessPodcast;
@@ -895,7 +899,7 @@ You must use the `chain` method provided by the `Queueable` trait directly on yo
     ])->dispatch();
 
 > [!WARNING]  
-> If you have opted out of Strict Security Mode to use legacy object-based jobs, you may chain them in the exact same manner: `(new ProcessPodcast())->chain([...])`. However, you **cannot** chain Closures, as closure serialization is strictly forbidden by the framework.
+> If you have opted out of Strict Security Mode to use legacy object-based jobs, you may chain them in the exact same manner: `ProcessPodcast::new()->chain([...])`. However, you **cannot** chain Closures, as closure serialization is strictly forbidden by the framework.
 
 > [!WARNING]  
 > Deleting jobs using the `$job->delete()` method (via the injected `Job` interface) will not prevent chained jobs from being processed. The chain will only stop executing if a job in the chain fails by throwing an unhandled exception or calling `$job->fail()`.
@@ -1505,7 +1509,6 @@ No need to create a Job class for simple logic. The container will autowire depe
 Storable array callables seamlessly integrate with Framework's batching and chaining systems.
 ```php
     use App\Services\ImageProcessor;
-    use MacropaySolutions\Kernel\Support\Facades\Bus;
 
     \app('bus')->batch([
         [ImageProcessor::class, 'optimize', ['path' => 'photo1.jpg']],
@@ -1562,21 +1565,20 @@ Similarly, when defining failure callbacks on the dispatch, you must use the Arr
 
 #### Job Middleware and Rate Limiting
 
-Because Array Callables are not traditional Job classes, you cannot define a `middleware()` method on them. If you need to apply rate limiting or prevent job overlaps, you should use Framework's caching and throttling facades directly inside your targeted method.
+Because Array Callables are not traditional Job classes, you cannot define a `middleware()` method on them. If you need to apply rate limiting or prevent job overlaps, you should use Framework's caching and throttling directly inside your targeted method.
 
 Because the Storable Array Callable engine seamlessly injects the underlying queue worker, you can type-hint the `Job` interface to manually release or fail the job if it is rate-limited!
 
 **✅ Correct (Rate Limiting via Method Injection):**
 ```php
 use MacropaySolutions\Kernel\Contracts\Queue\Job;
-use MacropaySolutions\Kernel\Support\Facades\Redis;
 
 class EmailService
 {
     // The native Job instance is injected automatically!
     public function sendWelcomeEmail(int $userId, Job $job): void
     {
-        Redis::throttle('welcome-emails')
+        \app('redis')->throttle('welcome-emails')
             ->allow(10)->every(60)
             ->then(function () use ($userId) {
                 // Lock obtained, process the email...
@@ -2136,9 +2138,9 @@ As you can see in the example above, the array of chained jobs may be an array o
 
     // Asserting traditional job objects...
     \app('bus')->assertChained([
-        new ShipOrder,
-        new RecordShipment,
-        new UpdateInventory,
+        ShipOrder::new(),
+        RecordShipment::new(),
+        UpdateInventory::new(),
     ]);
 
     // Asserting Storable Array Callables (Required for Strict Mode)...
@@ -2152,34 +2154,6 @@ You may use the `assertDispatchedWithoutChain` method to assert that a job was p
 
     \app('bus')->assertDispatchedWithoutChain(ShipOrder::class);
 
-<a name="testing-chained-batches"></a>
-#### Testing Chained Batches
-
-If your job chain [contains a batch of jobs](#chains-and-batches), you may assert that the chained batch matches your expectations by inserting a `\app('bus')->chainedBatch` definition within your chain assertion:
-
-    use App\Jobs\ShipOrder;
-    use App\Jobs\UpdateInventory;
-    use MacropaySolutions\Kernel\Bus\PendingBatch;
-
-    // Asserting a chained batch with traditional job objects...
-    \app('bus')->assertChained([
-        new ShipOrder,
-        \app('bus')->chainedBatch(function (PendingBatch $batch) {
-            return $batch->jobs->count() === 3;
-        }),
-        new UpdateInventory,
-    ]);
-
-    // Asserting a chained batch with Storable Array Callables...
-    \app('bus')->assertChained([
-        [ShipOrderService::class, 'handle'],
-        \app('bus')->chainedBatch(function (PendingBatch $batch) {
-            return $batch->jobs->count() === 3;
-        }),
-        [UpdateInventoryService::class, 'handle'],
-    ]);
-
-<a name="testing-job-batches"></a>
 ### Testing Job Batches
 
 The `assertBatched` method may be used to assert that a batch of jobs was dispatched. The closure given to the `assertBatched` method receives an instance of `MacropaySolutions\Kernel\Bus\PendingBatch`, which may be used to inspect the jobs within the batch:
@@ -2208,7 +2182,7 @@ You may use `assertNothingBatched` to assert that no batches were dispatched:
 
 In addition, you may occasionally need to test an individual job's interaction with its underlying batch. For example, you may need to test if a job cancelled further processing for its batch. To accomplish this, you need to assign a fake batch to the job via the `withFakeBatch` method. The `withFakeBatch` method returns a tuple containing the job instance and the fake batch:
 
-    [$job, $batch] = (new ShipOrder)->withFakeBatch();
+    [$job, $batch] = ShipOrder::new()->withFakeBatch();
 
     $job->handle();
 
@@ -2240,8 +2214,16 @@ Using the `before` and `after` methods on the queue service, you may specify cal
 
 Using the `looping` method, you may specify callbacks that execute before the worker attempts to fetch a job from a queue. For example, you might register a closure to rollback any transactions that were left open by a previously failed job:
 
-    \app('queue')->looping(function () {
-        while (\app('db')->transactionLevel() > 0) {
-            \app('db')->rollBack();
+    \app('queue')->looping([\App\Listeners\QueueLoopListener::class, 'resetTransactions']);
+
+    class QueueLoopListener
+    {
+        public static function resetTransactions(): void
+        {
+            $db = \app('db');
+
+            while ($db->transactionLevel() > 0) {
+                $db->rollBack();
+            }
         }
-    });
+    }
