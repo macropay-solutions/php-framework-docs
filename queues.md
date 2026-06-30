@@ -499,14 +499,12 @@ Framework allows you to ensure the privacy and integrity of a job's data via [en
 
 Job middleware allow you to wrap custom logic around the execution of queued jobs, reducing boilerplate in the jobs themselves. For example, consider the following `handle` method which leverages Framework's Redis rate limiting features to allow only one job to process every five seconds:
 
-    use MacropaySolutions\Kernel\Support\Facades\Redis;
-
     /**
      * Execute the job.
      */
     public function handle(): void
     {
-        Redis::throttle('key')->block(0)->allow(1)->every(5)->then(function () {
+        \app('redis')->throttle('key')->block(0)->allow(1)->every(5)->then(function () {
             info('Lock obtained...');
 
             // Handle job...
@@ -569,7 +567,7 @@ After creating job middleware, they may be attached to a job by returning them f
 <a name="rate-limiting"></a>
 ### Rate Limiting
 
-Although we just demonstrated how to write your own rate limiting job middleware, Framework actually includes a rate limiting middleware that you may utilize to rate limit jobs. Like [route rate limiters](/routing#defining-rate-limiters), job rate limiters are defined using the `RateLimiter` facade's `for` method.
+Although we just demonstrated how to write your own rate limiting job middleware, Framework actually includes a rate limiting middleware that you may utilize to rate limit jobs. Like [route rate limiters](/routing#defining-rate-limiters), job rate limiters are defined using the core `RateLimiter` class configuration.
 
 For example, you may wish to allow users to backup their data once per hour while imposing no such limit on premium customers. To accomplish this, you may define a `RateLimiter` in the `boot` method of your `AppServiceProvider`:
 
@@ -1505,7 +1503,6 @@ No need to create a Job class for simple logic. The container will autowire depe
 Storable array callables seamlessly integrate with Framework's batching and chaining systems.
 ```php
     use App\Services\ImageProcessor;
-    use MacropaySolutions\Kernel\Support\Facades\Bus;
 
     \app('bus')->batch([
         [ImageProcessor::class, 'optimize', ['path' => 'photo1.jpg']],
@@ -1562,21 +1559,20 @@ Similarly, when defining failure callbacks on the dispatch, you must use the Arr
 
 #### Job Middleware and Rate Limiting
 
-Because Array Callables are not traditional Job classes, you cannot define a `middleware()` method on them. If you need to apply rate limiting or prevent job overlaps, you should use Framework's caching and throttling facades directly inside your targeted method.
+Because Array Callables are not traditional Job classes, you cannot define a `middleware()` method on them. If you need to apply rate limiting or prevent job overlaps, you should use Framework's caching and throttling directly inside your targeted method.
 
 Because the Storable Array Callable engine seamlessly injects the underlying queue worker, you can type-hint the `Job` interface to manually release or fail the job if it is rate-limited!
 
 **✅ Correct (Rate Limiting via Method Injection):**
 ```php
 use MacropaySolutions\Kernel\Contracts\Queue\Job;
-use MacropaySolutions\Kernel\Support\Facades\Redis;
 
 class EmailService
 {
     // The native Job instance is injected automatically!
     public function sendWelcomeEmail(int $userId, Job $job): void
     {
-        Redis::throttle('welcome-emails')
+        \app('redis')->throttle('welcome-emails')
             ->allow(10)->every(60)
             ->then(function () use ($userId) {
                 // Lock obtained, process the email...
@@ -2240,8 +2236,16 @@ Using the `before` and `after` methods on the queue service, you may specify cal
 
 Using the `looping` method, you may specify callbacks that execute before the worker attempts to fetch a job from a queue. For example, you might register a closure to rollback any transactions that were left open by a previously failed job:
 
-    \app('queue')->looping(function () {
-        while (\app('db')->transactionLevel() > 0) {
-            \app('db')->rollBack();
+    \app('queue')->looping([\App\Listeners\QueueLoopListener::class, 'resetTransactions']);
+
+    class QueueLoopListener
+    {
+        public static function resetTransactions(): void
+        {
+            $db = \app('db');
+
+            while ($db->transactionLevel() > 0) {
+                $db->rollBack();
+            }
         }
-    });
+    }
