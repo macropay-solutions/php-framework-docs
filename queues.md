@@ -895,7 +895,7 @@ You must use the `chain` method provided by the `Queueable` trait directly on yo
     ])->dispatch();
 
 > [!WARNING]  
-> If you have opted out of Strict Security Mode to use legacy object-based jobs, you may chain them in the exact same manner: `(new ProcessPodcast())->chain([...])`. However, you **cannot** chain Closures, as closure serialization is strictly forbidden by the framework.
+> If you have opted out of Strict Security Mode to use legacy object-based jobs, you may chain them in the exact same manner: `ProcessPodcast::new()->chain([...])`. However, you **cannot** chain Closures, as closure serialization is strictly forbidden by the framework.
 
 > [!WARNING]  
 > Deleting jobs using the `$job->delete()` method (via the injected `Job` interface) will not prevent chained jobs from being processed. The chain will only stop executing if a job in the chain fails by throwing an unhandled exception or calling `$job->fail()`.
@@ -2136,9 +2136,9 @@ As you can see in the example above, the array of chained jobs may be an array o
 
     // Asserting traditional job objects...
     \app('bus')->assertChained([
-        new ShipOrder,
-        new RecordShipment,
-        new UpdateInventory,
+        ShipOrder::new(),
+        RecordShipment::new(),
+        UpdateInventory::new(),
     ]);
 
     // Asserting Storable Array Callables (Required for Strict Mode)...
@@ -2163,11 +2163,11 @@ If your job chain [contains a batch of jobs](#chains-and-batches), you may asser
 
     // Asserting a chained batch with traditional job objects...
     \app('bus')->assertChained([
-        new ShipOrder,
+        ShipOrder::new(),
         \app('bus')->chainedBatch(function (PendingBatch $batch) {
             return $batch->jobs->count() === 3;
         }),
-        new UpdateInventory,
+        UpdateInventory::new(),
     ]);
 
     // Asserting a chained batch with Storable Array Callables...
@@ -2208,7 +2208,7 @@ You may use `assertNothingBatched` to assert that no batches were dispatched:
 
 In addition, you may occasionally need to test an individual job's interaction with its underlying batch. For example, you may need to test if a job cancelled further processing for its batch. To accomplish this, you need to assign a fake batch to the job via the `withFakeBatch` method. The `withFakeBatch` method returns a tuple containing the job instance and the fake batch:
 
-    [$job, $batch] = (new ShipOrder)->withFakeBatch();
+    [$job, $batch] = ShipOrder::new()->withFakeBatch();
 
     $job->handle();
 
