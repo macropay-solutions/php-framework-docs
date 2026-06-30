@@ -1,6 +1,6 @@
 ---
 title: Deployment
-description: Guide to server requirements, Nginx configuration, and production optimizations for deploying Framework applications.
+description: Guide to server requirements, Nginx configuration, and production optimizations for deploying PHP-Framework applications.
 context: deployment
 ---
 
@@ -9,9 +9,9 @@ context: deployment
 
 > **CRITICAL ARCHITECTURAL WARNING**
 >
-> Because Framework's high-performance router utilizes native `strtok()` loops to parse URI nodes with zero memory allocations, **this framework is strictly designed for a stateless, isolated PHP-FPM execution architecture.**
+> Because PHP-Framework's high-performance router utilizes native `strtok()` loops to parse URI nodes with zero memory allocations, **this framework is strictly designed for a stateless, isolated PHP-FPM execution architecture.**
 >
-> Do **NOT** run Framework with long-running, multithreaded, or coroutine-based application servers (such as **Swoole, OpenSwoole, or RoadRunner**).
+> Do **NOT** run PHP-Framework with long-running, multithreaded, or coroutine-based application servers (such as **Swoole, OpenSwoole, or RoadRunner**).
 >
 > Because `strtok()` relies on a single global internal pointer within the PHP thread state, concurrent asynchronous requests sharing the same process worker will overwrite each other's routing tokens mid-flight. This will result in critical security vulnerabilities, including routing desynchronization, cross-user data leaks, and authentication middleware bypasses.
 
@@ -33,12 +33,12 @@ context: deployment
 <a name="introduction"></a>
 ## Introduction
 
-When you're ready to deploy your Framework application to production, there are some important things you can do to make sure your application is running as efficiently as possible. In this document, we'll cover some great starting points for making sure your Framework application is deployed properly.
+When you're ready to deploy your PHP-Framework application to production, there are some important things you can do to make sure your application is running as efficiently as possible. In this document, we'll cover some great starting points for making sure your PHP-Framework application is deployed properly.
 
 <a name="server-requirements"></a>
 ## Server Requirements
 
-The Framework framework has a few system requirements. You should ensure that your web server has the following minimum PHP version and extensions:
+PHP-Framework has a few system requirements. You should ensure that your web server has the following minimum PHP version and extensions:
 
 <div class="content-list" markdown="1">
 
@@ -56,7 +56,7 @@ The Framework framework has a few system requirements. You should ensure that yo
 - Session PHP Extension
 - Tokenizer PHP Extension
 - XML PHP Extension
-- See more in [PHP Kernel composer.json](https://github.com/macropay-solutions/php-kernel/blob/production/composer.json) and [Framework composer.json](https://github.com/macropay-solutions/php-framework/blob/production/composer.json)
+- See more in [PHP Kernel composer.json](https://github.com/macropay-solutions/php-kernel/blob/production/composer.json) and [PHP-Framework composer.json](https://github.com/macropay-solutions/php-framework/blob/production/composer.json)
 
 </div>
 
