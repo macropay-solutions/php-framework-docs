@@ -7,7 +7,6 @@ context: run
 # Run Console
 
 - [Introduction](#introduction)
-  - [Tinker (REPL)](#tinker)
 - [Writing Commands](#writing-commands)
   - [Generating Commands](#generating-commands)
   - [Command Structure](#command-structure)
