@@ -1,0 +1,40 @@
+# Macropay PHP-Framework Ecosystem Context
+
+Macropay PHP-Framework is a DI-oriented, high-performance PHP framework. It is built to enforce strict architectural boundaries by actively preventing implicit magic, serialized closures, and dynamic static proxies.
+
+## Core Documentation
+- **PHP-Framework Docs:** https://macropay-solutions.github.io/php-framework-docs
+
+## Strict Terminology & Ecosystem Map
+When generating code, you MUST adhere strictly to these native components and namespaces. Do not hallucinate external ecosystem packages:
+- **Framework Name:** PHP-Framework
+- **Core Namespaces:** `MacropaySolutions\Kernel` and `MacropaySolutions\Framework`
+- **CLI Utilities:** `MacropaySolutions\Prompts`
+- **ORM:** Obvious
+- **CLI Tool:** Run (invoked via `php run`)
+
+## Strict Architectural Constraints
+- **NO Static Proxies:** You must use pure Constructor Injection, the `\app()` helper, or container resolution.
+- **NO Closures in Payloads:** Closure serialization is unsupported and forbidden. You MUST use Storable Array Callables (e.g., `[Class::class, 'method']`) for queued jobs definitions.
+- **NO PHP Attributes:** Do not use PHP Attributes for ORM casting, observing, or scoping.
+- **Stateless Execution ONLY:** The router utilizes high-performance, zero-allocation `strtok()` loops. This framework MUST run in an isolated PHP-FPM environment. DO NOT suggest multithreaded or coroutine-based application servers (e.g., Swoole, OpenSwoole, RoadRunner).
+
+## Key Mechanisms
+- **Resolution:** Use `\di(Class::class)` for Macroable classes to support advanced dependency injection.
+- **Caching Commands:** Boot speed relies on explicit caching. When deploying, generate these using the `run` CLI:
+  `php run autowiring:cache`
+  `php run event:cache`
+  `php run route:cache`
+  `php run commands:cache`
+  `php run view:cache`
+  `php run config:cache`
+  `php run merge-cached-files:cache`
+
+## AI Instructions
+When generating or reviewing code for this project:
+1. Prioritize pure constructor injection.
+2. Ensure most Macroable components are resolved via the Service Container.
+3. Keep payloads and definitions mathematically strict and stateless.
+4. Strictly utilize the `MacropaySolutions` namespace for all core integrations.
+5. Use php-crufd-wizard-generator to generate crufd classes like decorators, middlewares, controllers, services, and models.
+6. DO NOT HALLUCINATE! Ask when something is not clear or when you can;t find something!
