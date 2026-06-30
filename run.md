@@ -202,12 +202,12 @@ Options, like arguments, are another form of user input. Options are prefixed by
      *
      * @var string
      */
-    protected $signature = 'mail:send {user} {--queue}';
+    protected $signature = 'mail:send {user} {--force}';
 
-In this example, the `--queue` switch may be specified when calling the Run command. If the `--queue` switch is passed, the value of the option will be `true`. Otherwise, the value will be `false`:
+In this example, the `--force` switch may be specified when calling the Run command. If the `--force` switch is passed, the value of the option will be `true`. Otherwise, the value will be `false`:
 
 ```shell
-php run mail:send 1 --queue
+php run mail:send 1 --force
 ```
 
 <a name="options-with-values"></a>
@@ -220,29 +220,29 @@ Next, let's take a look at an option that expects a value. If the user must spec
      *
      * @var string
      */
-    protected $signature = 'mail:send {user} {--queue=}';
+    protected $signature = 'mail:send {user} {--status=}';
 
 In this example, the user may pass a value for the option like so. If the option is not specified when invoking the command, its value will be `null`:
 
 ```shell
-php run mail:send 1 --queue=default
+php run mail:send 1 --status=default
 ```
 
 You may assign default values to options by specifying the default value after the option name. If no option value is passed by the user, the default value will be used:
 
-    'mail:send {user} {--queue=default}'
+    'mail:send {user} {--status=default}'
 
 <a name="option-shortcuts"></a>
 #### Option Shortcuts
 
 To assign a shortcut when defining an option, you may specify it before the option name and use the `|` character as a delimiter to separate the shortcut from the full option name:
 
-    'mail:send {user} {--Q|queue}'
+    'mail:send {user} {--S|status}'
 
 When invoking the command on your terminal, option shortcuts should be prefixed with a single hyphen and no `=` character should be included when specifying a value for the option:
 
 ```shell
-php run mail:send 1 -Qdefault
+php run mail:send 1 -Sdefault
 ```
 
 <a name="input-arrays"></a>
@@ -286,8 +286,8 @@ You may assign descriptions to input arguments and options by separating the arg
      * @var string
      */
     protected $signature = 'mail:send
-                            {user : The ID of the user}
-                            {--queue : Whether the job should be queued}';
+      {user : The ID of the user}
+      {--pretend : Simulate sending the email without actually delivering it}';
 
 <a name="prompting-for-missing-input"></a>
 ### Prompting for Missing Input
@@ -370,9 +370,9 @@ If you wish to prompt the user to select or enter [options](#options), you may i
      */
     protected function afterPromptingForMissingArguments(InputInterface $input, OutputInterface $output)
     {
-        $input->setOption('queue', confirm(
-            label: 'Would you like to queue the mail?',
-            default: $this->option('queue')
+        $input->setOption('force', confirm(
+            label: 'Would you like to force the mail?',
+            default: $this->option('force')
         ));
     }
 
@@ -399,7 +399,7 @@ If you need to retrieve all the arguments as an `array`, call the `arguments` me
 Options may be retrieved just as easily as arguments using the `option` method. To retrieve all the options as an array, call the `options` method:
 
     // Retrieve a specific option...
-    $queueName = $this->option('queue');
+    $status = $this->option('status');
 
     // Retrieve all options as an array...
     $options = $this->options();
@@ -581,8 +581,7 @@ The `call` method accepts either the command's signature name or class name as i
         public function send(string $user, Kernel $kernel)
         {
             $exitCode = $kernel->call('mail:send', [
-                'user' => $user, 
-                '--queue' => 'default',
+                'user' => $user,
             ]);
 
             // ...
@@ -591,7 +590,7 @@ The `call` method accepts either the command's signature name or class name as i
 
 Alternatively, you may pass the entire Run command to the `call` method as a single string. If you are in a context where you cannot easily inject the kernel, you may resolve it directly from the application container:
 
-    \app(\MacropaySolutions\Kernel\Contracts\Console\Kernel::class)->call('mail:send 1 --queue=default');
+    \app(\MacropaySolutions\Kernel\Contracts\Console\Kernel::class)->call('mail:send 1');
 
 <a name="passing-array-values"></a>
 #### Passing Array Values
@@ -611,8 +610,11 @@ If you need to specify the value of an option that does not accept string values
         '--force' => true,
     ]);
 
+<a name="queueing-commands"></a>
+#### Queueing Commands
+
 > [!WARNING]  
-> **Queueing Commands is Unsupported:** Attempting to queue a command for background execution using the `queue` method on the Kernel will throw a `RuntimeException`.
+> **Queueing Commands is Unsupported:** Queueing console commands for background execution is not supported in PHP Framework. If you need to execute tasks in the background, you should dispatch a queued Job or Storable Array Callable instead or just use ->runInBackground() in scheduler.
 
 <a name="calling-commands-from-other-commands"></a>
 ### Calling Commands From Other Commands
@@ -625,7 +627,7 @@ Sometimes you may wish to call other commands from an existing Run command. You 
     public function handle(): void
     {
         $this->call('mail:send', [
-            'user' => 1, '--queue' => 'default'
+            'user' => 1
         ]);
 
         // ...
@@ -634,7 +636,7 @@ Sometimes you may wish to call other commands from an existing Run command. You 
 If you would like to call another console command and suppress all of its output, you may use the `callSilently` method. The `callSilently` method has the same signature as the `call` method:
 
     $this->callSilently('mail:send', [
-        'user' => 1, '--queue' => 'default'
+        'user' => 1
     ]);
 
 <a name="signal-handling"></a>
