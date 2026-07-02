@@ -221,7 +221,7 @@ If you would like a model to use a UUID key instead of an auto-incrementing inte
         // ...
     }
 
-    $article = Article::getQuery()->create(['title' => 'Traveling to Europe']);
+    $article = Article::query()->create(['title' => 'Traveling to Europe']);
 
     $article->a->id; // "8f8e8478-9035-4d23-b9a7-62f4d2612ce5"
 
@@ -261,7 +261,7 @@ If you wish, you may choose to utilize "ULIDs" instead of UUIDs. ULIDs are simil
         // ...
     }
 
-    $article = Article::getQuery()->create(['title' => 'Traveling to Asia']);
+    $article = Article::query()->create(['title' => 'Traveling to Asia']);
 
     $article->a->id; // "01gd4d3tgrrfqeda94gdbtdk5c"
 
@@ -486,7 +486,7 @@ Once you have created a model and [its associated database table](/migrations#wr
 
     use App\Models\Flight;
 
-    foreach (Flight::getQuery()->all() as $flight) {
+    foreach (Flight::query()->all() as $flight) {
         echo $flight->a->name;
     }
 
@@ -495,7 +495,7 @@ Once you have created a model and [its associated database table](/migrations#wr
 
 The Obvious `all` method will return all the results in the model's table. However, since each Obvious model serves as a [query builder](/queries), you may add additional constraints to queries and then invoke the `get` method to retrieve the results:
 
-    $flights = Flight::getQuery()->where('active', 1)
+    $flights = Flight::query()->where('active', 1)
                    ->orderBy('name')
                    ->take(10)
                    ->get();
@@ -508,13 +508,13 @@ The Obvious `all` method will return all the results in the model's table. Howev
 
 If you already have an instance of an Obvious model that was retrieved from the database, you can "refresh" the model using the `fresh` and `refresh` methods. The `fresh` method will re-retrieve the model from the database. The existing model instance will not be affected:
 
-    $flight = Flight::getQuery()->where('number', 'FR 900')->first();
+    $flight = Flight::query()->where('number', 'FR 900')->first();
 
     $freshFlight = $flight->fresh();
 
 The `refresh` method will re-hydrate the existing model using fresh data from the database. In addition, all of its loaded relationships will be refreshed as well:
 
-    $flight = Flight::getQuery()->where('number', 'FR 900')->first();
+    $flight = Flight::query()->where('number', 'FR 900')->first();
 
     $flight->a->number = 'FR 456';
 
@@ -530,7 +530,7 @@ As we have seen, Obvious methods like `all` and `get` retrieve multiple records 
 The Obvious `Collection` class extends Kernel's base `MacropaySolutions\Kernel\Support\Collection` class, which provides a [variety of helpful methods](/collections#available-methods) for interacting with data collections. For example, the `reject` method may be used to remove models from a collection based on the results of an invoked closure:
 
 ```php
-$flights = Flight::getQuery()->where('destination', 'Paris')->get();
+$flights = Flight::query()->where('destination', 'Paris')->get();
 
 $flights = $flights->reject(function (Flight $flight) {
     return $flight->a->cancelled;
@@ -558,7 +558,7 @@ The `chunk` method will retrieve a subset of Obvious models, passing them to a c
 use App\Models\Flight;
 use MacropaySolutions\Kernel\Database\Obvious\Collection;
 
-Flight::getQuery()->chunk(200, function (Collection $flights) {
+Flight::query()->chunk(200, function (Collection $flights) {
     foreach ($flights as $flight) {
         // ...
     }
@@ -570,7 +570,7 @@ The first argument passed to the `chunk` method is the number of records you wis
 If you are filtering the results of the `chunk` method based on a column that you will also be updating while iterating over the results, you should use the `chunkById` method. Using the `chunk` method in these scenarios could lead to unexpected and inconsistent results. Internally, the `chunkById` method will always retrieve models with an `id` column greater than the last model in the previous chunk:
 
 ```php
-Flight::getQuery()->where('departed', true)
+Flight::query()->where('departed', true)
     ->chunkById(200, function (Collection $flights) {
         $flights->each->update(['departed' => false]);
     }, $column = 'id');
@@ -584,7 +584,7 @@ The `lazy` method works similarly to [the `chunk` method](#chunking-results) in 
 ```php
 use App\Models\Flight;
 
-foreach (Flight::getQuery()->lazy() as $flight) {
+foreach (Flight::query()->lazy() as $flight) {
     // ...
 }
 ```
@@ -592,7 +592,7 @@ foreach (Flight::getQuery()->lazy() as $flight) {
 If you are filtering the results of the `lazy` method based on a column that you will also be updating while iterating over the results, you should use the `lazyById` method. Internally, the `lazyById` method will always retrieve models with an `id` column greater than the last model in the previous chunk:
 
 ```php
-Flight::getQuery()->where('departed', true)
+Flight::query()->where('departed', true)
     ->lazyById(200, $column = 'id')
     ->each->update(['departed' => false]);
 ```
@@ -614,7 +614,7 @@ Internally, the `cursor` method uses PHP [generators](https://www.php.net/manual
 ```php
 use App\Models\Flight;
 
-foreach (Flight::getQuery()->where('destination', 'Zurich')->cursor() as $flight) {
+foreach (Flight::query()->where('destination', 'Zurich')->cursor() as $flight) {
     // ...
 }
 ```
@@ -624,7 +624,7 @@ The `cursor` returns an `MacropaySolutions\Kernel\Support\LazyCollection` instan
 ```php
 use App\Models\User;
 
-$users = User::getQuery()->cursor()->filter(function (User $user) {
+$users = User::query()->cursor()->filter(function (User $user) {
     return $user->a->id > 500;
 });
 
@@ -648,7 +648,7 @@ Using the subquery functionality available to the query builder's `select` and `
     use App\Models\Destination;
     use App\Models\Flight;
 
-    return Destination::getQuery()->addSelect(['last_flight' => Flight::getQuery()->select('name')
+    return Destination::query()->addSelect(['last_flight' => Flight::query()->select('name')
         ->whereColumn('destination_id', 'destinations.id')
         ->orderByDesc('arrived_at')
         ->limit(1)
@@ -659,8 +659,8 @@ Using the subquery functionality available to the query builder's `select` and `
 
 In addition, the query builder's `orderBy` function supports subqueries. Continuing to use our flight example, we may use this functionality to sort all destinations based on when the last flight arrived at that destination. Again, this may be done while executing a single database query:
 
-    return Destination::getQuery()->orderByDesc(
-        Flight::getQuery()->select('arrived_at')
+    return Destination::query()->orderByDesc(
+        Flight::query()->select('arrived_at')
             ->whereColumn('destination_id', 'destinations.id')
             ->orderByDesc('arrived_at')
             ->limit(1)
@@ -674,21 +674,21 @@ In addition to retrieving all the records matching a given query, you may also r
     use App\Models\Flight;
 
     // Retrieve a model by its primary key...
-    $flight = Flight::getQuery()->find(1);
+    $flight = Flight::query()->find(1);
 
     // Retrieve the first model matching the query constraints...
-    $flight = Flight::getQuery()->where('active', 1)->first();
+    $flight = Flight::query()->where('active', 1)->first();
 
     // Alternative to retrieving the first model matching the query constraints...
-    $flight = Flight::getQuery()->firstWhere('active', 1);
+    $flight = Flight::query()->firstWhere('active', 1);
 
 Sometimes you may wish to perform some other action if no results are found. The `findOr` and `firstOr` methods will return a single model instance or, if no results are found, execute the given closure. The value returned by the closure will be considered the result of the method:
 
-    $flight = Flight::getQuery()->findOr(1, function () {
+    $flight = Flight::query()->findOr(1, function () {
         // ...
     });
 
-    $flight = Flight::getQuery()->where('legs', '>', 3)->firstOr(function () {
+    $flight = Flight::query()->where('legs', '>', 3)->firstOr(function () {
         // ...
     });
 
@@ -697,9 +697,9 @@ Sometimes you may wish to perform some other action if no results are found. The
 
 Sometimes you may wish to throw an exception if a model is not found. This is particularly useful in routes or controllers. The `findOrFail` and `firstOrFail` methods will retrieve the first result of the query; however, if no result is found, an `MacropaySolutions\Kernel\Database\Obvious\ModelNotFoundException` will be thrown:
 
-    $flight = Flight::getQuery()->findOrFail(1);
+    $flight = Flight::query()->findOrFail(1);
 
-    $flight = Flight::getQuery()->where('legs', '>', 3)->firstOrFail();
+    $flight = Flight::query()->where('legs', '>', 3)->firstOrFail();
 
 If the `ModelNotFoundException` is not caught, a 404 HTTP response is automatically sent back to the client:
 
@@ -719,7 +719,7 @@ If the `ModelNotFoundException` is not caught, a 404 HTTP response is automatica
          */
         public function show(string $id): Flight
         {
-            return Flight::getQuery()->findOrFail($id);
+            return Flight::query()->findOrFail($id);
         }
     }
 
@@ -733,23 +733,23 @@ The `firstOrNew` method, like `firstOrCreate`, will attempt to locate a record i
     use App\Models\Flight;
 
     // Retrieve flight by name or create it if it doesn't exist...
-    $flight = Flight::getQuery()->firstOrCreate([
+    $flight = Flight::query()->firstOrCreate([
         'name' => 'London to Paris'
     ]);
 
     // Retrieve flight by name or create it with the name, delayed, and arrival_time attributes...
-    $flight = Flight::getQuery()->firstOrCreate(
+    $flight = Flight::query()->firstOrCreate(
         ['name' => 'London to Paris'],
         ['delayed' => 1, 'arrival_time' => '11:30']
     );
 
     // Retrieve flight by name or instantiate a new Flight instance...
-    $flight = Flight::getQuery()->firstOrNew([
+    $flight = Flight::query()->firstOrNew([
         'name' => 'London to Paris'
     ]);
 
     // Retrieve flight by name or instantiate with the name, delayed, and arrival_time attributes...
-    $flight = Flight::getQuery()->firstOrNew(
+    $flight = Flight::query()->firstOrNew(
         ['name' => 'Tokyo to Sydney'],
         ['delayed' => 1, 'arrival_time' => '11:30']
     );
@@ -759,9 +759,9 @@ The `firstOrNew` method, like `firstOrCreate`, will attempt to locate a record i
 
 When interacting with Obvious models, you may also use the `count`, `sum`, `max`, and other [aggregate methods](/queries#aggregates) provided by the Kernel [query builder](/queries). As you might expect, these methods return a scalar value instead of an Obvious model instance:
 
-    $count = Flight::getQuery()->where('active', 1)->count();
+    $count = Flight::query()->where('active', 1)->count();
 
-    $max = Flight::getQuery()->where('active', 1)->max('price');
+    $max = Flight::query()->where('active', 1)->max('price');
 
 <a name="inserting-and-updating-models"></a>
 ## Inserting and Updating Models
@@ -805,7 +805,7 @@ Alternatively, you may use the `create` method to "save" a new model using a sin
 
     use App\Models\Flight;
 
-    $flight = Flight::getQuery()->create([
+    $flight = Flight::query()->create([
         'name' => 'London to Paris',
     ]);
 
@@ -818,7 +818,7 @@ The `save` method may also be used to update models that already exist in the da
 
     use App\Models\Flight;
 
-    $flight = Flight::getQuery()->find(1);
+    $flight = Flight::query()->find(1);
 
     $flight->a->name = 'Paris to London';
 
@@ -829,7 +829,7 @@ The `save` method may also be used to update models that already exist in the da
 
 Updates can also be performed against models that match a given query. In this example, all flights that are `active` and have a `destination` of `San Diego` will be marked as delayed:
 
-    Flight::getQuery()->where('active', 1)
+    Flight::query()->where('active', 1)
           ->where('destination', 'San Diego')
           ->update(['delayed' => 1]);
 
@@ -847,7 +847,7 @@ The `isDirty` method determines if any of the model's attributes have been chang
 
     use App\Models\User;
 
-    $user = User::getQuery()->create([
+    $user = User::query()->create([
         'first_name' => 'Surname',
         'last_name' => 'Name',
         'title' => 'Developer',
@@ -872,7 +872,7 @@ The `isDirty` method determines if any of the model's attributes have been chang
 
 The `wasChanged` method determines if any attributes were changed when the model was last saved within the current request cycle. If needed, you may pass an attribute name to see if a particular attribute was changed:
 
-    $user = User::getQuery()->create([
+    $user = User::query()->create([
         'first_name' => 'Surname',
         'last_name' => 'Name',
         'title' => 'Developer',
@@ -890,7 +890,7 @@ The `wasChanged` method determines if any attributes were changed when the model
 
 The `getOriginal` method returns an array containing the original attributes of the model regardless of any changes to the model since it was retrieved. If needed, you may pass a specific attribute name to get the original value of a particular attribute:
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->a->name; // John
     $user->a->email; // john@example.com
@@ -908,7 +908,7 @@ You may use the `create` method to "save" a new model using a single PHP stateme
 
     use App\Models\Flight;
 
-    $flight = Flight::getQuery()->create([
+    $flight = Flight::query()->create([
         'name' => 'London to Paris',
     ]);
 
@@ -936,7 +936,7 @@ So, to get started, you should define which model attributes you want to make ma
 
 Once you have specified which attributes are mass assignable, you may use the `create` method to insert a new record in the database. The `create` method returns the newly created model instance:
 
-    $flight = Flight::getQuery()->create(['name' => 'London to Paris']);
+    $flight = Flight::query()->create(['name' => 'London to Paris']);
 
 If you already have a model instance, you may use the `fill` method to populate it with an array of attributes:
 
@@ -992,14 +992,14 @@ Occasionally, you may need to update an existing model or create a new model if 
 
 In the example below, if a flight exists with a `departure` location of `Oakland` and a `destination` location of `San Diego`, its `price` and `discounted` columns will be updated. If no such flight exists, a new flight will be created which has the attributes resulting from merging the first argument array with the second argument array:
 
-    $flight = Flight::getQuery()->updateOrCreate(
+    $flight = Flight::query()->updateOrCreate(
         ['departure' => 'Oakland', 'destination' => 'San Diego'],
         ['price' => 99, 'discounted' => 1]
     );
 
 If you would like to perform multiple "upserts" in a single query, then you should use the `upsert` method instead. The method's first argument consists of the values to insert or update, while the second argument lists the column(s) that uniquely identify records within the associated table. The method's third and final argument is an array of the columns that should be updated if a matching record already exists in the database. The `upsert` method will automatically set the `created_at` and `updated_at` timestamps if timestamps are enabled on the model:
 
-    Flight::getQuery()->upsert([
+    Flight::query()->upsert([
         ['departure' => 'Oakland', 'destination' => 'San Diego', 'price' => 99],
         ['departure' => 'Chicago', 'destination' => 'New York', 'price' => 150]
     ], ['departure', 'destination'], ['price']);
@@ -1014,26 +1014,26 @@ To delete a model, you may call the `delete` method on the model instance:
 
     use App\Models\Flight;
 
-    $flight = Flight::getQuery()->find(1);
+    $flight = Flight::query()->find(1);
 
     $flight->delete();
 
 You may call the `truncate` method to delete all the model's associated database records. The `truncate` operation will also reset any auto-incrementing IDs on the model's associated table:
 
-    Flight::getQuery()->truncate();
+    Flight::query()->truncate();
 
 <a name="deleting-an-existing-model-by-its-primary-key"></a>
 #### Deleting an Existing Model by its Primary Key
 
 In the example above, we are retrieving the model from the database before calling the `delete` method. However, if you know the primary key of the model, you may delete the model without explicitly retrieving it by calling the `destroy` method.  In addition to accepting the single primary key, the `destroy` method will accept multiple primary keys, an array of primary keys, or a [collection](/collections) of primary keys:
 
-    Flight::getQuery()->destroy(1);
+    Flight::query()->destroy(1);
 
-    Flight::getQuery()->destroy(1, 2, 3);
+    Flight::query()->destroy(1, 2, 3);
 
-    Flight::getQuery()->destroy([1, 2, 3]);
+    Flight::query()->destroy([1, 2, 3]);
 
-    Flight::getQuery()->destroy(collect([1, 2, 3]));
+    Flight::query()->destroy(collect([1, 2, 3]));
 
 > [!WARNING]  
 > The `destroy` method loads each model individually and calls the `delete` method so that the `deleting` and `deleted` events are properly dispatched for each model.
@@ -1043,7 +1043,7 @@ In the example above, we are retrieving the model from the database before calli
 
 Of course, you may build an Obvious query to delete all models matching your query's criteria. In this example, we will delete all flights that are marked as inactive. Like mass updates, mass deletes will not dispatch model events for the models that are deleted:
 
-    $deleted = Flight::getQuery()->where('active', 0)->delete();
+    $deleted = Flight::query()->where('active', 0)->delete();
 
 > [!WARNING]  
 > When executing a mass delete statement via Obvious, the `deleting` and `deleted` model events will not be dispatched for the deleted models. This is because the models are never actually retrieved when executing the delete statement.
@@ -1097,7 +1097,7 @@ Sometimes you may wish to "un-delete" a soft deleted model. To restore a soft de
 
 You may also use the `restore` method in a query to restore multiple models. Again, like other "mass" operations, this will not dispatch any model events for the models that are restored:
 
-    Flight::getQuery()->withTrashed()
+    Flight::query()->withTrashed()
             ->where('airline_id', 1)
             ->restore();
 
@@ -1126,7 +1126,7 @@ As noted above, soft deleted models will automatically be excluded from query re
 
     use App\Models\Flight;
 
-    $flights = Flight::getQuery()->withTrashed()
+    $flights = Flight::query()->withTrashed()
                     ->where('account_id', 1)
                     ->get();
 
@@ -1139,7 +1139,7 @@ The `withTrashed` method may also be called when building a [relationship](/obvi
 
 The `onlyTrashed` method will retrieve **only** soft deleted models:
 
-    $flights = Flight::getQuery()->onlyTrashed()
+    $flights = Flight::query()->onlyTrashed()
       ->where('airline_id', 1)
       ->get();
 
@@ -1165,7 +1165,7 @@ Sometimes you may want to periodically delete models that are no longer needed. 
          */
         public function prunable(): Builder
         {
-            return static::getQuery()->where('created_at', '<=', now()->subMonth());
+            return static::query()->where('created_at', '<=', now()->subMonth());
         }
     }
 
@@ -1232,7 +1232,7 @@ When models are marked with the `MacropaySolutions\Kernel\Database\Obvious\MassP
          */
         public function prunable(): Builder
         {
-            return static::getQuery()->where('created_at', '<=', now()->subMonth());
+            return static::query()->where('created_at', '<=', now()->subMonth());
         }
     }
 
@@ -1243,7 +1243,7 @@ You may create an unsaved copy of an existing model instance using the `replicat
 
     use App\Models\Address;
 
-    $shipping = Address::getQuery()->create([
+    $shipping = Address::query()->create([
         'type' => 'shipping',
         'line_1' => '123 Example Street',
         'city' => 'Victorville',
@@ -1259,7 +1259,7 @@ You may create an unsaved copy of an existing model instance using the `replicat
 
 To exclude one or more attributes from being replicated to the new model, you may pass an array to the `replicate` method:
 
-    $flight = Flight::getQuery()->create([
+    $flight = Flight::query()->create([
         'destination' => 'LAX',
         'origin' => 'LHR',
         'last_flown' => '2020-03-04 11:00:00',
@@ -1338,7 +1338,7 @@ To assign a global scope to a model, you should override the model's `booted` me
         }
     }
 
-After adding the scope in the example above to the `App\Models\User` model, a call to the `User::getQuery()->all()` method will execute the following SQL query:
+After adding the scope in the example above to the `App\Models\User` model, a call to the `User::query()->all()` method will execute the following SQL query:
 
 ```sql
 select * from `users` where `created_at` < 0021-02-18 00:00:00
@@ -1374,19 +1374,19 @@ Obvious also allows you to define global scopes using closures, which is particu
 
 If you would like to remove a global scope for a given query, you may use the `withoutGlobalScope` method. This method accepts the class name of the global scope as its only argument:
 
-    User::getQuery()->withoutGlobalScope(AncientScope::class)->get();
+    User::query()->withoutGlobalScope(AncientScope::class)->get();
 
 Or, if you defined the global scope using a closure, you should pass the string name that you assigned to the global scope:
 
-    User::getQuery()->withoutGlobalScope('ancient')->get();
+    User::query()->withoutGlobalScope('ancient')->get();
 
 If you would like to remove several or even all the query's global scopes, you may use the `withoutGlobalScopes` method:
 
     // Remove all the global scopes...
-    User::getQuery()->withoutGlobalScopes()->get();
+    User::query()->withoutGlobalScopes()->get();
 
     // Remove some of the global scopes...
-    User::getQuery()->withoutGlobalScopes([
+    User::query()->withoutGlobalScopes([
         FirstScope::class, SecondScope::class
     ])->get();
 
@@ -1430,17 +1430,17 @@ Once the scope has been defined, you may call the scope methods when querying th
 
     use App\Models\User;
 
-    $users = User::getQuery()->popular()->active()->orderBy('created_at')->get();
+    $users = User::query()->popular()->active()->orderBy('created_at')->get();
 
 Combining multiple Obvious model scopes via an `or` query operator may require the use of closures to achieve the correct [logical grouping](/queries#logical-grouping):
 
-    $users = User::getQuery()->popular()->orWhere(function (Builder $query) {
+    $users = User::query()->popular()->orWhere(function (Builder $query) {
         $query->active();
     })->get();
 
 However, since this can be cumbersome, Kernel provides a "higher order" `orWhere` method that allows you to fluently chain scopes together without the use of closures:
 
-    $users = User::getQuery()->popular()->orWhere->active()->get();
+    $users = User::query()->popular()->orWhere->active()->get();
 
 <a name="dynamic-scopes"></a>
 #### Dynamic Scopes
@@ -1467,7 +1467,7 @@ Sometimes you may wish to define a scope that accepts parameters. To get started
 
 Once the expected arguments have been added to your scope method's signature, you may pass the arguments when calling the scope:
 
-    $users = User::getQuery()->ofType('admin')->get();
+    $users = User::query()->ofType('admin')->get();
 
 <a name="comparing-models"></a>
 ## Comparing Models
@@ -1673,9 +1673,9 @@ You may occasionally need to temporarily "mute" all events fired by a model. You
     use App\Models\User;
 
     $user = User::withoutEvents(function () {
-        User::getQuery()->findOrFail(1)->delete();
+        User::query()->findOrFail(1)->delete();
 
-        return User::getQuery()->find(2);
+        return User::query()->find(2);
     });
 
 <a name="saving-a-single-model-without-events"></a>
@@ -1683,7 +1683,7 @@ You may occasionally need to temporarily "mute" all events fired by a model. You
 
 Sometimes you may wish to "save" a given model without dispatching any events. You may accomplish this using the `saveQuietly` method:
 
-    $user = User::getQuery()->findOrFail(1);
+    $user = User::query()->findOrFail(1);
 
     $user->a->name = 'Victoria Faith';
 

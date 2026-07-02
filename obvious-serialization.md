@@ -30,19 +30,19 @@ To convert a model and its loaded [relationships](/obvious-relationships) to an 
 
     use App\Models\User;
 
-    $user = User::getQuery()->with('roles')->first();
+    $user = User::query()->with('roles')->first();
 
     return $user->toArray();
 
 The `attributesToArray` method may be used to convert a model's attributes to an array but not its relationships:
 
-    $user = User::getQuery()->first();
+    $user = User::query()->first();
 
     return $user->attributesToArray();
 
 You may also convert entire [collections](/obvious-collections) of models to arrays by calling the `toArray` method on the collection instance:
 
-    $users = User::getQuery()->all();
+    $users = User::query()->all();
 
     return $users->toArray();
 
@@ -53,7 +53,7 @@ To convert a model to JSON, you should use the `toJson` method. Like `toArray`, 
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     return $user->toJson();
 
@@ -61,12 +61,12 @@ To convert a model to JSON, you should use the `toJson` method. Like `toArray`, 
 
 Alternatively, you may cast a model or collection to a string, which will automatically call the `toJson` method on the model or collection:
 
-    return (string) User::getQuery()->find(1);
+    return (string) User::query()->find(1);
 
 Since models and collections are converted to JSON when cast to a string, you can return Obvious objects directly from your application's routes or controllers. Framework will automatically serialize your Obvious models and collections to JSON when they are returned from routes or controllers:
 
     Route::get('users', function () {
-        return User::getQuery()->all();
+        return User::query()->all();
     });
 
 <a name="relationships"></a>

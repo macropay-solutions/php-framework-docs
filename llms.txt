@@ -37,4 +37,4 @@ When generating or reviewing code for this project:
 3. Keep payloads and definitions mathematically strict and stateless.
 4. Strictly utilize the `MacropaySolutions` namespace for all core integrations.
 5. Use php-crufd-wizard-generator to generate crufd classes like decorators, middlewares, controllers, services, and models.
-6. DO NOT HALLUCINATE! Ask when something is not clear or when you can;t find something!
+6. DO NOT HALLUCINATE! Ask when something is not clear or when you can't find something!

@@ -159,7 +159,7 @@ A one-to-one relationship is a very basic type of database relationship. For exa
 
 The first argument passed to the `hasOne` method is the name of the related model class. Once the relationship is defined, we may retrieve the related record using Obvious's dynamic properties. Dynamic properties allow you to access relationship methods as if they were properties defined on the model:
 
-    $phone = User::getQuery()->find(1)->r->phone;
+    $phone = User::query()->find(1)->r->phone;
 
 Obvious determines the foreign key of the relationship based on the parent model name. In this case, the `Phone` model is automatically assumed to have a `user_id` foreign key. If you wish to override this convention, you may pass a second argument to the `hasOne` method:
 
@@ -243,7 +243,7 @@ Once the relationship method has been defined, we can access the [collection](/o
 
     use App\Models\Post;
 
-    $comments = Post::getQuery()->find(1)->r->comments;
+    $comments = Post::query()->find(1)->r->comments;
 
     foreach ($comments as $comment) {
         // ...
@@ -251,7 +251,7 @@ Once the relationship method has been defined, we can access the [collection](/o
 
 Since all relationships also serve as query builders, you may add further constraints to the relationship query by calling the `comments` method and continuing to chain conditions onto the query:
 
-    $comment = Post::getQuery()->find(1)->r->comments()
+    $comment = Post::query()->find(1)->r->comments()
                         ->where('title', 'foo')
                         ->first();
 
@@ -288,7 +288,7 @@ Once the relationship has been defined, we can retrieve a comment's parent post 
 
     use App\Models\Comment;
 
-    $comment = Comment::getQuery()->find(1);
+    $comment = Comment::query()->find(1);
 
     return $comment->r->post->a->title;
 
@@ -358,21 +358,21 @@ When querying for the children of a "belongs to" relationship, you may manually 
 
     use App\Models\Post;
 
-    $posts = Post::getQuery()->where('user_id', $user->a->id)->get();
+    $posts = Post::query()->where('user_id', $user->a->id)->get();
 
 However, you may find it more convenient to use the `whereBelongsTo` method, which will automatically determine the proper relationship and foreign key for the given model:
 
-    $posts = Post::getQuery()->whereBelongsTo($user)->get();
+    $posts = Post::query()->whereBelongsTo($user)->get();
 
 You may also provide a [collection](/obvious-collections) instance to the `whereBelongsTo` method. When doing so, Framework will retrieve models that belong to any of the parent models within the collection:
 
-    $users = User::getQuery()->where('vip', true)->get();
+    $users = User::query()->where('vip', true)->get();
 
-    $posts = Post::getQuery()->whereBelongsTo($users)->get();
+    $posts = Post::query()->whereBelongsTo($users)->get();
 
 By default, Framework will determine the relationship associated with the given model based on the class name of the model; however, you may specify the relationship name manually by providing it as the second argument to the `whereBelongsTo` method:
 
-    $posts = Post::getQuery()->whereBelongsTo($user, 'author')->get();
+    $posts = Post::query()->whereBelongsTo($user, 'author')->get();
 
 <a name="has-one-of-many"></a>
 ### Has One of Many
@@ -683,7 +683,7 @@ Once the relationship is defined, you may access the user's roles using the `rol
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     foreach ($user->r->roles as $role) {
         // ...
@@ -691,7 +691,7 @@ Once the relationship is defined, you may access the user's roles using the `rol
 
 Since all relationships also serve as query builders, you may add further constraints to the relationship query by calling the `roles` method and continuing to chain conditions onto the query:
 
-    $roles = User::getQuery()->find(1)->r->roles()->orderBy('name')->get();
+    $roles = User::query()->find(1)->r->roles()->orderBy('name')->get();
 
 To determine the table name of the relationship's intermediate table, Obvious will join the two related model names in alphabetical order. However, you are free to override this convention. You may do so by passing a second argument to the `belongsToMany` method:
 
@@ -733,7 +733,7 @@ As you have already learned, working with many-to-many relations requires the pr
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     foreach ($user->r->roles as $role) {
         echo $role->r->pivot->a->created_at;
@@ -765,7 +765,7 @@ For example, if your application contains users that may subscribe to podcasts, 
 
 Once the custom intermediate table attribute has been specified, you may access the intermediate table data using the customized name:
 
-    $users = User::getQuery()->with('podcasts')->get();
+    $users = User::query()->with('podcasts')->get();
 
     foreach ($users->flatMap(fn($user) => $user->r->podcasts) as $podcast) {
         echo $podcast->r->subscription->a->created_at;
@@ -950,7 +950,7 @@ Once your database table and models are defined, you may access the relationship
 
     use App\Models\Post;
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     $image = $post->r->image;
 
@@ -958,7 +958,7 @@ You may retrieve the parent of the polymorphic model by accessing the name of th
 
     use App\Models\Image;
 
-    $image = Image::getQuery()->find(1);
+    $image = Image::query()->find(1);
 
     $imageable = $image->r->imageable;
 
@@ -1059,7 +1059,7 @@ Once your database table and models are defined, you may access the relationship
 
     use App\Models\Post;
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     foreach ($post->r->comments as $comment) {
         // ...
@@ -1069,7 +1069,7 @@ You may also retrieve the parent of a polymorphic child model by accessing the n
 
     use App\Models\Comment;
 
-    $comment = Comment::getQuery()->find(1);
+    $comment = Comment::query()->find(1);
 
     $commentable = $comment->r->commentable;
 
@@ -1212,7 +1212,7 @@ Once your database table and models are defined, you may access the relationship
 
     use App\Models\Post;
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     foreach ($post->r->tags as $tag) {
         // ...
@@ -1222,7 +1222,7 @@ You may retrieve the parent of a polymorphic relation from the polymorphic child
 
     use App\Models\Tag;
 
-    $tag = Tag::getQuery()->find(1);
+    $tag = Tag::query()->find(1);
 
     foreach ($tag->r->posts as $post) {
         // ...
@@ -1305,7 +1305,7 @@ You may query the `posts` relationship and add additional constraints to the rel
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->r->posts()->where('active', 1)->get();
 
@@ -1355,7 +1355,7 @@ If you do not need to add additional constraints to an Obvious relationship quer
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     foreach ($user->r->posts as $post) {
         // ...
@@ -1371,29 +1371,29 @@ When retrieving model records, you may wish to limit your results based on the e
     use App\Models\Post;
 
     // Retrieve all posts that have at least one comment...
-    $posts = Post::getQuery()->has('comments')->get();
+    $posts = Post::query()->has('comments')->get();
 
 You may also specify an operator and count value to further customize the query:
 
     // Retrieve all posts that have three or more comments...
-    $posts = Post::getQuery()->has('comments', '>=', 3)->get();
+    $posts = Post::query()->has('comments', '>=', 3)->get();
 
 Nested `has` statements may be constructed using "dot" notation. For example, you may retrieve all posts that have at least one comment that has at least one image:
 
     // Retrieve posts that have at least one comment with images...
-    $posts = Post::getQuery()->has('comments.images')->get();
+    $posts = Post::query()->has('comments.images')->get();
 
 If you need even more power, you may use the `whereHas` and `orWhereHas` methods to define additional query constraints on your `has` queries, such as inspecting the content of a comment:
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     // Retrieve posts with at least one comment containing words like code%...
-    $posts = Post::getQuery()->whereHas('comments', function (Builder $query) {
+    $posts = Post::query()->whereHas('comments', function (Builder $query) {
         $query->where('content', 'like', 'code%');
     })->get();
 
     // Retrieve posts with at least ten comments containing words like code%...
-    $posts = Post::getQuery()->whereHas('comments', function (Builder $query) {
+    $posts = Post::query()->whereHas('comments', function (Builder $query) {
         $query->where('content', 'like', 'code%');
     }, '>=', 10)->get();
 
@@ -1407,11 +1407,11 @@ If you would like to query for a relationship's existence with a single, simple 
 
     use App\Models\Post;
 
-    $posts = Post::getQuery()->whereRelation('comments', 'is_approved', false)->get();
+    $posts = Post::query()->whereRelation('comments', 'is_approved', false)->get();
 
 Of course, like calls to the query builder's `where` method, you may also specify an operator:
 
-    $posts = Post::getQuery()->whereRelation(
+    $posts = Post::query()->whereRelation(
         'comments', 'created_at', '>=', now()->subHour()
     )->get();
 
@@ -1422,13 +1422,13 @@ When retrieving model records, you may wish to limit your results based on the a
 
     use App\Models\Post;
 
-    $posts = Post::getQuery()->doesntHave('comments')->get();
+    $posts = Post::query()->doesntHave('comments')->get();
 
 If you need even more power, you may use the `whereDoesntHave` and `orWhereDoesntHave` methods to add additional query constraints to your `doesntHave` queries, such as inspecting the content of a comment:
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
-    $posts = Post::getQuery()->whereDoesntHave('comments', function (Builder $query) {
+    $posts = Post::query()->whereDoesntHave('comments', function (Builder $query) {
         $query->where('content', 'like', 'code%');
     })->get();
 
@@ -1436,7 +1436,7 @@ You may use "dot" notation to execute a query against a nested relationship. For
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
-    $posts = Post::getQuery()->whereDoesntHave('comments.author', function (Builder $query) {
+    $posts = Post::query()->whereDoesntHave('comments.author', function (Builder $query) {
         $query->where('banned', 0);
     })->get();
 
@@ -1451,7 +1451,7 @@ To query the existence of "morph to" relationships, you may use the `whereHasMor
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
     // Retrieve comments associated to posts or videos with a title like code%...
-    $comments = Comment::getQuery()->whereHasMorph(
+    $comments = Comment::query()->whereHasMorph(
         'commentable',
         [Post::class, Video::class],
         function (Builder $query) {
@@ -1460,7 +1460,7 @@ To query the existence of "morph to" relationships, you may use the `whereHasMor
     )->get();
 
     // Retrieve comments associated to posts with a title not like code%...
-    $comments = Comment::getQuery()->whereDoesntHaveMorph(
+    $comments = Comment::query()->whereDoesntHaveMorph(
         'commentable',
         Post::class,
         function (Builder $query) {
@@ -1472,7 +1472,7 @@ You may occasionally need to add query constraints based on the "type" of the re
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
-    $comments = Comment::getQuery()->whereHasMorph(
+    $comments = Comment::query()->whereHasMorph(
         'commentable',
         [Post::class, Video::class],
         function (Builder $query, string $type) {
@@ -1489,7 +1489,7 @@ Instead of passing an array of possible polymorphic models, you may provide `*` 
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
-    $comments = Comment::getQuery()->whereHasMorph('commentable', '*', function (Builder $query) {
+    $comments = Comment::query()->whereHasMorph('commentable', '*', function (Builder $query) {
         $query->where('title', 'like', 'foo%');
     })->get();
 
@@ -1503,7 +1503,7 @@ Sometimes you may want to count the number of related models for a given relatio
 
     use App\Models\Post;
 
-    $posts = Post::getQuery()->withCount('comments')->get();
+    $posts = Post::query()->withCount('comments')->get();
 
     foreach ($posts as $post) {
         echo $post->a->comments_count;
@@ -1513,7 +1513,7 @@ By passing an array to the `withCount` method, you may add the "counts" for mult
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
-    $posts = Post::getQuery()->withCount(['votes', 'comments' => function (Builder $query) {
+    $posts = Post::query()->withCount(['votes', 'comments' => function (Builder $query) {
         $query->where('content', 'like', 'code%');
     }])->get();
 
@@ -1524,7 +1524,7 @@ You may also alias the relationship count result, allowing multiple counts on th
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
-    $posts = Post::getQuery()->withCount([
+    $posts = Post::query()->withCount([
         'comments',
         'comments as pending_comments_count' => function (Builder $query) {
             $query->where('approved', false);
@@ -1539,7 +1539,7 @@ You may also alias the relationship count result, allowing multiple counts on th
 
 Using the `loadCount` method, you may load a relationship count after the parent model has already been retrieved:
 
-    $book = Book::getQuery()->first();
+    $book = Book::query()->first();
 
     $book->loadCount('genres');
 
@@ -1554,7 +1554,7 @@ If you need to set additional query constraints on the count query, you may pass
 
 If you're combining `withCount` with a `select` statement, ensure that you call `withCount` after the `select` method:
 
-    $posts = Post::getQuery()->select(['title', 'body'])
+    $posts = Post::query()->select(['title', 'body'])
                     ->withCount('comments')
                     ->get();
 
@@ -1565,7 +1565,7 @@ In addition to the `withCount` method, Obvious provides `withMin`, `withMax`, `w
 
     use App\Models\Post;
 
-    $posts = Post::getQuery()->withSum('comments', 'votes')->get();
+    $posts = Post::query()->withSum('comments', 'votes')->get();
 
     foreach ($posts as $post) {
         echo $post->a->comments_sum_votes;
@@ -1573,7 +1573,7 @@ In addition to the `withCount` method, Obvious provides `withMin`, `withMax`, `w
 
 If you wish to access the result of the aggregate function using another name, you may specify your own alias:
 
-    $posts = Post::getQuery()->withSum('comments as total_comments', 'votes')->get();
+    $posts = Post::query()->withSum('comments as total_comments', 'votes')->get();
 
     foreach ($posts as $post) {
         echo $post->a->total_comments;
@@ -1581,13 +1581,13 @@ If you wish to access the result of the aggregate function using another name, y
 
 Like the `loadCount` method, deferred versions of these methods are also available. These additional aggregate operations may be performed on Obvious models that have already been retrieved:
 
-    $post = Post::getQuery()->first();
+    $post = Post::query()->first();
 
     $post->loadSum('comments', 'votes');
 
 If you're combining these aggregate methods with a `select` statement, ensure that you call the aggregate methods after the `select` method:
 
-    $posts = Post::getQuery()->select(['title', 'body'])
+    $posts = Post::query()->select(['title', 'body'])
                     ->withExists('comments')
                     ->get();
 
@@ -1602,7 +1602,7 @@ Now, let's imagine we want to retrieve `ActivityFeed` instances and eager load t
 
     use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
-    $activities = ActivityFeed::getQuery()->with([
+    $activities = ActivityFeed::query()->with([
         'parentable' => function (MorphTo $morphTo) {
             $morphTo->morphWithCount([
                 Photo::class => ['tags'],
@@ -1615,7 +1615,7 @@ Now, let's imagine we want to retrieve `ActivityFeed` instances and eager load t
 
 Let's assume we have already retrieved a set of `ActivityFeed` models and now we would like to load the nested relationship counts for the various `parentable` models associated with the activity feeds. You may use the `loadMorphCount` method to accomplish this:
 
-    $activities = ActivityFeed::getQuery()->with('parentable')->get();
+    $activities = ActivityFeed::query()->with('parentable')->get();
 
     $activities->loadMorphCount('parentable', [
         Photo::class => ['tags'],
@@ -1649,7 +1649,7 @@ Now, let's retrieve all books and their authors:
 
     use App\Models\Book;
 
-    $books = Book::getQuery()->all();
+    $books = Book::query()->all();
 
     foreach ($books as $book) {
         echo $book->r->author->a->name;
@@ -1659,7 +1659,7 @@ This loop will execute one query to retrieve all the books within the database t
 
 Thankfully, we can use eager loading to reduce this operation to just two queries. When building a query, you may specify which relationships should be eager loaded using the `with` method:
 
-    $books = Book::getQuery()->with('author')->get();
+    $books = Book::query()->with('author')->get();
 
     foreach ($books as $book) {
         echo $book->r->author->a->name;
@@ -1678,18 +1678,18 @@ select * from authors where id in (1, 2, 3, 4, 5, ...)
 
 Sometimes you may need to eager load several different relationships. To do so, just pass an array of relationships to the `with` method:
 
-    $books = Book::getQuery()->with(['author', 'publisher'])->get();
+    $books = Book::query()->with(['author', 'publisher'])->get();
 
 <a name="nested-eager-loading"></a>
 #### Nested Eager Loading
 
 To eager load a relationship's relationships, you may use "dot" syntax. For example, let's eager load all the book's authors and all the author's personal contacts:
 
-    $books = Book::getQuery()->with('author.contacts')->get();
+    $books = Book::query()->with('author.contacts')->get();
 
 Alternatively, you may specify nested eager loaded relationships by providing a nested array to the `with` method, which can be convenient when eager loading multiple nested relationships:
 
-    $books = Book::getQuery()->with([
+    $books = Book::query()->with([
         'author' => [
             'contacts',
             'publisher',
@@ -1723,7 +1723,7 @@ Using these model definitions and relationships, we may retrieve `ActivityFeed` 
 
     use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
-    $activities = ActivityFeed::getQuery()
+    $activities = ActivityFeed::query()
         ->with(['parentable' => function (MorphTo $morphTo) {
             $morphTo->morphWith([
                 Event::class => ['calendar'],
@@ -1737,7 +1737,7 @@ Using these model definitions and relationships, we may retrieve `ActivityFeed` 
 
 You may not always need every column from the relationships you are retrieving. For this reason, Obvious allows you to specify which columns of the relationship you would like to retrieve:
 
-    $books = Book::getQuery()->with('author:id,name,book_id')->get();
+    $books = Book::query()->with('author:id,name,book_id')->get();
 
 > [!WARNING]  
 > When using this feature, you should always include the `id` column and any relevant foreign key columns in the list of columns you wish to retrieve.
@@ -1782,11 +1782,11 @@ Sometimes you might want to always load some relationships when retrieving a mod
 
 If you would like to remove an item from the `$with` property for a single query, you may use the `without` method:
 
-    $books = Book::getQuery()->without('author')->get();
+    $books = Book::query()->without('author')->get();
 
 If you would like to override all items within the `$with` property for a single query, you may use the `withOnly` method:
 
-    $books = Book::getQuery()->withOnly('genre')->get();
+    $books = Book::query()->withOnly('genre')->get();
 
 <a name="constraining-eager-loads"></a>
 ### Constraining Eager Loads
@@ -1796,13 +1796,13 @@ Sometimes you may wish to eager load a relationship but also specify additional 
     use App\Models\User;
     use MacropaySolutions\Kernel\Contracts\Database\Obvious\Builder;
 
-    $users = User::getQuery()->with(['posts' => function (Builder $query) {
+    $users = User::query()->with(['posts' => function (Builder $query) {
         $query->where('title', 'like', '%code%');
     }])->get();
 
 In this example, Obvious will only eager load posts where the post's `title` column contains the word `code`. You may call other [query builder](/queries) methods to further customize the eager loading operation:
 
-    $users = User::getQuery()->with(['posts' => function (Builder $query) {
+    $users = User::query()->with(['posts' => function (Builder $query) {
         $query->orderBy('created_at', 'desc');
     }])->get();
 
@@ -1816,7 +1816,7 @@ If you are eager loading a `morphTo` relationship, Obvious will run multiple que
 
     use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
 
-    $comments = Comment::getQuery()->with(['commentable' => function (MorphTo $morphTo) {
+    $comments = Comment::query()->with(['commentable' => function (MorphTo $morphTo) {
         $morphTo->constrain([
             Post::class => function ($query) {
                 $query->whereNull('hidden_at');
@@ -1836,7 +1836,7 @@ You may sometimes find yourself needing to check for the existence of a relation
 
     use App\Models\User;
 
-    $users = User::getQuery()->withWhereHas('posts', function ($query) {
+    $users = User::query()->withWhereHas('posts', function ($query) {
         $query->where('featured', true);
     })->get();
 
@@ -1847,7 +1847,7 @@ Sometimes you may need to eager load a relationship after the parent model has a
 
     use App\Models\Book;
 
-    $books = Book::getQuery()->all();
+    $books = Book::query()->all();
 
     if ($someCondition) {
         $books->load('author', 'publisher');
@@ -1890,7 +1890,7 @@ In this example, let's assume `Event`, `Photo`, and `Post` models may create `Ac
 
 Using these model definitions and relationships, we may retrieve `ActivityFeed` model instances and eager load all `parentable` models and their respective nested relationships:
 
-    $activities = ActivityFeed::getQuery()->with('parentable')
+    $activities = ActivityFeed::query()->with('parentable')
         ->get()
         ->loadMorph('parentable', [
             Event::class => ['calendar'],
@@ -1942,7 +1942,7 @@ Obvious provides convenient methods for adding new models to relationships. For 
 
     $comment = new Comment(['message' => 'A new comment.']);
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     $post->r->comments()->save($comment);
 
@@ -1950,7 +1950,7 @@ Note that we did not access the `comments` relationship as a dynamic property. I
 
 If you need to save multiple related models, you may use the `saveMany` method:
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     $post->r->comments()->saveMany([
         new Comment(['message' => 'A new comment.']),
@@ -1971,7 +1971,7 @@ The `save` and `saveMany` methods will persist the given model instances, but wi
 
 If you would like to `save` your model and all of its associated relationships, you may use the `push` method. In this example, the `Post` model will be saved as well as its comments and the comment's authors:
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     $post->r->comments[0]->a->message = 'Message';
     $post->r->comments[0]->r->author->a->name = 'Author Name';
@@ -1989,7 +1989,7 @@ In addition to the `save` and `saveMany` methods, you may also use the `create` 
 
     use App\Models\Post;
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     $comment = $post->r->comments()->create([
         'message' => 'A new comment.',
@@ -1997,7 +1997,7 @@ In addition to the `save` and `saveMany` methods, you may also use the `create` 
 
 You may use the `createMany` method to create multiple related models:
 
-    $post = Post::getQuery()->find(1);
+    $post = Post::query()->find(1);
 
     $post->r->comments()->createMany([
         ['message' => 'A new comment.'],
@@ -2006,7 +2006,7 @@ You may use the `createMany` method to create multiple related models:
 
 The `createQuietly` and `createManyQuietly` methods may be used to create a model(s) without dispatching any events:
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->r->posts()->createQuietly([
         'title' => 'Post title.',
@@ -2029,7 +2029,7 @@ If you would like to assign a child model to a new parent model, you may use the
 
     use App\Models\Account;
 
-    $account = Account::getQuery()->find(10);
+    $account = Account::query()->find(10);
 
     $user->r->account()->associate($account);
 
@@ -2051,7 +2051,7 @@ Obvious also provides methods to make working with many-to-many relationships mo
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->r->roles()->attach($roleId);
 
@@ -2069,7 +2069,7 @@ Sometimes it may be necessary to remove a role from a user. To remove a many-to-
 
 For convenience, `attach` and `detach` also accept arrays of IDs as input:
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->r->roles()->detach([1, 2, 3]);
 
@@ -2116,7 +2116,7 @@ You may also pass additional intermediate table values with the IDs:
 
 If you need to update an existing row in your relationship's intermediate table, you may use the `updateExistingPivot` method. This method accepts the intermediate record foreign key and an array of attributes to update:
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->r->roles()->updateExistingPivot($roleId, [
         'active' => false,

@@ -19,7 +19,7 @@ All collections also serve as iterators, allowing you to loop over them as if th
 
     use App\Models\User;
 
-    $users = User::getQuery()->where('active', 1)->get();
+    $users = User::query()->where('active', 1)->get();
 
     foreach ($users as $user) {
         echo $user->a->name;
@@ -27,7 +27,7 @@ All collections also serve as iterators, allowing you to loop over them as if th
 
 However, as previously mentioned, collections are much more powerful than arrays and expose a variety of map / reduce operations that may be chained using an intuitive interface. For example, we may remove all inactive models and then gather the first name for each remaining user:
 
-    $names = User::getQuery()->all()->reject(function (User $user) {
+    $names = User::query()->all()->reject(function (User $user) {
         return $user->a->active === false;
     })->map(function (User $user) {
         return $user->a->name;
@@ -104,7 +104,7 @@ The `contains` method may be used to determine if a given model instance is cont
 
     $users->contains(1);
 
-    $users->contains(User::getQuery()->find(1));
+    $users->contains(User::query()->find(1));
 
 <a name="method-diff"></a>
 #### `diff($items)` {.collection-method}
@@ -113,7 +113,7 @@ The `diff` method returns all the models that are not present in the given colle
 
     use App\Models\User;
 
-    $users = $users->diff(User::getQuery()->whereIn('id', [1, 2, 3])->get());
+    $users = $users->diff(User::query()->whereIn('id', [1, 2, 3])->get());
 
 <a name="method-except"></a>
 #### `except($keys)` {.collection-method}
@@ -127,7 +127,7 @@ The `except` method returns all the models that do not have the given primary ke
 
 The `find` method returns the model that has a primary key matching the given key. If `$key` is a model instance, `find` will attempt to return a model matching the primary key. If `$key` is an array of keys, `find` will return all models which have a primary key in the given array:
 
-    $users = User::getQuery()->all();
+    $users = User::query()->all();
 
     $user = $users->find(1);
 
@@ -147,7 +147,7 @@ The `intersect` method returns all the models that are also present in the given
 
     use App\Models\User;
 
-    $users = $users->intersect(User::getQuery()->whereIn('id', [1, 2, 3])->get());
+    $users = $users->intersect(User::query()->whereIn('id', [1, 2, 3])->get());
 
 <a name="method-load"></a>
 #### `load($relations)` {.collection-method}
@@ -222,7 +222,7 @@ The `toQuery` method returns an Obvious query builder instance containing a `whe
 
     use App\Models\User;
 
-    $users = User::getQuery()->where('status', 'VIP')->get();
+    $users = User::query()->where('status', 'VIP')->get();
 
     $users->toQuery()->update([
         'status' => 'Administrator',
