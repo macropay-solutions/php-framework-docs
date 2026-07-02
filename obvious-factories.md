@@ -271,7 +271,7 @@ If necessary, you may include a closure as a sequence value. The closure will be
     $users = User::factory()
                     ->count(10)
                     ->state(new Sequence(
-                        fn(Sequence $sequence) => ['role' => UserRoles::getQuery()->all()->random()],
+                        fn(Sequence $sequence) => ['role' => UserRoles::query()->all()->random()],
                     ))
                     ->create();
 
@@ -518,7 +518,7 @@ If the relationship's columns depend on the factory that defines it you may assi
         return [
             'user_id' => User::factory(),
             'user_type' => function (array $attributes) {
-                return User::getQuery()->find($attributes['user_id'])->a->type;
+                return User::query()->find($attributes['user_id'])->a->type;
             },
             'title' => fake()->title(),
             'content' => fake()->paragraph(),

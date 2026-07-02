@@ -457,7 +457,7 @@ Sometimes, you may wish to acquire a lock in one process and release it in anoth
 
 In the example below, we will dispatch a queued job if a lock is successfully acquired. In addition, we will pass the lock's owner token to the queued job via the lock's `owner` method:
 
-    $podcast = Podcast::getQuery()->find($id);
+    $podcast = Podcast::query()->find($id);
 
     $lock = \app('cache')->lock('processing', 120);
 

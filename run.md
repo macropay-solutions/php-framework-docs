@@ -94,7 +94,7 @@ Let's take a look at an example command. Note that we are able to request any de
          */
         public function handle(DripEmailer $drip): void
         {
-            $drip->send(User::getQuery()->find($this->argument('user')));
+            $drip->send(User::query()->find($this->argument('user')));
         }
     }
 
@@ -344,7 +344,7 @@ If you would like complete control over the prompt, you may provide a closure th
             label: 'Search for a user:',
             placeholder: 'E.g. Surname Name',
             options: fn ($value) => strlen($value) > 0
-                ? User::getQuery()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+                ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
                 : []
         ),
     ];
@@ -518,7 +518,7 @@ The `table` method makes it easy to correctly format multiple rows / columns of 
 
     $this->table(
         ['Name', 'Email'],
-        User::getQuery()->all(['name', 'email'])->toArray()
+        User::query()->all(['name', 'email'])->toArray()
     );
 
 <a name="progress-bars"></a>
@@ -528,13 +528,13 @@ For long running tasks, it can be helpful to show a progress bar that informs us
 
     use App\Models\User;
 
-    $users = $this->withProgressBar(User::getQuery()->all(), function (User $user) {
+    $users = $this->withProgressBar(User::query()->all(), function (User $user) {
         $this->performTask($user);
     });
 
 Sometimes, you may need more manual control over how a progress bar is advanced. First, define the total number of steps the process will iterate through. Then, advance the progress bar after processing each item:
 
-    $users = App\Models\User::getQuery()->all();
+    $users = App\Models\User::query()->all();
 
     $bar = $this->output->createProgressBar(count($users));
 

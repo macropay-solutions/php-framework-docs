@@ -62,7 +62,7 @@ As you can see, the original value of the column is passed to the accessor closu
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $firstName = $user->a->first_name;
     $fullName = $user->a->full_name;
@@ -100,7 +100,7 @@ To use our mutator, we only need to set the `first_name` attribute via the `a` a
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->a->first_name = 'Sally';
 
@@ -163,7 +163,7 @@ To demonstrate attribute casting, let's cast the `is_admin` attribute, which is 
 
 After defining the cast, the `is_admin` attribute will always be cast to a boolean when you access it, even if the underlying value is stored in the database as an integer:
 
-    $user = App\Models\User::getQuery()->find(1);
+    $user = App\Models\User::query()->find(1);
 
     if ($user->a->is_admin) {
         // ...
@@ -230,7 +230,7 @@ Once the cast is defined, you may access the `options` attribute and it will aut
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $options = $user->a->options;
 
@@ -242,7 +242,7 @@ Once the cast is defined, you may access the `options` attribute and it will aut
 
 To update a single field of a JSON attribute with a more terse syntax, you may [make the attribute mass assignable](/obvious#mass-assignment-json-columns) and use the `->` operator when calling the `update` method:
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->update(['options->key' => 'value']);
 
@@ -251,7 +251,7 @@ To update a single field of a JSON attribute with a more terse syntax, you may [
 
 Although the standard `array` cast is sufficient for many applications, it does have some disadvantages. Since the `array` cast returns a primitive type, it is not possible to mutate an offset of the array directly. For example, the following code will trigger a PHP error:
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->a->options['key'] = $value;
 
@@ -400,17 +400,17 @@ Sometimes you may need to apply casts while executing a query, such as when sele
     use App\Models\Post;
     use App\Models\User;
 
-    $users = User::getQuery()->select([
+    $users = User::query()->select([
         'users.*',
-        'last_posted_at' => Post::getQuery()->selectRaw('MAX(created_at)')
+        'last_posted_at' => Post::query()->selectRaw('MAX(created_at)')
                 ->whereColumn('user_id', 'users.id')
     ])->get();
 
 The `last_posted_at` attribute on the results of this query will be a simple string. It would be wonderful if we could apply a `datetime` cast to this attribute when executing the query. Thankfully, we may accomplish this using the `withCasts` method:
 
-    $users = User::getQuery()->select([
+    $users = User::query()->select([
         'users.*',
-        'last_posted_at' => Post::getQuery()->selectRaw('MAX(created_at)')
+        'last_posted_at' => Post::query()->selectRaw('MAX(created_at)')
                 ->whereColumn('user_id', 'users.id')
     ])->withCasts([
         'last_posted_at' => 'datetime'
@@ -536,7 +536,7 @@ When casting to value objects, any changes made to the value object will automat
 
     use App\Models\User;
 
-    $user = User::getQuery()->find(1);
+    $user = User::query()->find(1);
 
     $user->a->address->lineOne = 'Updated Address Value';
 
