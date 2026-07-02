@@ -146,8 +146,7 @@ jobs:
               <p style="font-family:sans-serif; text-align:center; margin-top:50px; color:#64748b;">
                   Loading PHP Framework Documentation Engine...
               </p>
-              <a href="${{ steps.pages.outputs.base_path }}/production/" style="color:#3b82f6;">Click here if you are not redirected automatically: ${{ steps.pages.outputs.base_path }}/production/</a>
-          </body>
+              <a href="${{ steps.pages.outputs.base_path }}/production/" style="color:#3b82f6;">Click here if you are not redirected automatically: https://macropay-solutions.github.io${{ steps.pages.outputs.base_path }}/production/</a>          </body>
           </html>
           EOF
 
