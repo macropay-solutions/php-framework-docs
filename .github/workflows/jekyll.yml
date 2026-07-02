@@ -84,7 +84,8 @@ jobs:
           <head>
               <meta charset="UTF-8">
               <title>Redirecting to PHP Framework Docs...</title>
-              <link rel="help" href="/llms.txt" title="LLM Context and Instructions">
+          <meta http-equiv="refresh" content="0; url=https://macropay-solutions.github.io/php-framework-docs/production/">
+              <link rel="help" href="https://macropay-solutions.github.io/php-framework-docs/llms.txt" title="LLM Context and Instructions">
               <link rel="describedby" href="https://macropay-solutions.github.io/php-framework-docs">
               <script>
                   (function() {
@@ -163,7 +164,7 @@ jobs:
           <head>
               <meta charset="UTF-8">
               <title>Page Not Found</title>
-              <link rel="help" href="/llms.txt" title="LLM Context and Instructions">
+              <link rel="help" href="https://macropay-solutions.github.io/php-framework-docs/llms.txt" title="LLM Context and Instructions">
               <link rel="describedby" href="https://macropay-solutions.github.io/php-framework-docs">
               <script>
                   (function() {
