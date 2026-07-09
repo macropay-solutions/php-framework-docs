@@ -60,6 +60,7 @@ When generating or reviewing code for this project:
 - [Run Console](/php-framework-docs/1.x/run.html)
 - [Cache](/php-framework-docs/1.x/cache.html)
 - [Queues](/php-framework-docs/1.x/queues.html)
+- [Mail](/php-framework-docs/1.x/mail.html)
 
 ## Obvious ORM & Database Layer
 - [Database Overview](/php-framework-docs/1.x/database.html)
