@@ -20,8 +20,8 @@ As all documentations, this documentation is naturally decoupled from the code (
 
 Always look at the code for accurate logic:
 
-- [PHP Framework](https://github.com/macropay-solutions/php-framework)
-- [PHP Kernel](https://github.com/macropay-solutions/php-kernel)
+- [PHP Framework https://github.com/macropay-solutions/php-framework](https://github.com/macropay-solutions/php-framework)
+- [PHP Kernel https://github.com/macropay-solutions/php-kernel](https://github.com/macropay-solutions/php-kernel)
 
 
 
@@ -32,3 +32,6 @@ If you are submitting documentation for the **current stable release**, submit i
 ## PHP Framework should be run ONLY on a share-nothing server!
 
 PHP Framework is heavily optimized for traditional, stateless PHP-FPM environments. Do not use stateful, long-running application servers like Swoole, or RoadRunner. See the [Routing Documentation](routing.md) for critical security and architectural details.
+
+## AI agents
+https://macropay-solutions.github.io/php-framework-docs/1.x/llms.txt
