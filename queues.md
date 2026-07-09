@@ -1223,8 +1223,7 @@ To define a batchable job, you should [create a queueable job](#creating-jobs) a
 <a name="dispatching-batches"></a>
 ### Dispatching Batches
 
-To dispatch a batch of jobs, you should use the `batch` method of the `Bus` facade. Of course, batching is primarily useful when combined with completion callbacks. So, you may use the `then`, `catch`, and `finally` methods to define completion callbacks for the batch. Each of these callbacks will receive an `MacropaySolutions\Kernel\Bus\Batch` instance when they are invoked. In this example, we will imagine we are queueing a batch of jobs that each process a given number of rows from a CSV file:
-
+To dispatch a batch of jobs, you should use the `batch` method offered by the bus service. Of course, batching is primarily useful when combined with completion callbacks. So, you may use the `then`, `catch`, and `finally` methods to define completion callbacks for the batch. Each of these callbacks will receive an `MacropaySolutions\Kernel\Bus\Batch` instance when they are invoked. In this example, we will imagine we are queueing a batch of jobs that each process a given number of rows from a CSV file:
     use App\Jobs\ImportCsv;
     use App\Services\BatchCallbacks;
 
@@ -2067,8 +2066,7 @@ Scheduling this command alone is not enough to trigger a notification alerting y
 
 When testing code that dispatches jobs, you may wish to instruct Framework to not actually execute the job itself, since the job's code can be tested directly and separately of the code that dispatches it. Of course, to test the job itself, you may instantiate a job instance and invoke the `handle` method directly in your test.
 
-You may use the `Queue` facade's `fake` method to prevent queued jobs from actually being pushed to the queue. After calling the `Queue` facade's `fake` method, you may then assert that the application attempted to push jobs to the queue:
-
+You may use the queue engine's `fake` method to prevent queued jobs from actually being pushed to the queue. After calling the queue engine's `fake` method, you may then assert that the application attempted to push jobs to the queue:
     <?php
 
     namespace Tests\Feature;
@@ -2118,8 +2116,7 @@ If you only need to fake specific jobs while allowing your other jobs to execute
 <a name="testing-job-chains"></a>
 ### Testing Job Chains
 
-To test job chains, you will need to utilize the `Bus` facade's faking capabilities. The `Bus` facade's `assertChained` method may be used to assert that a [chain of jobs](/queues#job-chaining) was dispatched. The `assertChained` method accepts an array of chained jobs as its first argument:
-
+To test job chains, you will need to utilize the bus service's faking capabilities. The bus service's `assertChained` method may be used to assert that a [chain of jobs](/queues#job-chaining) was dispatched. The `assertChained` method accepts an array of chained jobs as its first argument:
     use App\Jobs\RecordShipment;
     use App\Jobs\ShipOrder;
     use App\Jobs\UpdateInventory;
