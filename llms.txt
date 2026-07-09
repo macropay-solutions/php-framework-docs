@@ -51,6 +51,7 @@ When generating or reviewing code for this project:
 - [HTTP Routing](/php-framework-docs/1.x/routing.html)
 - [HTTP Requests](/php-framework-docs/1.x/requests.html)
 - [HTTP Session](/php-framework-docs/1.x/session.html)
+- [Views](/php-framework-docs/1.x/views.html)
 - [Validation](/php-framework-docs/1.x/validation.html)
 - [API Resources](/php-framework-docs/1.x/api-resources.html)
 
