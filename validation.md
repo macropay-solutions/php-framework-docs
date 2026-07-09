@@ -453,7 +453,7 @@ The form request class also contains an `authorize` method. Within this method, 
      */
     public function authorize(): bool
     {
-        $comment = Comment::find($this->route('comment'));
+        $comment = Comment::query()->find($this->route('comment'));
 
         return $comment && $this->user()->can('update', $comment);
     }

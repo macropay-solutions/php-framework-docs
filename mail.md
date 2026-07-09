@@ -1,0 +1,1264 @@
+---
+title: Mail
+description: Explicit mail opt-in flow, mailable configuration, queueing, and custom transports for PHP-Framework.
+context: mail
+---
+
+# Mail
+
+- [Introduction](#introduction)
+  - [Explicit Mail Opt-In Flow](#explicit-mail-opt-in-flow)
+  - [Configuration](#configuration)
+  - [Driver Prerequisites](#driver-prerequisites)
+  - [Failover Configuration](#failover-configuration)
+  - [Round Robin Configuration](#round-robin-configuration)
+- [Generating Mailables](#generating-mailables)
+- [Writing Mailables](#writing-mailables)
+  - [Configuring the Sender](#configuring-the-sender)
+  - [Configuring the View](#configuring-the-view)
+  - [View Data](#view-data)
+  - [Attachments](#attachments)
+  - [Inline Attachments](#inline-attachments)
+  - [Attachable Objects](#attachable-objects)
+  - [Headers](#headers)
+  - [Tags and Metadata](#tags-and-metadata)
+  - [Customizing the Symfony Message](#customizing-the-symfony-message)
+- [Markdown Mailables](#markdown-mailables)
+  - [Generating Markdown Mailables](#generating-markdown-mailables)
+  - [Writing Markdown Messages](#writing-markdown-messages)
+- [Sending Mail](#sending-mail)
+  - [Queueing Mail](#queueing-mail)
+- [Rendering Mailables](#rendering-mailables)
+- [Localizing Mailables](#localizing-mailables)
+- [Testing](#testing)
+  - [Testing Mailable Content](#testing-mailable-content)
+  - [Testing Mailable Sending](#testing-mailable-sending)
+- [Mail and Local Development](#mail-and-local-development)
+- [Events](#events)
+- [Custom Transports](#custom-transports)
+  - [Additional Symfony Transports](#additional-symfony-transports)
+
+<a name="introduction"></a>
+## Introduction
+
+Sending email doesn't have to be complicated. Framework provides a clean, simple email API powered by the popular [Symfony Mailer](https://symfony.com/doc/6.2/mailer.html) component. Framework and Symfony Mailer provide drivers for sending email via SMTP, Mailgun, Postmark, Amazon SES, and `sendmail`, allowing you to quickly get started sending mail through a local or cloud based service of your choice.
+
+<a name="explicit-mail-opt-in-flow"></a>
+### Explicit Mail Opt-In Flow
+
+Because PHP-Framework is tailored explicitly for high-performance, stateless JSON APIs, the mail delivery subsystems are completely disabled and excluded from the application classmap by default to save memory and minimize boot overhead. To send emails, you must actively toggle the mail engine on within your application structure:
+
+1. **Composer Realignment**: Open your `composer.json` file and remove the mail exclusion string from the `exclude-from-classmap` collection:
+
+        "vendor/macropay-solutions/php-kernel/kernel/Mail/"
+
+2. **Container Activation**: Open `App\Application.php` and uncomment the explicit mailer bindings inside your `$availableBindings` map:
+
+        'mailer' => 'registerMailBindings',
+        'mail.manager' => 'registerMailBindings',
+        \MacropaySolutions\Kernel\Mail\Markdown::class => 'registerMailBindings',
+
+3. **Core Alias Activation**: While inside `App\Application.php`, scroll down to the `registerContainerAliases` method and uncomment the corresponding mail abstractions inside both the `$abstractAliases` and `$aliases` arrays.
+
+Once these configurations are active, execute:
+
+```shell
+composer require symfony/mailer
+composer dump-autoload
+```
+
+You may use this mail implementation logic to implement your own deferred service provider.
+
+<a name="configuration"></a>
+### Configuration
+
+Framework's email services may be configured via your application's `config/mail.php` configuration file. Each mailer configured within this file may have its own unique configuration and even its own unique "transport", allowing your application to use different email services to send certain email messages. For example, your application might use Postmark to send transactional emails while using Amazon SES to send bulk emails.
+
+Within your `mail` configuration file, you will find a `mailers` configuration array. This array contains a sample configuration entry for each of the major mail drivers / transports supported by Framework, while the `default` configuration value determines which mailer will be used by default when your application needs to send an email message.
+
+The following foundational configuration environment variables must be declared within your application's `.env` file to control the default SMTP transport connection:
+
+    MAIL_MAILER=smtp
+    MAIL_HOST=smtp.mailtrap.io
+    MAIL_PORT=2525
+    MAIL_USERNAME=null
+    MAIL_PASSWORD=null
+    MAIL_ENCRYPTION=tls
+    MAIL_FROM_ADDRESS=hello@example.com
+    MAIL_FROM_NAME="Example App"
+
+<a name="driver-prerequisites"></a>
+### Driver / Transport Prerequisites
+
+The API based drivers such as Mailgun, Postmark, and MailerSend are often simpler and faster than sending mail via SMTP servers. Whenever possible, we recommend that you use one of these drivers.
+
+<a name="mailgun-driver"></a>
+#### Mailgun Driver
+
+To use the Mailgun driver, install Symfony's Mailgun Mailer transport via Composer:
+
+```shell
+composer require symfony/mailgun-mailer symfony/http-client
+```
+
+Next, set the `default` option in your application's `config/mail.php` configuration file to `mailgun`. After configuring your application's default mailer, verify that your `config/services.php` configuration file contains the following options:
+
+    'mailgun' => [
+        'transport' => 'mailgun',
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+    ],
+
+If you are not using the United States [Mailgun region](https://documentation.mailgun.com/en/latest/api-intro.html#mailgun-regions), you may define your region's endpoint in the `services` configuration file:
+
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'),
+    ],
+
+<a name="postmark-driver"></a>
+#### Postmark Driver
+
+To use the Postmark driver, install Symfony's Postmark Mailer transport via Composer:
+
+```shell
+composer require symfony/postmark-mailer symfony/http-client
+```
+
+Next, set the `default` option in your application's `config/mail.php` configuration file to `postmark`. After configuring your application's default mailer, verify that your `config/services.php` configuration file contains the following options:
+
+    'postmark' => [
+        'token' => env('POSTMARK_TOKEN'),
+    ],
+
+If you would like to specify the Postmark message stream that should be used by a given mailer, you may add the `message_stream_id` configuration option to the mailer's configuration array inside `config/mail.php`:
+
+    'postmark' => [
+        'transport' => 'postmark',
+        'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
+    ],
+
+This way you are also able to set up multiple Postmark mailers with different message streams.
+
+<a name="ses-driver"></a>
+#### SES Driver
+
+To use the Amazon SES driver you must first install the Amazon AWS SDK for PHP. You may install this library via the Composer package manager:
+
+```shell
+composer require aws/aws-sdk-php
+```
+
+Next, set the `default` option in your `config/mail.php` configuration file to `ses` and verify that your `config/services.php` configuration file contains the following options:
+
+    'ses' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+To utilize AWS [temporary credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html) via a session token, you may add a `token` key to your application's SES configuration:
+
+    'ses' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+        'token' => env('AWS_SESSION_TOKEN'),
+    ],
+
+If you would like to define [additional options](https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sesv2-2019-09-27.html#sendemail) that Framework should pass to the AWS SDK's `SendEmail` method when sending an email, you may define an `options` array within your `ses` configuration:
+
+    'ses' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+        'options' => [
+            'ConfigurationSetName' => 'MyConfigurationSet',
+            'EmailTags' => [
+                ['Name' => 'foo', 'Value' => 'bar'],
+            ],
+        ],
+    ],
+
+<a name="failover-configuration"></a>
+### Failover Configuration
+
+Sometimes, an external service you have configured to send your application's mail may be down. In these cases, it can be useful to define one or more backup mail delivery configurations that will be used in case your primary delivery driver is down.
+
+To accomplish this, you should define a mailer within your application's `mail` configuration file that uses the `failover` transport. The configuration array for your application's `failover` mailer should contain an array of `mailers` that reference the order in which configured mailers should be chosen for delivery:
+
+    'mailers' => [
+        'failover' => [
+            'transport' => 'failover',
+            'mailers' => [
+                'postmark',
+                'mailgun',
+                'sendmail',
+            ],
+        ],
+
+        // ...
+    ],
+
+Once your failover mailer has been defined, you should set this mailer as the default mailer used by your application by specifying its name as the value of the `default` configuration key within your application's `mail` configuration file:
+
+    'default' => env('MAIL_MAILER', 'failover'),
+
+<a name="round-robin-configuration"></a>
+### Round Robin Configuration
+
+The `roundrobin` transport allows you to distribute your mailing workload across multiple mailers. To get started, define a mailer within your application's `mail` configuration file that uses the `roundrobin` transport. The configuration array for your application's `roundrobin` mailer should contain an array of `mailers` that reference which configured mailers should be used for delivery:
+
+    'mailers' => [
+        'roundrobin' => [
+            'transport' => 'roundrobin',
+            'mailers' => [
+                'ses',
+                'postmark',
+            ],
+        ],
+
+        // ...
+    ],
+
+Once your round robin mailer has been defined, you should set this mailer as the default mailer used by your application by specifying its name as the value of the `default` configuration key within your application's `mail` configuration file:
+
+    'default' => env('MAIL_MAILER', 'roundrobin'),
+
+The round robin transport selects a random mailer from the list of configured mailers and then switches to the next available mailer for each subsequent email. In contrast to `failover` transport, which helps to achieve *[high availability](https://en.wikipedia.org/wiki/High_availability)*, the `roundrobin` transport provides *[load balancing](https://en.wikipedia.org/wiki/Load_balancing_(computing))*.
+
+<a name="generating-mailables"></a>
+## Generating Mailables
+
+When building Framework applications, each type of email sent by your application is represented as a "mailable" class. These classes are stored in the `app/Mail` directory. Don't worry if you don't see this directory in your application, since it will be generated for you when you create your first mailable class using the `make:mail` Run command:
+
+```shell
+php run make:mail OrderShipped
+```
+
+<a name="writing-mailables"></a>
+## Writing Mailables
+
+Once you have generated a mailable class, open it up so we can explore its contents. Mailable class configuration is done in several methods, including the `envelope`, `content`, and `attachments` methods.
+
+The `envelope` method returns an `MacropaySolutions\Kernel\Mail\Mailables\Envelope` object that defines the subject and, sometimes, the recipients of the message. The `content` method returns an `MacropaySolutions\Kernel\Mail\Mailables\Content` object that defines the [Blade template](/blade) that will be used to generate the message content.
+
+<a name="configuring-the-sender"></a>
+### Configuring the Sender
+
+<a name="using-the-envelope"></a>
+#### Using the Envelope
+
+First, let's explore configuring the sender of the email. Or, in other words, who the email is going to be "from". There are two ways to configure the sender. First, you may specify the "from" address on your message's envelope:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Address;
+    use MacropaySolutions\Kernel\Mail\Mailables\Envelope;
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            from: new Address('jeffrey@example.com', 'Jeffrey Way'),
+            subject: 'Order Shipped',
+        );
+    }
+
+If you would like, you may also specify a `replyTo` address:
+
+    return new Envelope(
+        from: new Address('jeffrey@example.com', 'Jeffrey Way'),
+        replyTo: [
+            new Address('surname@example.com', 'Surname Name'),
+        ],
+        subject: 'Order Shipped',
+    );
+
+<a name="using-a-global-from-address"></a>
+#### Using a Global `from` Address
+
+However, if your application uses the same "from" address for all of its emails, it can become cumbersome to add it to each mailable class you generate. Instead, you may specify a global "from" address in your `config/mail.php` configuration file. This address will be used if no other "from" address is specified within the mailable class:
+
+    'from' => [
+        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'name' => env('MAIL_FROM_NAME', 'Example'),
+    ],
+
+In addition, you may define a global "reply_to" address within your `config/mail.php` configuration file:
+
+    'reply_to' => ['address' => 'example@example.com', 'name' => 'App Name'],
+
+<a name="configuring-the-view"></a>
+### Configuring the View
+
+Within a mailable class's `content` method, you may define the `view`, or which template should be used when rendering the email's contents. Since each email typically uses a [Blade template](/blade) to render its contents, you have the full power and convenience of the Blade templating engine when building your email's HTML:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Content;
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'mail.orders.shipped',
+        );
+    }
+
+> [!NOTE]  
+> You may wish to create a `resources/views/emails` directory to house all of your email templates; however, you are free to place them wherever you wish within your `resources/views` directory.
+
+<a name="plain-text-emails"></a>
+#### Plain Text Emails
+
+If you would like to define a plain-text version of your email, you may specify the plain-text template when creating the message's `Content` definition. Like the `view` parameter, the `text` parameter should be a template name which will be used to render the contents of the email. You are free to define both an HTML and plain-text version of your message:
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'mail.orders.shipped',
+            text: 'mail.orders.shipped-text'
+        );
+    }
+
+For clarity, the `html` parameter may be used as an alias of the `view` parameter:
+
+    return new Content(
+        html: 'mail.orders.shipped',
+        text: 'mail.orders.shipped-text'
+    );
+
+<a name="view-data"></a>
+### View Data
+
+<a name="via-public-properties"></a>
+#### Via Public Properties
+
+Typically, you will want to pass some data to your view that you can utilize when rendering the email's HTML. There are two ways you may make data available to your view. First, any public property defined on your mailable class will automatically be made available to the view. So, for example, you may pass data into your mailable class's constructor and set that data to public properties defined on the class:
+
+    <?php
+
+    namespace App\Mail;
+
+    use App\Models\Order;
+    use MacropaySolutions\Kernel\Bus\Queueable;
+    use MacropaySolutions\Kernel\Mail\Mailable;
+    use MacropaySolutions\Kernel\Mail\Mailables\Content;
+    use MacropaySolutions\Kernel\Queue\SerializesModels;
+
+    class OrderShipped extends Mailable
+    {
+        use Queueable, SerializesModels;
+
+        /**
+         * Create a new message instance.
+         */
+        public function __construct(
+            public Order $order,
+        ) {}
+
+        /**
+         * Get the message content definition.
+         */
+        public function content(): Content
+        {
+            return new Content(
+                view: 'mail.orders.shipped',
+            );
+        }
+    }
+
+Once the data has been set to a public property, it will automatically be available in your view, so you may access it like you would access any other data in your Blade templates:
+
+    <div>
+        Price: {{ $order->price }}
+    </div>
+
+<a name="via-the-with-parameter"></a>
+#### Via the `with` Parameter:
+
+If you would like to customize the format of your email's data before it is sent to the template, you may manually pass your data to the view via the `Content` definition's `with` parameter. Typically, you will still pass data via the mailable class's constructor; however, you should set this data to `protected` or `private` properties so the data is not automatically made available to the template:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Content;
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'mail.orders.shipped',
+            with: [
+                'orderName' => $this->order->name,
+                'orderPrice' => $this->order->price,
+                ],
+            );
+    }
+
+Once the data has been passed to the `with` method, it will automatically be available in your view, so you may access it like you would access any other data in your Blade templates:
+
+    <div>
+        Price: {{ $orderPrice }}
+    </div>
+
+<a name="attachments"></a>
+### Attachments
+
+To add attachments to an email, you will add attachments to the array returned by the message's `attachments` method. First, you may add an attachment by providing a file path to the `fromPath` method provided by the `Attachment` class:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Attachment;
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \MacropaySolutions\Kernel\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromPath('/path/to/file'),
+        ];
+    }
+
+When attaching files to a message, you may also specify the display name and / or MIME type for the attachment using the `as` and `withMime` methods:
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \MacropaySolutions\Kernel\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromPath('/path/to/file')
+                    ->as('name.pdf')
+                    ->withMime('application/pdf'),
+        ];
+    }
+
+<a name="attaching-files-from-disk"></a>
+#### Attaching Files From Disk
+
+If you have stored a file on one of your [filesystem disks](/filesystem), you may attach it to the email using the `fromStorage` attachment method:
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \MacropaySolutions\Kernel\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromStorage('/path/to/file'),
+        ];
+    }
+
+Of course, you may also specify the attachment's name and MIME type:
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \MacropaySolutions\Kernel\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromStorage('/path/to/file')
+                    ->as('name.pdf')
+                    ->withMime('application/pdf'),
+        ];
+    }
+
+The `fromStorageDisk` method may be used if you need to specify a storage disk other than your default disk:
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \MacropaySolutions\Kernel\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromStorageDisk('s3', '/path/to/file')
+                    ->as('name.pdf')
+                    ->withMime('application/pdf'),
+        ];
+    }
+
+<a name="raw-data-attachments"></a>
+#### Raw Data Attachments
+
+The `fromData` attachment method may be used to attach a raw string of bytes as an attachment. For example, you might use this method if you have generated a PDF in memory and want to attach it to the email without writing it to disk. The `fromData` method accepts a closure which resolves the raw data bytes as well as the name that the attachment should be assigned:
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \MacropaySolutions\Kernel\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromData(fn () => $this->pdf, 'Report.pdf')
+                    ->withMime('application/pdf'),
+        ];
+    }
+
+<a name="inline-attachments"></a>
+### Inline Attachments
+
+Embedding inline images into your emails is typically cumbersome; however, Framework provides a convenient way to attach images to your emails. To embed an inline image, use the `embed` method on the `$message` variable within your email template. Framework automatically makes the `$message` variable available to all of your email templates, so you don't need to worry about passing it in manually:
+
+```blade
+<body>
+    Here is an image:
+
+    <img src="{{ $message->embed($pathToImage) }}">
+</body>
+```
+
+> [!WARNING]  
+> The `$message` variable is not available in plain-text message templates since plain-text messages do not utilize inline attachments.
+
+<a name="embedding-raw-data-attachments"></a>
+#### Embedding Raw Data Attachments
+
+If you already have a raw image data string you wish to embed into an email template, you may call the `embedData` method on the `$message` variable. When calling the `embedData` method, you will need to provide a filename that should be assigned to the embedded image:
+
+```blade
+<body>
+    Here is an image from raw data:
+
+    <img src="{{ $message->embedData($data, 'example-image.jpg') }}">
+</body>
+```
+
+<a name="attachable-objects"></a>
+### Attachable Objects
+
+While attaching files to messages via simple string paths is often sufficient, in many cases the attachable entities within your application are represented by classes. For example, if your application is attaching a photo to a message, your application may also have a `Photo` model that represents that photo. When that is the case, wouldn't it be convenient to simply pass the `Photo` model to the `attach` method? Attachable objects allow you to do just that.
+
+To get started, implement the `MacropaySolutions\Kernel\Contracts\Mail\Attachable` interface on the object that will be attachable to messages. This interface dictates that your class defines a `toMailAttachment` method that returns an `MacropaySolutions\Kernel\Mail\Attachment` instance:
+
+    <?php
+
+    namespace App\Models;
+
+    use MacropaySolutions\Kernel\Contracts\Mail\Attachable;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+    use MacropaySolutions\Kernel\Mail\Attachment;
+
+    class Photo extends Model implements Attachable
+    {
+        /**
+         * Get the attachable representation of the model.
+         */
+        public function toMailAttachment(): Attachment
+        {
+            return Attachment::fromPath('/path/to/file');
+        }
+    }
+
+Once you have defined your attachable object, you may return an instance of that object from the `attachments` method when building an email message:
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \MacropaySolutions\Kernel\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [$this->photo];
+    }
+
+Of course, attachment data may be stored on a remote file storage service such as Amazon S3. So, Framework also allows you to generate attachment instances from data that is stored on one of your application's [filesystem disks](/filesystem):
+
+    // Create an attachment from a file on your default disk...
+    return Attachment::fromStorage($this->path);
+
+    // Create an attachment from a file on a specific disk...
+    return Attachment::fromStorageDisk('backblaze', $this->path);
+
+In addition, you may create attachment instances via data that you have in memory. To accomplish this, provide a closure to the `fromData` method. The closure should return the raw data that represents the attachment:
+
+    return Attachment::fromData(fn () => $this->content, 'Photo Name');
+
+Framework also provides additional methods that you may use to customize your attachments. For example, you may use the `as` and `withMime` methods to customize the file's name and MIME type:
+
+    return Attachment::fromPath('/path/to/file')
+            ->as('Photo Name')
+            ->withMime('image/jpeg');
+
+<a name="headers"></a>
+### Headers
+
+Sometimes you may need to attach additional headers to the outgoing message. For instance, you may need to set a custom `Message-Id` or other arbitrary text headers.
+
+To accomplish this, define a `headers` method on your mailable. The `headers` method should return an `MacropaySolutions\Kernel\Mail\Mailables\Headers` instance. This class accepts `messageId`, `references`, and `text` parameters. Of course, you may provide only the parameters you need for your particular message:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Headers;
+
+    /**
+     * Get the message headers.
+     */
+    public function headers(): Headers
+    {
+        return new Headers(
+            messageId: 'custom-message-id@example.com',
+            references: ['previous-message@example.com'],
+            text: [
+                'X-Custom-Header' => 'Custom Value',
+            ],
+        );
+    }
+
+<a name="tags-and-metadata"></a>
+### Tags and Metadata
+
+Some third-party email providers such as Mailgun and Postmark support message "tags" and "metadata", which may be used to group and track emails sent by your application. You may add tags and metadata to an email message via your `Envelope` definition:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Envelope;
+
+    /**
+     * Get the message envelope.
+     *
+     * @return \MacropaySolutions\Kernel\Mail\Mailables\Envelope
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Order Shipped',
+            tags: ['shipment'],
+            metadata: [
+                'order_id' => $this->order->id,
+            ],
+        );
+    }
+
+If your application is using the Mailgun driver, you may consult Mailgun's documentation for more information on [tags](https://documentation.mailgun.com/en/latest/user_manual.html#tagging-1) and [metadata](https://documentation.mailgun.com/en/latest/user_manual.html#attaching-data-to-messages). Likewise, the Postmark documentation may also be consulted for more information on their support for [tags](https://postmarkapp.com/blog/tags-support-for-smtp) and [metadata](https://postmarkapp.com/support/article/1125-custom-metadata-faq).
+
+If your application is using Amazon SES to send emails, you should use the `metadata` method to attach [SES "tags"](https://docs.aws.amazon.com/ses/latest/APIReference/API_MessageTag.html) to the message.
+
+<a name="customizing-the-symfony-message"></a>
+### Customizing the Symfony Message
+
+Framework's mail capabilities are powered by Symfony Mailer. Framework allows you to register custom callbacks that will be invoked with the Symfony Message instance before sending the message. This gives you an opportunity to deeply customize the message before it is sent. To accomplish this, define a `using` parameter on your `Envelope` definition:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Envelope;
+    use Symfony\Component\Mime\Email;
+    
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Order Shipped',
+            using: [
+                function (Email $message) {
+                    // ...
+                },
+            ]
+        );
+    }
+
+<a name="markdown-mailables"></a>
+## Markdown Mailables
+
+Markdown mailable messages allow you to take advantage of the pre-built templates and components of [mail notifications](/notifications#mail-notifications) in your mailables. Since the messages are written in Markdown, Framework is able to render beautiful, responsive HTML templates for the messages while also automatically generating a plain-text counterpart.
+
+<a name="generating-markdown-mailables"></a>
+### Generating Markdown Mailables
+
+To generate a mailable with a corresponding Markdown template, you may use the `--markdown` option of the `make:mail` Run command:
+
+```shell
+php run make:mail OrderShipped --markdown=mail.orders.shipped
+```
+
+Then, when configuring the mailable `Content` definition within its `content` method, use the `markdown` parameter instead of the `view` parameter:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Content;
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'mail.orders.shipped',
+            with: [
+                'url' => $this->orderUrl,
+            ],
+        );
+    }
+
+<a name="writing-markdown-messages"></a>
+### Writing Markdown Messages
+
+Markdown mailables use a combination of Blade components and Markdown syntax which allow you to easily construct mail messages while leveraging Framework's pre-built email UI components:
+
+```blade
+<x-mail::message>
+# Order Shipped
+
+Your order has been shipped!
+
+<x-mail::button :url="$url">
+View Order
+</x-mail::button>
+
+Thanks,<br>
+{{ config('app.name') }}
+</x-mail::message>
+```
+
+> [!NOTE]  
+> Do not use excess indentation when writing Markdown emails. Per Markdown standards, Markdown parsers will render indented content as code blocks.
+
+<a name="button-component"></a>
+#### Button Component
+
+The button component renders a centered button link. The component accepts two arguments, a `url` and an optional `color`. Supported colors are `primary`, `success`, and `error`. You may add as many button components to a message as you wish:
+
+```blade
+<x-mail::button :url="$url" color="success">
+View Order
+</x-mail::button>
+```
+
+<a name="panel-component"></a>
+#### Panel Component
+
+The panel component renders the given block of text in a panel that has a slightly different background color than the rest of the message. This allows you to draw attention to a given block of text:
+
+```blade
+<x-mail::panel>
+This is the panel content.
+</x-mail::panel>
+```
+
+<a name="table-component"></a>
+#### Table Component
+
+The table component allows you to transform a Markdown table into an HTML table. The component accepts the Markdown table as its content. Table column alignment is supported using the default Markdown table alignment syntax:
+
+```blade
+<x-mail::table>
+| Framework       | Table         | Example  |
+| ------------- |:-------------:| --------:|
+| Col 2 is      | Centered      | $10      |
+| Col 3 is      | Right-Aligned | $20      |
+</x-mail::table>
+```
+
+<a name="sending-mail"></a>
+## Sending Mail
+
+To send a message, use the `to` method on the main mailer instance resolved out of the container via the `\app()` helper method. Once you have specified your recipients, you may pass an instance of your mailable class to the `send` method:
+
+    namespace App\Http\Controllers;
+
+    use App\Mail\OrderShipped;
+    use App\Models\Order;
+    use MacropaySolutions\Kernel\Http\Request;
+    use MacropaySolutions\Kernel\Http\JsonResponse;
+
+    class OrderShipmentController
+    {
+        /**
+         * Ship the given order.
+         */
+        public function store(Request $request): JsonResponse
+        {
+            $order = Order::queue()->findOrFail($request->getFiltered('order_id'));
+
+            // Process delivery logic...
+
+            \app('mailer')->to($request->user()->email)->send(new OrderShipped($order));
+
+            return response()->json(['status' => 'Shipped']);
+        }
+    }
+
+You are free to set "to", "cc", and "bcc" recipients by chaining their respective methods together:
+
+    \app('mailer')->to($request->user()->email)
+        ->cc($moreUsers)
+        ->bcc($evenMoreUsers)
+        ->send(new OrderShipped($order));
+
+<a name="sending-mail-via-a-specific-mailer"></a>
+#### Sending Mail via a Specific Mailer
+
+By default, Framework will send email using the mailer configured as the `default` mailer in your application's `mail` configuration file. However, you may use the `mailer` method on the mail manager container to send a message using a specific mailer configuration:
+
+    \app('mailer')->mailer('postmark')
+        ->to($request->user()->email)
+        ->send(new OrderShipped($order));
+
+<a name="queueing-mail"></a>
+### Queueing Mail
+
+Since sending email messages can negatively impact the response time of your application, you should move email delivery operations to the background queue engine.
+
+#### Via Storable Array Callables (Default & Strict Mode Compliant)
+
+By default, PHP-Framework operates with strict security parameters enabled (`FORBID_SERIALIZED_OBJECTS_IN_QUEUE = true`). This aggressively blocks instantiated objects from entering your queue layers to eliminate payload injection attack vectors. Traditional mailable execution via pushing the mailable instance to `->queue()` will fail by default in this state.
+
+The recommended, high-performance option is passing a structured **Storable Array Callable** with primitive identifiers. This bypasses object serialization overhead entirely, minimizing payload footprint on services like Redis or Amazon SQS while maximizing background worker throughput.
+
+    namespace App\Http\Controllers;
+
+    use App\Services\OrderMailService;
+    use MacropaySolutions\Kernel\Http\Request;
+    use MacropaySolutions\Kernel\Http\JsonResponse;
+
+    class OrderShipmentController
+    {
+        /**
+         * Ship the given order.
+         */
+        public function store(Request $request): JsonResponse
+        {
+            $orderId = (int)$request->getFiltered('order_id');
+            $email = $request->user()->email;
+
+            // Pass primitive variables directly. The container autowires execution hooks.
+            \dispatch([OrderMailService::class, 'sendOrderShippedEmail', [
+                'orderId' => $orderId,
+                'recipient' => $email,
+            ]])->onConnection('redis')->onQueue('emails');
+
+            return response()->json(['status' => 'Queued']);
+        }
+    }
+
+Inside your targeted service implementation, pull a fresh record from the database using Obvious ORM and invoke your mailable securely:
+
+    namespace App\Services;
+
+    use App\Models\Order;
+    use App\Mail\OrderShipped;
+
+    class OrderMailService
+    {
+        /**
+         * Re-retrieve models and compile the mailable inside the worker thread.
+         */
+        public function sendOrderShippedEmail(int $orderId, string $recipient): void
+        {
+            $order = Order::queue()->findOrFail($orderId);
+
+            \app('mailer')->to($recipient)->send(new OrderShipped($order));
+        }
+    }
+
+#### Via Legacy Object Serialization (Requires Strict Mode Disabled)
+
+If you choose to opt-out of strict security mode inside your `App\Application` class by toggling `FORBID_SERIALIZED_OBJECTS_IN_QUEUE = false`, traditional object push routines are restored:
+
+    \app('mailer')->to($request->user()->email)->queue(new OrderShipped($order));
+
+If you wish to delay the delivery of a queued email message, you may use the `later` method. As its first argument, the `later` method accepts a `DateTime` or Carbon instance indicating when the message should be sent:
+
+    \app('mailer')->to($request->user()->email)
+        ->later(\Carbon\Carbon::now()->addMinutes(10), (new OrderShipped($order))
+            ->onConnection('sqs')
+            ->onQueue('emails'));
+
+<a name="queueing-by-default"></a>
+#### Queueing by Default
+
+If your legacy application relies on object-based mailables that must execute asynchronously every time, implement the `ShouldQueue` interface directly on your class. The runtime pipeline will intercept explicit `send()` calls and reroute them to the queue connection automatically:
+
+    use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
+    use MacropaySolutions\Kernel\Mail\Mailable;
+
+    class OrderShipped extends Mailable implements ShouldQueue
+    {
+        // ...
+    }
+
+<a name="queued-mailables-and-database-transactions"></a>
+#### Queued Mailables and Database Transactions
+
+When background mail commands are issued inside active database transactions, workers can pick up jobs before the surrounding transaction finishes committing. If the worker executes before PHP-FPM registers the data, the worker will trigger exceptions trying to fetch missing rows.
+
+To resolve this, toggle the `after_commit` key to `true` in your `config/queue.php` configuration map. This forces the queue server to defer dispatching payloads until open parent transactions clear.
+
+Alternatively, manage this inline on specific calls using the `afterCommit` chain:
+
+    // For Storable Array Callables (Strict Mode Enabled)
+    \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create([OrderMailService::class, 'sendOrderShippedEmail', [
+        'orderId' => $order->id,
+        'recipient' => $email,
+    ]])->afterCommit()->dispatch();
+
+    // For Legacy Serialized Mailables (Strict Mode Disabled Only)
+    \app('mailer')->to($email)->send(
+        (new OrderShipped($order))->afterCommit()
+    );
+
+> [!NOTE]  
+> To learn more about working around these issues, please review the documentation regarding [queued jobs and database transactions](/queues#jobs-and-database-transactions).
+
+<a name="rendering-mailables"></a>
+## Rendering Mailables
+
+Sometimes you may wish to capture the HTML content of a mailable without sending it. To accomplish this, you may call the `render` method of the mailable. This method will return the evaluated HTML content of the mailable as a string:
+
+    use App\Mail\InvoicePaid;
+    use App\Models\Invoice;
+
+    $invoice = Invoice::queue()->find(1);
+
+    return (new InvoicePaid($invoice))->render();
+
+<a name="localizing-mailables"></a>
+## Localizing Mailables
+
+Framework allows you to send mailables in a locale other than the request's current locale, and will even remember this locale if the mail is queued.
+
+To accomplish this, the mail engine offers a `locale` method to set the desired language. The application will change into this locale when the mailable's template is being evaluated and then revert back to the previous locale when evaluation is complete:
+
+    \app('mailer')->locale('es')->to($userEmail)->send(
+        new OrderShipped($order)
+    );
+
+<a name="user-preferred-locales"></a>
+### User Preferred Locales
+
+Sometimes, applications store each user's preferred locale. By implementing the `HasLocalePreference` contract on one or more of your models, you may instruct Framework to use this stored locale when sending mail:
+
+    use MacropaySolutions\Kernel\Contracts\Translation\HasLocalePreference;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+
+    class User extends Model implements HasLocalePreference
+    {
+        /**
+         * Get the user's preferred locale.
+         */
+        public function preferredLocale(): string
+        {
+            return $this->locale;
+        }
+    }
+
+Once you have implemented the interface, Framework will automatically use the preferred locale when sending mailables and notifications to the model. Therefore, there is no need to call the `locale` method when using this interface:
+
+    \app('mailer')->to($request->user()->email)->send(new OrderShipped($order));
+
+<a name="testing"></a>
+## Testing
+
+<a name="testing-mailable-content"></a>
+### Testing Mailable Content
+
+Framework provides a variety of methods for inspecting your mailable's structure. In addition, Framework provides several convenient methods for testing that your mailable contains the content that you expect. These methods are: `assertSeeInHtml`, `assertDontSeeInHtml`, `assertSeeInOrderInHtml`, `assertSeeInText`, `assertDontSeeInText`, `assertSeeInOrderInText`, `assertHasAttachment`, `assertHasAttachedData`, `assertHasAttachmentFromStorage`, and `assertHasAttachmentFromStorageDisk`.
+
+As you might expect, the "HTML" assertions assert that the HTML version of your mailable contains a given string, while the "text" assertions assert that the plain-text version of your mailable contains a given string:
+
+    use App\Mail\InvoicePaid;
+    use App\Models\User;
+
+    public function test_mailable_content(): void
+    {
+        $user = User::factory()->create();
+
+        $mailable = new InvoicePaid($user);
+
+        $mailable->assertFrom('jeffrey@example.com');
+        $mailable->assertTo('surname@example.com');
+        $mailable->assertHasCc('abigail@example.com');
+        $mailable->assertHasBcc('victoria@example.com');
+        $mailable->assertHasReplyTo('tyler@example.com');
+        $mailable->assertHasSubject('Invoice Paid');
+        $mailable->assertHasTag('example-tag');
+        $mailable->assertHasMetadata('key', 'value');
+
+        $mailable->assertSeeInHtml($user->email);
+        $mailable->assertSeeInHtml('Invoice Paid');
+        $mailable->assertSeeInOrderInHtml(['Invoice Paid', 'Thanks']);
+
+        $mailable->assertSeeInText($user->email);
+        $mailable->assertSeeInOrderInText(['Invoice Paid', 'Thanks']);
+
+        $mailable->assertHasAttachment('/path/to/file');
+        $mailable->assertHasAttachment(Attachment::fromPath('/path/to/file'));
+        $mailable->assertHasAttachedData($pdfData, 'name.pdf', ['mime' => 'application/pdf']);
+        $mailable->assertHasAttachmentFromStorage('/path/to/file', 'name.pdf', ['mime' => 'application/pdf']);
+        $mailable->assertHasAttachmentFromStorageDisk('s3', '/path/to/file', 'name.pdf', ['mime' => 'application/pdf']);
+    }
+
+<a name="testing-mailable-sending"></a>
+### Testing Mailable Sending
+
+We suggest testing the content of your mailables separately from your tests that assert that a given delivery chain was invoked. It is sufficient to simply assert that Framework was instructed to queue or send a given operation.
+
+#### Asserting Storable Array Callables (Default Mode)
+
+When validating email dispatch routines while utilizing **Storable Array Callables**, assert directly against the queue service container fake using the structured class-method array instead of checking for instantiated objects:
+
+    namespace Tests\Feature;
+
+    use App\Services\OrderMailService;
+    use Tests\TestCase;
+
+    class ExampleTest extends TestCase
+    {
+        public function test_orders_trigger_background_emails(): void
+        {
+            // Mock the internal queue dispatch matrix
+            \app('queue')->fake();
+
+            // Execute target controller logic...
+            $this->post('/api/orders/ship', ['order_id' => 99]);
+
+            // Verify the Array Callable was securely pushed to the queue
+            \app('queue')->assertPushed([OrderMailService::class, 'sendOrderShippedEmail']);
+        }
+    }
+
+#### Asserting Legacy Object Mailables (Strict Mode Off)
+
+If your environment operates with strict mode disabled, you may call `fake()` directly on the mailer service container to halt transmissions and inspect object states:
+
+    <?php
+
+    namespace Tests\Feature;
+
+    use App\Mail\OrderShipped;
+    use Tests\TestCase;
+
+    class ExampleTest extends TestCase
+    {
+        public function test_orders_can_be_shipped(): void
+        {
+            \app('mailer')->fake();
+
+            // Perform order shipping operations...
+
+            \app('mailer')->assertSent(OrderShipped::class);
+            \app('mailer')->assertSentCount(1);
+        }
+    }
+
+If you are queueing legacy mailables for delivery in the background, use `assertQueued` instead of `assertSent`:
+
+    \app('mailer')->assertQueued(OrderShipped::class);
+    \app('mailer')->assertNotQueued(OrderShipped::class);
+    \app('mailer')->assertNothingQueued();
+    \app('mailer')->assertQueuedCount(3);
+
+You may pass a closure to the `assertSent`, `assertNotSent`, `assertQueued`, or `assertNotQueued` methods in order to assert that a mailable was sent that passes a given "truth test". If at least one mailable was sent that passes the given truth test then the assertion will be successful:
+
+    \app('mailer')->assertSent(function (OrderShipped $mail) use ($order) {
+        return $mail->order->id === $order->id;
+    });
+
+When calling the mail engine's assertion methods, the mailable instance accepted by the provided closure exposes helpful methods for examining the mailable:
+
+    \app('mailer')->assertSent(OrderShipped::class, function (OrderShipped $mail) use ($user) {
+        return $mail->hasTo($user->email) &&
+               $mail->hasCc('...') &&
+               $mail->hasBcc('...') &&
+               $mail->hasReplyTo('...') &&
+               $mail->hasFrom('...') &&
+               $mail->hasSubject('...');
+    });
+
+The mailable instance also includes several helpful methods for examining the attachments on a mailable:
+
+    use MacropaySolutions\Kernel\Mail\Mailables\Attachment;
+
+    \app('mailer')->assertSent(OrderShipped::class, function (OrderShipped $mail) {
+        return $mail->hasAttachment(
+            Attachment::fromPath('/path/to/file')
+                ->as('name.pdf')
+                ->withMime('application/pdf')
+        );
+    });
+
+    \app('mailer')->assertSent(OrderShipped::class, function (OrderShipped $mail) {
+        return $mail->hasAttachment(
+            Attachment::fromStorageDisk('s3', '/path/to/file')
+        );
+    });
+
+    \app('mailer')->assertSent(OrderShipped::class, function (OrderShipped $mail) use ($pdfData) {
+        return $mail->hasAttachment(
+            Attachment::fromData(fn () => $pdfData, 'name.pdf')
+        );
+    });
+
+You may have noticed that there are two methods for asserting that mail was not sent: `assertNotSent` and `assertNotQueued`. Sometimes you may wish to assert that no mail was sent **or** queued. To accomplish this, you may use the `assertNothingOutgoing` and `assertNotOutgoing` methods:
+
+    \app('mailer')->assertNothingOutgoing();
+
+    \app('mailer')->assertNotOutgoing(function (OrderShipped $mail) use ($order) {
+        return $mail->order->id === $order->id;
+    });
+
+<a name="mail-and-local-development"></a>
+## Mail and Local Development
+
+When developing an application that sends email, you probably don't want to actually send emails to live email addresses.
+
+<a name="log-driver"></a>
+#### Log Driver
+
+Instead of sending your emails, the `log` mail driver will write all email messages to your log files for inspection. Typically, this driver would only be used during local development.
+
+<a name="mailtrap"></a>
+#### HELO / Mailtrap / Mailpit
+
+Alternatively, you may use a service like [HELO](https://usehelo.com) or [Mailtrap](https://mailtrap.io) and the `smtp` driver to send your email messages to a "dummy" mailbox where you may view them in a true email client. This approach has the benefit of allowing you to actually inspect the final emails in Mailtrap's message viewer.
+
+If you are using a containerized environment, you may preview your messages using tools like [Mailpit](https://github.com/axllent/mailpit). When your service stack is running, you may access the Mailpit interface at its designated local port (e.g., `http://localhost:8025`).
+
+<a name="using-a-global-to-address"></a>
+#### Using a Global `to` Address
+
+Finally, you may specify a global "to" address by invoking the `alwaysTo` method offered by the mailer instance. Typically, this method should be called from the `boot` method of one of your application's service providers:
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        if ($this->app->environment('local')) {
+            \app('mailer')->alwaysTo('surname@example.com');
+        }
+    }
+
+<a name="events"></a>
+## Events
+
+Framework fires two events during the process of sending mail messages. The `MessageSending` event is fired prior to a message being sent, while the `MessageSent` event is fired after a message has been sent. Remember, these events are fired when the mail is being *sent*, not when it is queued. You may register event listeners for this event in your `App\Providers\EventServiceProvider` service provider:
+
+    use MacropaySolutions\Kernel\Mail\Events\MessageSending;
+    use MacropaySolutions\Kernel\Mail\Events\MessageSent;
+
+    protected $listen = [
+        MessageSending::class => [
+            \App\Listeners\LogSendingMessage::class,
+        ],
+        MessageSent::class => [
+            \App\Listeners\LogSentMessage::class,
+        ],
+    ];
+
+<a name="custom-transports"></a>
+## Custom Transports
+
+Framework includes a variety of mail transports; however, you may wish to write your own transports to deliver email via other services that Framework does not support out of the box. To get started, define a class that extends the `Symfony\Component\Mailer\Transport\AbstractTransport` class. Then, implement the `doSend` and `__toString()` methods on your transport:
+
+    use MailchimpTransactional\ApiClient;
+    use Symfony\Component\Mailer\SentMessage;
+    use Symfony\Component\Mailer\Transport\AbstractTransport;
+    use Symfony\Component\Mime\Address;
+    use Symfony\Component\Mime\MessageConverter;
+
+    class MailchimpTransport extends AbstractTransport
+    {
+        /**
+         * Create a new Mailchimp transport instance.
+         */
+        public function __construct(
+            protected ApiClient $client,
+        ) {
+            parent::__construct();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        protected function doSend(SentMessage $message): void
+        {
+            $email = MessageConverter::toEmail($message->getOriginalMessage());
+
+            $this->client->messages->send(['message' => [
+                'from_email' => $email->getFrom(),
+                'to' => collect($email->getTo())->map(function (Address $email) {
+                    return ['email' => $email->getAddress(), 'type' => 'to'];
+                })->all(),
+                'subject' => $email->getSubject(),
+                'text' => $email->getTextBody(),
+            ]]);
+        }
+
+        /**
+         * Get the string representation of the transport.
+         */
+        public function __toString(): string
+        {
+            return 'mailchimp';
+        }
+    }
+
+Once you've defined your custom transport, you may register it via the `extend` method provided by the mail manager container inside the `boot` lifecycle step of a service provider:
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        \app('mailer')->extend('mailchimp', function (array $config = []) {
+            return new MailchimpTransport(/* ... */);
+        });
+    }
+
+Once your custom transport has been defined and registered, you may create a mailer definition within your application's `config/mail.php` configuration file that utilizes the new transport:
+
+    'mailchimp' => [
+        'transport' => 'mailchimp',
+        // ...
+    ],
+
+<a name="additional-symfony-transports"></a>
+### Additional Symfony Transports
+
+Framework includes support for some existing Symfony maintained mail transports like Mailgun and Postmark. However, you may wish to extend Framework with support for additional Symfony maintained transports. You can do so by requiring the necessary Symfony mailer via Composer and registering the transport with Framework. For example, you may install and register the "Brevo" (formerly "Sendinblue") Symfony mailer:
+
+```none
+composer require symfony/brevo-mailer symfony/http-client
+```
+
+Once the Brevo mailer package has been installed, you may add an entry for your Brevo API credentials to your application's `services` configuration file:
+
+    'brevo' => [
+        'key' => 'your-api-key',
+    ],
+
+Next, you may use the mail manager's `extend` method to register the transport with Framework. Typically, this should be done within the `boot` method of a service provider:
+
+    use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory;
+    use Symfony\Component\Mailer\Transport\Dsn;
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        \app('mailer')->extend('brevo', function () {
+            return (new BrevoTransportFactory)->create(
+                new Dsn(
+                    'brevo+api',
+                    'default',
+                    \config('services.brevo.key')
+                )
+            );
+        });
+    }
+
+Once your transport has been registered, you may create a mailer definition within your application's `config/mail.php` configuration file that utilizes the new transport:
+
+    'brevo' => [
+        'transport' => 'brevo',
+        // ...
+    ],
