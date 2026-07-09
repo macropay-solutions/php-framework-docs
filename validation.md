@@ -22,7 +22,7 @@ context: basics
   - [Customizing the Error Messages](#customizing-the-error-messages)
   - [Preparing Input for Validation](#preparing-input-for-validation)
 - [Manually Creating Validators](#manually-creating-validators)
-  - [Automatic Redirection](#automatic-redirection)
+  - [Automatic Exception Throwing](#automatic-exception-throwing)
   - [Named Error Bags](#named-error-bags)
   - [Customizing the Error Messages](#manual-customizing-the-error-messages)
   - [Performing Additional Validation](#performing-additional-validation)
@@ -113,7 +113,7 @@ Next, let's take a look at a simple controller that handles incoming requests to
 
 Now we are ready to fill in our `store` method with the logic to validate the new blog post. To do this, we will use the `validate` method provided by the `MacropaySolutions\Kernel\Http\Request` object. If the validation rules pass, your code will keep executing normally; however, if validation fails, a `MacropaySolutions\Kernel\Validation\ValidationException` exception will be thrown and the proper error response will automatically be sent back to the user.
 
-If validation fails during a traditional HTTP request, a redirect response to the previous URL will be generated. If the incoming request is an XHR request, a [JSON response containing the validation error messages](#validation-error-response-format) will be returned.
+Should validation fail, a [JSON response containing the validation error messages](#validation-error-response-format) will be automatically returned with a 422 HTTP status code, as Framework is stateless by default and does not perform automatic session-backed redirections.
 
 To get a better understanding of the `validate` method, let's jump back into the `store` method:
 
@@ -306,7 +306,7 @@ So, how are the validation rules evaluated? All you need to do is type-hint the 
         return redirect('/posts');
     }
 
-If validation fails, a redirect response will be generated to send the user back to their previous location. The errors will also be flashed to the session so they are available for display. If the request was an XHR request, an HTTP response with a 422 status code will be returned to the user including a [JSON representation of the validation errors](#validation-error-response-format).
+If validation fails, a `MacropaySolutions\Kernel\Validation\ValidationException` is thrown, which results in an HTTP response with a 422 status code containing a [JSON representation of the validation errors](#validation-error-response-format). Automatic redirection and session flashing are not performed by default.
 
 > [!NOTE]  
 > Need to add real-time form request validation to your Inertia powered Framework frontend? Check out [Framework Precognition](/precognition).
@@ -598,10 +598,10 @@ The `stopOnFirstFailure` method will inform the validator that it should stop va
         // ...
     }
 
-<a name="automatic-redirection"></a>
-### Automatic Redirection
+<a name="automatic-exception-throwing"></a>
+### Automatic Exception Throwing
 
-If you would like to create a validator instance manually but still take advantage of the automatic redirection offered by the HTTP request's `validate` method, you may call the `validate` method on an existing validator instance. If validation fails, the user will automatically be redirected or, in the case of an XHR request, a [JSON response will be returned](#validation-error-response-format):
+If you would like to create a validator instance manually but still take advantage of the automatic exception throwing offered by the HTTP request's `validate` method, you may call the `validate` method on an existing validator instance. If validation fails, a `ValidationException` is thrown and a [JSON response will be returned](#validation-error-response-format):
 
     validator()->make($request->all(), [
         'title' => 'required|unique:posts|max:255',
