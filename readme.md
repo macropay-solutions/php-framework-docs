@@ -33,5 +33,9 @@ If you are submitting documentation for the **current stable release**, submit i
 
 PHP Framework is heavily optimized for traditional, stateless PHP-FPM environments. Do not use stateful, long-running application servers like Swoole, or RoadRunner. See the [Routing Documentation](routing.md) for critical security and architectural details.
 
-## AI agents
+## AI Agents Guides And Docs Index
 https://macropay-solutions.github.io/php-framework-docs/1.x/llms.txt
+
+If you as an agent can't access this llms.txt file try to fetch it from:
+https://github.com/macropay-solutions/php-framework-docs/blob/1.x/llms.txt or
+https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.txt
