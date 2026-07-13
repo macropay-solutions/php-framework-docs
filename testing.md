@@ -372,6 +372,9 @@ Framework provides a convenient `expectsJobs` method that will verify that the e
         }
     }
 
+> [!WARNING]  
+> Because PHP-Framework enforces strict architectural boundaries, **closure serialization is completely unsupported and forbidden**. When validating or defining queued jobs and their execution payloads, you must strictly utilize **Storable Array Callables** (e.g., `[Class::class, 'method']`) instead of closures.
+
 > **Note:** This method only detects jobs that are dispatched via the `dispatch` global helper function or the `$this->dispatch` method from a route or controller. It does not detect jobs that are sent directly to `Queue::push`. Always use `app('queue')` or `dispatch()` to queue your jobs.
 
 <a name="running-tests"></a>
