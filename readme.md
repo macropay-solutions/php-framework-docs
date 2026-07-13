@@ -40,40 +40,40 @@ If you as an agent can't access this llms.txt file try to fetch it from:
 https://github.com/macropay-solutions/php-framework-docs/blob/1.x/llms.txt or
 https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.txt
 
-# PHP-Framework Documentation Map
+### PHP-Framework Documentation Map
 
-## Getting Started & Core Configuration
-- Home /php-framework-docs/1.x/
-- Installation /php-framework-docs/1.x/installation.html
-- Release Notes /php-framework-docs/1.x/releases.html
-- Deployment /php-framework-docs/1.x/deployment.html
+#### Getting Started & Core Configuration
+- Home https://macropay-solutions.github.io/php-framework-docs/1.x/
+- Installation https://macropay-solutions.github.io/php-framework-docs/1.x/installation.html
+- Release Notes https://macropay-solutions.github.io/php-framework-docs/1.x/releases.html
+- Deployment https://macropay-solutions.github.io/php-framework-docs/1.x/deployment.html
 
-## Core HTTP Architecture
-- HTTP Routing /php-framework-docs/1.x/routing.html
-- HTTP Middleware /php-framework-docs/1.x/middleware.html
-- HTTP Requests /php-framework-docs/1.x/requests.html
-- HTTP Session /php-framework-docs/1.x/session.html
-- Views /php-framework-docs/1.x/views.html
-- Validation /php-framework-docs/1.x/validation.html
-- API Resources /php-framework-docs/1.x/api-resources.html
-- Configuration /php-framework-docs/1.x/configuration.html
+#### Core HTTP Architecture
+- HTTP Routing https://macropay-solutions.github.io/php-framework-docs/1.x/routing.html
+- HTTP Middleware https://macropay-solutions.github.io/php-framework-docs/1.x/middleware.html
+- HTTP Requests https://macropay-solutions.github.io/php-framework-docs/1.x/requests.html
+- HTTP Session https://macropay-solutions.github.io/php-framework-docs/1.x/session.html
+- Views https://macropay-solutions.github.io/php-framework-docs/1.x/views.html
+- Validation https://macropay-solutions.github.io/php-framework-docs/1.x/validation.html
+- API Resources https://macropay-solutions.github.io/php-framework-docs/1.x/api-resources.html
+- Configuration https://macropay-solutions.github.io/php-framework-docs/1.x/configuration.html
 
-## System Services
-- Service Container /php-framework-docs/1.x/container.html
-- Run Console /php-framework-docs/1.x/run.html
-- Cache /php-framework-docs/1.x/cache.html
-- Queues /php-framework-docs/1.x/queues.html
-- Mail /php-framework-docs/1.x/mail.html
+#### System Services
+- Service Container https://macropay-solutions.github.io/php-framework-docs/1.x/container.html
+- Run Console https://macropay-solutions.github.io/php-framework-docs/1.x/run.html
+- Cache https://macropay-solutions.github.io/php-framework-docs/1.x/cache.html
+- Queues https://macropay-solutions.github.io/php-framework-docs/1.x/queues.html
+- Mail https://macropay-solutions.github.io/php-framework-docs/1.x/mail.html
 
-## Testing & Verification
-- Testing /php-framework-docs/1.x/testing.html
+#### Testing & Verification
+- Testing https://macropay-solutions.github.io/php-framework-docs/1.x/testing.html
 
-## Obvious ORM & Database Layer
-- Database Overview /php-framework-docs/1.x/database.html
-- Database: Migrations /php-framework-docs/1.x/migrations.html
-- Obvious Getting Started /php-framework-docs/1.x/obvious.html
-- Obvious Collections /php-framework-docs/1.x/obvious-collections.html
-- Obvious Factories /php-framework-docs/1.x/obvious-factories.html
-- Obvious Mutators & Casting /php-framework-docs/1.x/obvious-mutators.html
-- Obvious Relationships /php-framework-docs/1.x/obvious-relationships.html
-- Obvious Serialization /php-framework-docs/1.x/obvious-serialization.html
+#### Obvious ORM & Database Layer
+- Database Overview https://macropay-solutions.github.io/php-framework-docs/1.x/database.html
+- Database: Migrations https://macropay-solutions.github.io/php-framework-docs/1.x/migrations.html
+- Obvious Getting Started https://macropay-solutions.github.io/php-framework-docs/1.x/obvious.html
+- Obvious Collections https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-collections.html
+- Obvious Factories https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-factories.html
+- Obvious Mutators & Casting https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-mutators.html
+- Obvious Relationships https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-relationships.html
+- Obvious Serialization https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-serialization.html
