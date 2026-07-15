@@ -11,6 +11,7 @@ context: queues
   - [Driver Notes and Prerequisites](#driver-prerequisites)
 - [Queueing Storable Array Callables (Recommended)](#queueing-storable-array-callables-recommended)
   - [Basic Dispatching](#basic-dispatching)
+  - [Unique Array Callables](#unique-array-callables)
   - [Chains & Batches](#chains-and-batches-arrays)
   - [Job Chaining Exceptions](#job-chaining-exceptions)
   - [Job Middleware and Rate Limiting](#job-middleware-and-rate-limiting)
@@ -172,6 +173,25 @@ No need to create a Job class for simple logic. The container will autowire depe
 
     // Primitive arguments passed explicitly. Dependencies autowired.
     \dispatch([EmailService::class, 'sendWelcomeEmail', ['userId' => $user->id]]);
+
+#### Unique Array Callables
+
+    use MacropaySolutions\Kernel\Queue\UniqueCallQueuedCallable;
+    use MacropaySolutions\Kernel\Queue\UniqueUntilProcessingCallQueuedCallable;
+    
+    // Standard Unique Lock (Released AFTER execution)
+    UniqueCallQueuedCallable::create([ProcessReport::class, 'handle', ['id' => 5]])
+        ->setUniqueId('report-lock-5') // optional
+        ->setUniqueFor(300) // optional
+        ->setUniqueCacheStore('redis') // optional
+        ->dispatch();
+    
+    // Early-Release Unique Lock (Released BEFORE execution)
+    UniqueUntilProcessingCallQueuedCallable::create([ProcessReport::class, 'handle', ['id' => 5]])
+        ->setUniqueId('report-lock-5') // optional
+        ->setUniqueFor(300) // optional
+        ->setUniqueCacheStore('redis') // optional
+        ->dispatch();
 
 #### Chains and Batches Arrays
 
@@ -1599,7 +1619,16 @@ public const FORBID_SERIALIZED_OBJECTS_IN_QUEUE = true;
 ```
 When enabled, the framework will forcefully scan all outbound job payloads. If a developer attempts to dispatch a traditional instantiated job object, a queued closure, or attempts to chain an object into an array callable, the queue dispatcher will immediately throw an InvalidArgumentException.
 
-In this strict mode, only Storable Array Callables, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
+**How Storable Objects Work in Strict Mode**
+
+While traditional objects are banned, the framework natively supports routing objects that implement the `StorableCallable` interface (such as Mailables, Notifications, and Broadcast Events and so on). 
+
+When you dispatch a `StorableCallable`, the framework intercepts the object *before* serialization. It extracts the object's public properties into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
+
+> [!WARNING]  
+> **The Primitive Property Rule:** Because the extraction process only permits primitives, your `StorableCallable` classes **must not contain objects in their public properties**. If you pass an ORM Model or any other object as a public property, the `ensureNoObjects` security validator will instantly throw an exception on the web server. You must pass primitive IDs (e.g., `$orderId`) and re-fetch your data on the worker.
+
+In this strict mode, only Storable Array Callables, objects implementing the `StorableCallable` contract, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
 
 <a name="encrypted-array-callables"></a>
 #### Encrypted Array Callables
