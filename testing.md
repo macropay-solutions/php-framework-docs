@@ -375,6 +375,11 @@ Framework provides a convenient `expectsJobs` method that will verify that the e
 > [!WARNING]  
 > Because PHP-Framework enforces strict architectural boundaries, **closure serialization is completely unsupported and forbidden**. When validating or defining queued jobs and their execution payloads, you must strictly utilize **Storable Array Callables** (e.g., `[Class::class, 'method']`) instead of closures.
 
+> [!NOTE]  
+> **Storable Array Callables & Mocking:** If your application dispatches background tasks using Storable Array Callables (e.g., `\dispatch([PodcastService::class, 'purchase'])`), pass the **service class name** (e.g., `PodcastService::class`) to the `expectsJobs` method. The testing engine will automatically unwrap the payload to verify the dispatch.
+>
+> **Note on Multiple Jobs:** The `expectsJobs` method expects a single job class string per call. To assert multiple jobs, chain them or call the helper sequentially (e.g., `$this->expectsJobs(JobA::class)->expectsJobs(JobB::class)`).
+
 > **Note:** This method only detects jobs that are dispatched via the `dispatch` global helper function or the `$this->dispatch` method from a route or controller. It does not detect jobs that are sent directly to `Queue::push`. Always use `app('queue')` or `dispatch()` to queue your jobs.
 
 <a name="running-tests"></a>
