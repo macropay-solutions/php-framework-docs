@@ -353,13 +353,16 @@ Typically, you will want to pass some data to your view that you can utilize whe
 
     class OrderShipped extends Mailable
     {
-        use Queueable, SerializesModels;
+        use Queueable;
+        use SerializesModels; // SerializesModels is useless in Strict Mode because objects are banned!
+
 
         /**
          * Create a new message instance.
          */
         public function __construct(
-            public Order $order,
+            // MUST be a primitive! Objects will be rejected by the Queue engine.
+            public ?int $orderId = null, 
         ) {}
 
         /**
@@ -857,6 +860,16 @@ Inside your targeted service implementation, pull a fresh record from the databa
             \app('mailer')->to($recipient)->send(new OrderShipped($order));
         }
     }
+
+> [!WARNING]  
+> **The Primitive Property Rule:** In Strict Queue Mode, objects are fundamentally banned from queue payloads. If your Mailable has a public property containing an Object (like an Obvious Model), the dispatcher will throw a security exception. You **must** pass primitive data (like an `$orderId`) and fetch the database records inside your `envelope()` or `build()` methods.
+>
+> **The Constructor Rule:** Because the worker rebuilds your Mailable via the Dependency Injection container (`\app($class)`) before hydrating its public properties, **the constructor must be resolvable by the container**. Any stateful arguments (like `$orderId`) must be optional (`= null`), or you will trigger an `ArgumentCountError` on the worker. To avoid reflection you can add these classes in your app.autowiring config.
+>
+> **The "Dumb" Constructor Caveat:** Because the worker passes `null` to build the initial shell, your constructor must *only* be used for property assignment. Do not execute database queries or business logic on the passed arguments inside the constructor, as it will crash the worker.
+>
+> **❌ BAD (Crashes on Worker):** `$this->invoice = Order::find($orderId)->invoice;` // Crashes because $orderId is null on the worker!
+> **✅ GOOD (Safe):** Fetch the order inside the `envelope()`, `content()`, or `build()` methods. The framework will have fully hydrated the real `$orderId` integer by the time those methods execute.
 
 #### Via Legacy Object Serialization (Requires Strict Mode Disabled)
 
