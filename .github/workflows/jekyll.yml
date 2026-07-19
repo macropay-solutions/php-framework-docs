@@ -3,7 +3,7 @@ name: Deploy Multi-Version Jekyll Site to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["1.x"]
+    branches: ["1.x", "production"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
