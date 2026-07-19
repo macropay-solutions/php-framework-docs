@@ -299,6 +299,11 @@ If you are migrating a legacy application and need to dispatch traditional objec
 > 
 > Instead, PHP will silently strip away all `protected` and `private` properties. The background worker will receive a fragmented associative array containing only the public properties. If your target method expects the original DTO class type, the worker will crash with a fatal `TypeError`. If it expects an array, you will experience silent state loss. Always double-check that your nested objects implement `JsonSerializable` or use ONLY public primitive properties!
 
+> [!WARNING]  
+> **Manual Serialization & POI Vulnerabilities:** Strict Security Mode protects your application from PHP Object Injection (POI) by preventing the framework from automatically unserializing objects. Do **not** attempt to bypass this by manually serializing objects into strings (e.g., `['data' => \serialize($obj)]`) before dispatching.
+>
+> For maximum performance, the dispatcher does not run regex scans on text strings. If you manually execute `\unserialize()` inside your worker methods to decode these strings, you are actively re-introducing POI attack vectors into your own application logic.
+
 <a name="encrypted-array-callables"></a>
 #### Encrypted Array Callables
 
