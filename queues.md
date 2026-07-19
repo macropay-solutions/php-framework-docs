@@ -294,6 +294,11 @@ If you are migrating a legacy application and need to dispatch traditional objec
         public const FORBID_SERIALIZED_OBJECTS_IN_QUEUE = false;
     }
 
+> [!CAUTION]  
+> **The Silent Data Loss Trap:** The framework relies entirely on PHP's native `json_encode()` for high-performance payload flattening. If you nest a standard PHP object or DTO inside your array payload and **forget** to implement `JsonSerializable`, the dispatcher will **NOT** throw an error. 
+> 
+> Instead, PHP will silently strip away all `protected` and `private` properties. The background worker will receive a fragmented associative array containing only the public properties. If your target method expects the original DTO class type, the worker will crash with a fatal `TypeError`. If it expects an array, you will experience silent state loss. Always double-check that your nested objects implement `JsonSerializable` or use ONLY public primitive properties!
+
 <a name="encrypted-array-callables"></a>
 #### Encrypted Array Callables
 
