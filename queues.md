@@ -345,25 +345,35 @@ Job classes are very simple, normally containing only a `handle` method that is 
     use MacropaySolutions\Kernel\Queue\InteractsWithQueue;
     use MacropaySolutions\Kernel\Queue\SerializesModels;
 
-    class ProcessPodcast implements ShouldQueue
+    class ProcessPodcast implements ShouldQueue, StorableCallable
     {
-        use InteractsWithQueue, Queueable, SerializesModels;
+        use InstanceDispatchable;
+        use InteractsWithQueue;
+        use Queueable;
+        use SerializesModels;
 
         /**
          * Create a new job instance.
          */
         public function __construct(
-            public Podcast $podcast,
+            //jobs must NOT receive their data via construct
         ) {}
 
         /**
          * Execute the job.
          */
-        public function handle(AudioProcessor $processor): void
+        public function handle(AudioProcessor $processor, array $podcast): void
         {
+            $podcast = Podcast::query()->findOrFail($podcast['id']);
             // Process uploaded podcast...
         }
     }
+
+    ProcessPodcast::new([
+        'podcast' => $podcast,
+        // or
+        // 'podcast' => $podcast->toArray(), // the json_encode will convert it into a json and the worker will reconstruct it as array
+    ])->dispatch();
 
 In this example, note that we were able to pass an [Obvious model](/obvious) directly into the queued job's constructor. Because of the `SerializesModels` trait that the job is using, Obvious models and their loaded relationships will be gracefully serialized and unserialized when the job is processing.
 
@@ -389,6 +399,9 @@ If you would like to take total control over how the container injects dependenc
 
 <a name="handling-relationships"></a>
 #### Queued Relationships
+
+> [!WARNING]  
+> The following applies **only** if you have explicitly disabled Strict Security Mode (`FORBID_SERIALIZED_OBJECTS_IN_QUEUE = false`). In default strict mode, objects and relations are blocked from entering the queue entirely.
 
 Because all loaded Obvious model relationships also get serialized when a job is queued, the serialized job string can sometimes become quite large. Furthermore, when a job is deserialized and model relationships are re-retrieved from the database, they will be retrieved in their entirety. Any previous relationship constraints that were applied before the model was serialized during the job queueing process will not be applied when the job is deserialized. Therefore, if you wish to work with a subset of a given relationship, you should re-constrain that relationship within your queued job.
 
@@ -1621,14 +1634,43 @@ When enabled, the framework will forcefully scan all outbound job payloads. If a
 
 **How Storable Objects Work in Strict Mode**
 
-While traditional objects are banned, the framework natively supports routing objects that implement the `StorableCallable` interface (such as Mailables, Notifications, and Broadcast Events and so on). 
+While traditional objects are banned, the framework natively supports routing objects that implement the `StorableCallable` interface (Mailables, Notifications, Broadcast Events, and Queued Events). 
 
 When you dispatch a `StorableCallable`, the framework intercepts the object *before* serialization. It extracts the object's public properties into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
 
 > [!WARNING]  
 > **The Primitive Property Rule:** Because the extraction process only permits primitives, your `StorableCallable` classes **must not contain objects in their public properties**. If you pass an ORM Model or any other object as a public property, the `ensureNoObjects` security validator will instantly throw an exception on the web server. You must pass primitive IDs (e.g., `$orderId`) and re-fetch your data on the worker.
 
+> [!WARNING]  
+> **The Broadcast Exception:** While Mailables and Notifications rely on public properties for their payload, **Broadcast Events** operate differently. In Strict Mode, queued Broadcast Events are strictly required to define a `broadcastWith()` method that returns an associative array of primitive data. The framework will throw a `RuntimeException` if a queued Broadcast Event attempts to rely on property reflection instead of an explicit `broadcastWith()` payload.
+
+> [!WARNING]  
+> **The Queued Event Trap:** If you dispatch an Event that triggers a Queued Listener, the **Event class itself** must obey the Primitive Property Rule. You cannot pass an Obvious Model or object into your Event's public properties, or the dispatcher will crash when queueing the listener. Pass primitive IDs into your Event constructor and re-hydrate the models inside your Queued Listener's `handle()` method.
+
 In this strict mode, only Storable Array Callables, objects implementing the `StorableCallable` contract, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
+
+#### Passing JSON-Ready Objects and DTOs
+
+Because the transport engine utilizes `json_encode()` under Strict Security Mode, you can pass rich Data Transfer Objects (DTOs) or custom value objects within your job arguments, provided they implement the native `JsonSerializable` interface. 
+
+When the job is dispatched, the framework automatically triggers the object's `jsonSerialize()` method, flattening it into a secure, queue-legal primitive structure.
+
+> [!WARNING]  
+> **The One-Way Array Rule:** The transformation is entirely destructive to the original object type. Because the background worker unpacks the payload using `json_decode($command, true)`, **the object will arrive at your target method as a native PHP associative array**, not the original class instance. Your background processing methods must type-hint `array` accordingly.
+
+    // Dispatching a DTO that implements \JsonSerializable or a model:
+    \dispatch([BillingService::class, 'provisionAccount', ['data' => $dtoOrModel]]);
+
+    // Worker implementation receiving the flattened payload:
+    class BillingService 
+    {
+        public function provisionAccount(array $data): void
+        {
+            // $data is received as associative array e.g. ['name' => 'John Doe', 'role' => 'admin']
+        }
+    }
+
+If your background logic specifically requires a literal, raw JSON string representation (e.g., to store directly into a database text column or forward to a third-party API wrapper), you must explicitly run `json_encode()` on the object *prior* to passing it to the dispatcher. This ensures the transport layer treats it as an escaped string primitive rather than a processable array layout.
 
 <a name="encrypted-array-callables"></a>
 #### Encrypted Array Callables
@@ -1887,22 +1929,26 @@ When a particular job fails, you may want to send an alert to your users or reve
     use MacropaySolutions\Kernel\Queue\SerializesModels;
     use Throwable;
 
-    class ProcessPodcast implements ShouldQueue
+    class ProcessPodcast implements ShouldQueue, StorableCallable
     {
-        use InteractsWithQueue, Queueable, SerializesModels;
+        use InstanceDispatchable;
+        use InteractsWithQueue;
+        use Queueable;
+        use SerializesModels;
 
         /**
          * Create a new job instance.
          */
         public function __construct(
-            public Podcast $podcast,
+            //jobs must NOT receive their data via construct
         ) {}
 
         /**
          * Execute the job.
          */
-        public function handle(AudioProcessor $processor): void
+        public function handle(AudioProcessor $processor, array $podcast): void
         {
+            $podcast = Podcast::query()->findOrFail($podcast['id']);
             // Process uploaded podcast...
         }
 
@@ -1914,6 +1960,12 @@ When a particular job fails, you may want to send an alert to your users or reve
             // Send user notification of failure, etc...
         }
     }
+
+    ProcessPodcast::new([
+        'podcast' => $podcast,
+        // or
+        // 'podcast' => $podcast->toArray(), // the json_encode will convert it into a json and the worker will reconstruct it as array
+    ])->dispatch();
 
 > [!WARNING]  
 > A new instance of the job is instantiated before invoking the `failed` method; therefore, any class property modifications that may have occurred within the `handle` method will be lost.
