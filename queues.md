@@ -304,6 +304,10 @@ If you are migrating a legacy application and need to dispatch traditional objec
 >
 > For maximum performance, the dispatcher does not run regex scans on text strings. If you manually execute `\unserialize()` inside your worker methods to decode these strings, you are actively re-introducing POI attack vectors into your own application logic.
 
+> [!CAUTION]  
+> **Migration Warning: Changing `FORBID_SERIALIZED_OBJECTS_IN_QUEUE` Requires Empty Queues!**  
+> Because the background worker changes its payload decoding engine (`json_decode` vs `unserialize`) based on this constant, you **must** ensure all queues are completely empty before toggling this value. If you flip this constant while jobs are still in flight, the worker will crash when attempting to parse the old payloads.
+
 <a name="encrypted-array-callables"></a>
 #### Encrypted Array Callables
 
