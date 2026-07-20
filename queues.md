@@ -1599,14 +1599,23 @@ class EmailService
 #### Storable Objects
 Because the framework uses a strict JSON transport layer to eliminate PHP Object Injection (POI) vulnerabilities, traditional objects silently lose their class routing identity when encoded. To prevent un-routable payloads, if a developer attempts to dispatch a traditional instantiated job object (that does not implement `StorableCallable`), a queued closure, or attempts to chain an object, the queue dispatcher will explicitly throw an `InvalidArgumentException` or `RuntimeException`. However, objects nested *inside* valid array payloads will not throw an exception and will suffer silent data loss.
 
-**How Storable Objects Work**
+**How Storable Objects & `SerializesModels` Work**
 
 While traditional objects are banned, the framework natively supports routing objects that implement the `StorableCallable` interface (Mailables, Notifications, Broadcast Events, and Queued Events). 
 
-When you dispatch a `StorableCallable`, the framework intercepts the object *before* serialization. It extracts the object's public properties into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
+When you dispatch a `StorableCallable` or a class utilizing `SerializesModels` (Mailables, Notifications, Broadcast Events, and Queued Events), the framework intercepts the object *before* serialization. It extracts the object's **public properties** into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
+
+<a name="model-serialization-and-rehydration"></a>
+#### Automatic Model Serialization & Rehydration
+
+When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCollection`) into Storable Array Callables or as public properties on Storable Objects (Mailables, Notifications, Events), the framework **does not** serialize the entire object or its loaded relationships into the queue payload.
+
+Instead, the framework intercepts the model and converts it into a lightweight `ModelIdentifier` structure containing only the class name and primary key. 
+
+When the background worker picks up the job, it automatically queries the database to **rehydrate** a completely fresh instance of the model before invoking your logic. This guarantees your background workers always operate on the most up-to-date database state, preventing stale data bugs. This does not work on composite primary keys! For those cases manually dispatch the identifiers and do not use the object.
 
 > [!WARNING]  
-> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (like an Obvious Model) as a public property to your `StorableCallable` (e.g., Mailable, Notification, Broadcast Event) will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your methods expect an actual Model instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and re-fetch your records on the worker.
+> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a QueueableCollection or QueueableEntity) as a public property to your `StorableCallable` (e.g., Mailable, Notification, Broadcast Event) will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your methods expect an actual Model instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and re-fetch your records on the worker.
 
 > [!WARNING]  
 > **The Broadcast Exception:** While Mailables and Notifications rely on public properties for their payload, **Broadcast Events** operate differently. Queued Broadcast Events are strictly required to define a `broadcastWith()` method that returns an associative array of primitive data. The framework will throw a `RuntimeException` if a queued Broadcast Event attempts to rely on property reflection instead of an explicit `broadcastWith()` payload.
@@ -1970,16 +1979,19 @@ To delete all of your failed jobs from the `failed_jobs` table, you may use the 
 <a name="ignoring-missing-models"></a>
 ### Ignoring Missing Models
 
-When injecting an Obvious model into an object job, the model is automatically serialized before being placed on the queue. However, if the model has been deleted, your job may fail with a `ModelNotFoundException`. Array Callables bypass this requirement entirely since you fetch models explicitly in your own method logic.
+Because queued tasks automatically rehydrate fresh model instances from the database, your job will fail with a `ModelNotFoundException` if the underlying database record is deleted before the worker processes the payload.
 
-For convenience, you may choose to automatically delete jobs with missing models by setting your job's `deleteWhenMissingModels` property to `true`. When this property is set to `true`, Framework will quietly discard the job without raising an exception:
+If you are queuing a Storable Object (like a Mailable, Notification, Broadcast Event or you are using a normal class) and want the worker to silently discard the job if the model no longer exists, you may add the `$deleteWhenMissingModels` public property to your class and set it to `true`:
 
-    /**
-     * Delete the job if its models no longer exist.
-     *
-     * @var bool
-     */
-    public $deleteWhenMissingModels = true;
+    <?php
+
+        /**
+         * Delete the job if its models no longer exist.
+         */
+        public bool $deleteWhenMissingModels = true;
+
+
+When this property is set to `true`, the queue worker will quietly discard the job without raising an exception or sending it to the `failed_jobs` table.
 
 <a name="pruning-failed-jobs"></a>
 ### Pruning Failed Jobs

@@ -858,8 +858,18 @@ Inside your targeted service implementation, pull a fresh record from the databa
         }
     }
 
+<a name="model-serialization-and-rehydration"></a>
+#### Automatic Model Serialization & Rehydration
+
+When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCollection`) as public properties on your Mailable, the framework **does not** serialize the entire object or its loaded relationships. It converts it into a lightweight `ModelIdentifier` and automatically rehydrates a completely fresh instance of the model on the worker. This guarantees your background workers always operate on the most up-to-date database state. This does not work on composite primary keys! For those cases manually dispatch the identifiers and do not use the object.
+
+> [!CAUTION]  
+> **The Protected / Private Property Loss Trap:** The queue transport layer relies entirely on `get_object_vars()` and `json_encode()` to flatten queued Mailables into 100% object-free JSON payloads. As a result, **all `protected` and `private` instance properties are permanently stripped during serialization**.
+>
+> **The Recommended Fix:** To pass primitive data cleanly without exposing it as public properties (or leaking it to Blade templates), **pass your primitive arguments directly to your execution methods** (`handle()`, `content()`, `envelope()`, or `build()`) or use Storable Array Callables. The container and queue engine will hydrate parameters dynamically at execution time.
+
 > [!WARNING]  
-> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (like an Obvious Model) as a public property to your Mailable will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your Mailable methods expect an actual Model instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and fetch the database records inside your `envelope()` or `build()` methods.
+> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a `QueueableCollection` or `QueueableEntity`) as a public property to your Mailable will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your Mailable methods expect an actual instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and fetch the database records inside your `envelope()` or `build()` methods.
 >
 > **The Constructor Rule:** Because the worker rebuilds your Mailable via the Dependency Injection container (`\app($class)`) before hydrating its public properties, **the constructor must be resolvable by the container**. Any stateful arguments (like `$orderId`) must be optional (`= null`), or you will trigger an `ArgumentCountError` on the worker. To avoid reflection you can add these classes in your app.autowiring config.
 >
