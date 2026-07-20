@@ -349,13 +349,10 @@ Typically, you will want to pass some data to your view that you can utilize whe
     use MacropaySolutions\Kernel\Bus\Queueable;
     use MacropaySolutions\Kernel\Mail\Mailable;
     use MacropaySolutions\Kernel\Mail\Mailables\Content;
-    use MacropaySolutions\Kernel\Queue\SerializesModels;
 
     class OrderShipped extends Mailable
     {
         use Queueable;
-        use SerializesModels; // SerializesModels is useless in Strict Mode because objects are banned!
-
 
         /**
          * Create a new message instance.
@@ -809,9 +806,9 @@ By default, Framework will send email using the mailer configured as the `defaul
 
 Since sending email messages can negatively impact the response time of your application, you should move email delivery operations to the background queue engine.
 
-#### Via Storable Array Callables (Default & Strict Mode Compliant)
+#### Via Storable Array Callables
 
-By default, PHP-Framework operates with strict security parameters enabled (`FORBID_SERIALIZED_OBJECTS_IN_QUEUE = true`). This aggressively blocks instantiated objects from entering your queue layers to eliminate payload injection attack vectors. Traditional mailable execution via pushing the mailable instance to `->queue()` will fail by default in this state.
+PHP-Framework operates with strict security parameters that aggressively block instantiated objects from entering your queue layers to eliminate payload injection attack vectors. Traditional mailable execution via pushing the mailable instance to `->queue()` is not supported.
 
 The recommended, high-performance option is passing a structured **Storable Array Callable** with primitive identifiers. This bypasses object serialization overhead entirely, minimizing payload footprint on services like Redis or Amazon SQS while maximizing background worker throughput.
 
@@ -862,7 +859,7 @@ Inside your targeted service implementation, pull a fresh record from the databa
     }
 
 > [!WARNING]  
-> **The Primitive Property Rule:** In Strict Queue Mode, objects are fundamentally banned from queue payloads. If your Mailable has a public property containing an Object (like an Obvious Model), the dispatcher will throw a security exception. You **must** pass primitive data (like an `$orderId`) and fetch the database records inside your `envelope()` or `build()` methods.
+> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (like an Obvious Model) as a public property to your Mailable will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your Mailable methods expect an actual Model instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and fetch the database records inside your `envelope()` or `build()` methods.
 >
 > **The Constructor Rule:** Because the worker rebuilds your Mailable via the Dependency Injection container (`\app($class)`) before hydrating its public properties, **the constructor must be resolvable by the container**. Any stateful arguments (like `$orderId`) must be optional (`= null`), or you will trigger an `ArgumentCountError` on the worker. To avoid reflection you can add these classes in your app.autowiring config.
 >
@@ -870,12 +867,6 @@ Inside your targeted service implementation, pull a fresh record from the databa
 >
 > **❌ BAD (Crashes on Worker):** `$this->invoice = Order::find($orderId)->invoice;` // Crashes because $orderId is null on the worker!
 > **✅ GOOD (Safe):** Fetch the order inside the `envelope()`, `content()`, or `build()` methods. The framework will have fully hydrated the real `$orderId` integer by the time those methods execute.
-
-#### Via Legacy Object Serialization (Requires Strict Mode Disabled)
-
-If you choose to opt-out of strict security mode inside your `App\Application` class by toggling `FORBID_SERIALIZED_OBJECTS_IN_QUEUE = false`, traditional object push routines are restored:
-
-    \app('mailer')->to($request->user()->email)->queue(new OrderShipped($order));
 
 If you wish to delay the delivery of a queued email message, you may use the `later` method. As its first argument, the `later` method accepts a `DateTime` or Carbon instance indicating when the message should be sent:
 
@@ -887,7 +878,7 @@ If you wish to delay the delivery of a queued email message, you may use the `la
 <a name="queueing-by-default"></a>
 #### Queueing by Default
 
-If your legacy application relies on object-based mailables that must execute asynchronously every time, implement the `ShouldQueue` interface directly on your class. The runtime pipeline will intercept explicit `send()` calls and reroute them to the queue connection automatically:
+If your application relies on mailables that must execute asynchronously every time, implement the `ShouldQueue` interface directly on your class. The runtime pipeline will intercept explicit `send()` calls and reroute them to the queue connection automatically:
 
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
     use MacropaySolutions\Kernel\Mail\Mailable;
@@ -906,16 +897,10 @@ To resolve this, toggle the `after_commit` key to `true` in your `config/queue.p
 
 Alternatively, manage this inline on specific calls using the `afterCommit` chain:
 
-    // For Storable Array Callables (Strict Mode Enabled)
     \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create([OrderMailService::class, 'sendOrderShippedEmail', [
         'orderId' => $order->id,
         'recipient' => $email,
     ]])->afterCommit()->dispatch();
-
-    // For Legacy Serialized Mailables (Strict Mode Disabled Only)
-    \app('mailer')->to($email)->send(
-        (new OrderShipped($order))->afterCommit()
-    );
 
 > [!NOTE]  
 > To learn more about working around these issues, please review the documentation regarding [queued jobs and database transactions](/queues#jobs-and-database-transactions).
@@ -1013,9 +998,9 @@ As you might expect, the "HTML" assertions assert that the HTML version of your 
 
 We suggest testing the content of your mailables separately from your tests that assert that a given delivery chain was invoked. It is sufficient to simply assert that Framework was instructed to queue or send a given operation.
 
-#### Asserting Storable Array Callables (Default Mode)
+#### Asserting Storable Array Callables
 
-When validating email dispatch routines while utilizing **Storable Array Callables**, assert directly against the queue service container fake using the structured class-method array instead of checking for instantiated objects:
+When validating email dispatch routines, assert directly against the queue service container fake using the structured class-method array instead of checking for instantiated objects:
 
     namespace Tests\Feature;
 
@@ -1037,31 +1022,7 @@ When validating email dispatch routines while utilizing **Storable Array Callabl
         }
     }
 
-#### Asserting Legacy Object Mailables (Strict Mode Off)
-
-If your environment operates with strict mode disabled, you may call `fake()` directly on the mailer service container to halt transmissions and inspect object states:
-
-    <?php
-
-    namespace Tests\Feature;
-
-    use App\Mail\OrderShipped;
-    use Tests\TestCase;
-
-    class ExampleTest extends TestCase
-    {
-        public function test_orders_can_be_shipped(): void
-        {
-            \app('mailer')->fake();
-
-            // Perform order shipping operations...
-
-            \app('mailer')->assertSent(OrderShipped::class);
-            \app('mailer')->assertSentCount(1);
-        }
-    }
-
-If you are queueing legacy mailables for delivery in the background, use `assertQueued` instead of `assertSent`:
+If you are queueing mailables for delivery in the background, use `assertQueued` instead of `assertSent`:
 
     \app('mailer')->assertQueued(OrderShipped::class);
     \app('mailer')->assertNotQueued(OrderShipped::class);
