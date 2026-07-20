@@ -376,7 +376,7 @@ Typically, you will want to pass some data to your view that you can utilize whe
 Once the data has been set to a public property, it will automatically be available in your view, so you may access it like you would access any other data in your Blade templates:
 
     <div>
-        Price: {{ $order->price }}
+        Order ID: {{ $orderId }}
     </div>
 
 <a name="via-the-with-parameter"></a>

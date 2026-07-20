@@ -780,7 +780,7 @@ Internally, this middleware uses Framework's cache system to implement rate limi
 <a name="dispatching-jobs"></a>
 ## Dispatching Jobs
 
-You may dispatch tasks using the `\dispatch` global helper method. The arguments passed to the `\dispatch` method will automatically wrap array callables or standard job classes (if strict security is bypassed):
+You may dispatch tasks using the `\dispatch` global helper method. The arguments passed to the `\dispatch` method will automatically wrap array callables or storable job classes:
 
     <?php
 
