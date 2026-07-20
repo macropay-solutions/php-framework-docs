@@ -15,7 +15,6 @@ context: queues
   - [Chains & Batches](#chains-and-batches-arrays)
   - [Job Chaining Exceptions](#job-chaining-exceptions)
   - [Job Middleware and Rate Limiting](#job-middleware-and-rate-limiting)
-  - [Strict Security Mode](#strict-security-mode)
   - [Encrypted Array Callables](#encrypted-array-callables)
 - [Creating Jobs](#creating-jobs)
   - [Generating Job Classes](#generating-job-classes)
@@ -163,7 +162,7 @@ The following dependencies are needed for the listed queue drivers. These depend
 <a name="queueing-storable-array-callables-recommended"></a>
 ## Queueing Storable Array Callables (Recommended)
 
-Framework supports **Storable Array Callables** as a secure, high-performance alternative to traditional object-based jobs by eliminating serialization overhead. Because of the risk of PHP Object Injection (POI) vulnerabilities, this is the default and only allowed queueing mechanism unless strict security mode is explicitly disabled.
+Framework supports **Storable Array Callables** as a secure, high-performance alternative to traditional object-based jobs by eliminating serialization overhead. Because of the risk of PHP Object Injection (POI) vulnerabilities, this is the only allowed queueing mechanism.
 
 #### Basic Dispatching
 
@@ -280,33 +279,15 @@ Because the Storable Array Callable engine seamlessly injects the underlying que
         }
     }
 
-<a name="strict-security-mode"></a>
-#### Strict Security Mode
-
-By default, Framework aggressively forbids serialized objects and closures in the queue to completely eliminate the risk of POI vulnerabilities. In the core container, `FORBID_SERIALIZED_OBJECTS_IN_QUEUE` is set to `true`.
-
-If you are migrating a legacy application and need to dispatch traditional object jobs or closures, you must explicitly opt-out of this security by overriding this constant in your `App\Application` class:
-
-    namespace App;
-
-    class Application extends \MacropaySolutions\Framework\Application
-    {
-        public const FORBID_SERIALIZED_OBJECTS_IN_QUEUE = false;
-    }
-
 > [!CAUTION]  
 > **The Silent Data Loss Trap:** The framework relies entirely on PHP's native `json_encode()` for high-performance payload flattening. If you nest a standard PHP object or DTO inside your array payload and **forget** to implement `JsonSerializable`, the dispatcher will **NOT** throw an error. 
 > 
 > Instead, PHP will silently strip away all `protected` and `private` properties. The background worker will receive a fragmented associative array containing only the public properties. If your target method expects the original DTO class type, the worker will crash with a fatal `TypeError`. If it expects an array, you will experience silent state loss. Always double-check that your nested objects implement `JsonSerializable` or use ONLY public primitive properties!
 
 > [!WARNING]  
-> **Manual Serialization & POI Vulnerabilities:** Strict Security Mode protects your application from PHP Object Injection (POI) by preventing the framework from automatically unserializing objects. Do **not** attempt to bypass this by manually serializing objects into strings (e.g., `['data' => \serialize($obj)]`) before dispatching.
+> **Manual Serialization & POI Vulnerabilities:** The framework protects your application from PHP Object Injection (POI) by preventing the automatic unserialization of objects. Do **not** attempt to bypass this by manually serializing objects into strings (e.g., `['data' => \serialize($obj)]`) before dispatching.
 >
 > For maximum performance, the dispatcher does not run regex scans on text strings. If you manually execute `\unserialize()` inside your worker methods to decode these strings, you are actively re-introducing POI attack vectors into your own application logic.
-
-> [!CAUTION]  
-> **Migration Warning: Changing `FORBID_SERIALIZED_OBJECTS_IN_QUEUE` Requires Empty Queues!**  
-> Because the background worker changes its payload decoding engine (`json_decode` vs `unserialize`) based on this constant, you **must** ensure all queues are completely empty before toggling this value. If you flip this constant while jobs are still in flight, the worker will crash when attempting to parse the old payloads.
 
 <a name="encrypted-array-callables"></a>
 #### Encrypted Array Callables
@@ -332,7 +313,7 @@ Storable Array Callables fully support Framework's built-in payload encryption. 
 ## Creating Jobs
 
 > [!WARNING]  
-> Creating and dispatching traditional job objects is blocked by default. You must set `FORBID_SERIALIZED_OBJECTS_IN_QUEUE = false` in your `Application` class to use this feature.
+> Creating and dispatching traditional job objects is completely blocked by the framework. Because the transport layer strictly uses JSON to prevent PHP Object Injection, traditional objects silently lose their class identity when encoded and cannot be routed by the worker. You must use Storable Array Callables or implement the `StorableCallable` interface instead.
 
 <a name="generating-job-classes"></a>
 ### Generating Job Classes
@@ -357,14 +338,12 @@ Job classes are very simple, normally containing only a `handle` method that is 
     use MacropaySolutions\Kernel\Bus\Queueable;
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
     use MacropaySolutions\Kernel\Queue\InteractsWithQueue;
-    use MacropaySolutions\Kernel\Queue\SerializesModels;
 
     class ProcessPodcast implements ShouldQueue, StorableCallable
     {
         use InstanceDispatchable;
         use InteractsWithQueue;
         use Queueable;
-        use SerializesModels;
 
         /**
          * Create a new job instance.
@@ -389,10 +368,6 @@ Job classes are very simple, normally containing only a `handle` method that is 
         // 'podcast' => $podcast->toArray(), // the json_encode will convert it into a json and the worker will reconstruct it as array
     ])->dispatch();
 
-In this example, note that we were able to pass an [Obvious model](/obvious) directly into the queued job's constructor. Because of the `SerializesModels` trait that the job is using, Obvious models and their loaded relationships will be gracefully serialized and unserialized when the job is processing.
-
-If your queued job accepts an Obvious model in its constructor, only the identifier for the model will be serialized onto the queue. When the job is actually handled, the queue system will automatically re-retrieve the full model instance and its loaded relationships from the database. This approach to model serialization allows for much smaller job payloads to be sent to your queue driver.
-
 <a name="handle-method-dependency-injection"></a>
 #### `handle` Method Dependency Injection
 
@@ -410,24 +385,6 @@ If you would like to take total control over how the container injects dependenc
 
 > [!WARNING]  
 > Binary data, such as raw image contents, should be passed through the `base64_encode` function before being passed to a queued job. Otherwise, the job may not properly serialize to JSON when being placed on the queue.
-
-<a name="handling-relationships"></a>
-#### Queued Relationships
-
-> [!WARNING]  
-> The following applies **only** if you have explicitly disabled Strict Security Mode (`FORBID_SERIALIZED_OBJECTS_IN_QUEUE = false`). In default strict mode, objects and relations are blocked from entering the queue entirely.
-
-Because all loaded Obvious model relationships also get serialized when a job is queued, the serialized job string can sometimes become quite large. Furthermore, when a job is deserialized and model relationships are re-retrieved from the database, they will be retrieved in their entirety. Any previous relationship constraints that were applied before the model was serialized during the job queueing process will not be applied when the job is deserialized. Therefore, if you wish to work with a subset of a given relationship, you should re-constrain that relationship within your queued job.
-
-Or, to prevent relations from being serialized, you can call the `withoutRelations` method on the model when setting a property value. This method will return an instance of the model without its loaded relationships:
-
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(Podcast $podcast)
-    {
-        $this->podcast = $podcast->withoutRelations();
-    }
 
 <a name="unique-jobs"></a>
 ### Unique Jobs
@@ -823,7 +780,7 @@ Internally, this middleware uses Framework's cache system to implement rate limi
 <a name="dispatching-jobs"></a>
 ## Dispatching Jobs
 
-You may dispatch tasks using the `\dispatch` global helper method. The arguments passed to the `\dispatch` method will automatically wrap array callables or standard job classes (if strict security is bypassed):
+You may dispatch tasks using the `\dispatch` global helper method. The arguments passed to the `\dispatch` method will automatically wrap array callables or storable job classes:
 
     <?php
 
@@ -946,7 +903,7 @@ Chaining must be configured using safe, primitive Storable Array Callables. You 
     ])->dispatch();
 
 > [!WARNING]  
-> If you have opted out of Strict Security Mode to use legacy object-based jobs, you may chain them in the exact same manner: `ProcessPodcast::new()->chain([...])`. However, you **cannot** chain Closures, as closure serialization is strictly forbidden by the framework.
+> You **cannot** chain legacy object-based jobs or Closures, as object serialization is strictly forbidden by the framework. All chains must use Array Callables.
 
 > [!WARNING]  
 > Deleting jobs using the `$job->delete()` method (via the injected `Job` interface) will not prevent chained jobs from being processed. The chain will only stop executing if a job in the chain fails by throwing an unhandled exception or calling `$job->fail()`.
@@ -1246,11 +1203,12 @@ To define a batchable job, you should [create a queueable job](#creating-jobs) a
     use MacropaySolutions\Kernel\Bus\Queueable;
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
     use MacropaySolutions\Kernel\Queue\InteractsWithQueue;
-    use MacropaySolutions\Kernel\Queue\SerializesModels;
 
     class ImportCsv implements ShouldQueue
     {
-        use Batchable, InteractsWithQueue, Queueable, SerializesModels;
+        use Batchable;
+        use InteractsWithQueue;
+        use Queueable;
 
         /**
          * Execute the job.
@@ -1637,35 +1595,39 @@ class EmailService
 }
 ```
 
-<a name="strict-security-mode"></a>
-#### Strict Security Mode
-To completely eliminate the risk of PHP Object Injection (POI) vulnerabilities, you may instruct Framework to aggressively reject any serialized objects pushed to the queue. You can enable this strict security boundary by overriding the FORBID_SERIALIZED_OBJECTS_IN_QUEUE constant in your App\Application class:
+<a name="storable-objects"></a>
+#### Storable Objects
+Because the framework uses a strict JSON transport layer to eliminate PHP Object Injection (POI) vulnerabilities, traditional objects silently lose their class routing identity when encoded. To prevent un-routable payloads, if a developer attempts to dispatch a traditional instantiated job object (that does not implement `StorableCallable`), a queued closure, or attempts to chain an object, the queue dispatcher will explicitly throw an `InvalidArgumentException` or `RuntimeException`. However, objects nested *inside* valid array payloads will not throw an exception and will suffer silent data loss.
 
-```PHP
-public const FORBID_SERIALIZED_OBJECTS_IN_QUEUE = true;
-```
-When enabled, the framework will forcefully scan all outbound job payloads. If a developer attempts to dispatch a traditional instantiated job object, a queued closure, or attempts to chain an object into an array callable, the queue dispatcher will immediately throw an InvalidArgumentException.
-
-**How Storable Objects Work in Strict Mode**
+**How Storable Objects & `SerializesModels` Work**
 
 While traditional objects are banned, the framework natively supports routing objects that implement the `StorableCallable` interface (Mailables, Notifications, Broadcast Events, and Queued Events). 
 
-When you dispatch a `StorableCallable`, the framework intercepts the object *before* serialization. It extracts the object's public properties into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
+When you dispatch a `StorableCallable` or a class utilizing `SerializesModels` (Mailables, Notifications, Broadcast Events, and Queued Events), the framework intercepts the object *before* serialization. It extracts the object's **public properties** into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
+
+<a name="model-serialization-and-rehydration"></a>
+#### Automatic Model Serialization & Rehydration
+
+When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCollection`) into Storable Array Callables or as public properties on Storable Objects (Mailables, Notifications, Events), the framework **does not** serialize the entire object or its loaded relationships into the queue payload.
+
+Instead, the framework intercepts the model and converts it into a lightweight `ModelIdentifier` structure containing only the class name and primary key. 
+
+When the background worker picks up the job, it automatically queries the database to **rehydrate** a completely fresh instance of the model before invoking your logic. This guarantees your background workers always operate on the most up-to-date database state, preventing stale data bugs. This does not work on composite primary keys! For those cases manually dispatch the identifiers and do not use the object.
 
 > [!WARNING]  
-> **The Primitive Property Rule:** Because the extraction process only permits primitives, your `StorableCallable` classes **must not contain objects in their public properties**. If you pass an ORM Model or any other object as a public property, the `ensureNoObjects` security validator will instantly throw an exception on the web server. You must pass primitive IDs (e.g., `$orderId`) and re-fetch your data on the worker.
+> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a QueueableCollection or QueueableEntity) as a public property to your `StorableCallable` (e.g., Mailable, Notification, Broadcast Event) will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your methods expect an actual Model instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and re-fetch your records on the worker.
 
 > [!WARNING]  
-> **The Broadcast Exception:** While Mailables and Notifications rely on public properties for their payload, **Broadcast Events** operate differently. In Strict Mode, queued Broadcast Events are strictly required to define a `broadcastWith()` method that returns an associative array of primitive data. The framework will throw a `RuntimeException` if a queued Broadcast Event attempts to rely on property reflection instead of an explicit `broadcastWith()` payload.
+> **The Broadcast Exception:** While Mailables and Notifications rely on public properties for their payload, **Broadcast Events** operate differently. Queued Broadcast Events are strictly required to define a `broadcastWith()` method that returns an associative array of primitive data. The framework will throw a `RuntimeException` if a queued Broadcast Event attempts to rely on property reflection instead of an explicit `broadcastWith()` payload.
 
 > [!WARNING]  
 > **The Queued Event Trap:** If you dispatch an Event that triggers a Queued Listener, the **Event class itself** must obey the Primitive Property Rule. You cannot pass an Obvious Model or object into your Event's public properties, or the dispatcher will crash when queueing the listener. Pass primitive IDs into your Event constructor and re-hydrate the models inside your Queued Listener's `handle()` method.
 
-In this strict mode, only Storable Array Callables, objects implementing the `StorableCallable` contract, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
+Only Storable Array Callables, objects implementing the `StorableCallable` contract, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
 
 #### Passing JSON-Ready Objects and DTOs
 
-Because the transport engine utilizes `json_encode()` under Strict Security Mode, you can pass rich Data Transfer Objects (DTOs) or custom value objects within your job arguments, provided they implement the native `JsonSerializable` interface. 
+Because the transport engine utilizes `json_encode()`, you can pass rich Data Transfer Objects (DTOs) or custom value objects within your job arguments, provided they implement the native `JsonSerializable` interface. 
 
 When the job is dispatched, the framework automatically triggers the object's `jsonSerialize()` method, flattening it into a secure, queue-legal primitive structure.
 
@@ -1710,7 +1672,7 @@ dispatch([ProcessPayroll::class, 'handle', ['employeeId' => 5]]);
 ## Queueing Closures
 
 > [!WARNING]  
-> Queueing closures will not work. For queueing jobs you must explicitly opt out of strict mode in `Application.php` to use this. Consider using [Storable Array Callables](#queueing-storable-array-callables-recommended) instead.
+> Queueing closures is completely unsupported due to the JSON transport layer. Consider using [Storable Array Callables](#queueing-storable-array-callables-recommended) instead.
 
 
 <a name="running-the-queue-worker"></a>
@@ -1940,7 +1902,6 @@ When a particular job fails, you may want to send an alert to your users or reve
     use MacropaySolutions\Kernel\Bus\Queueable;
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
     use MacropaySolutions\Kernel\Queue\InteractsWithQueue;
-    use MacropaySolutions\Kernel\Queue\SerializesModels;
     use Throwable;
 
     class ProcessPodcast implements ShouldQueue, StorableCallable
@@ -1948,7 +1909,6 @@ When a particular job fails, you may want to send an alert to your users or reve
         use InstanceDispatchable;
         use InteractsWithQueue;
         use Queueable;
-        use SerializesModels;
 
         /**
          * Create a new job instance.
@@ -2019,16 +1979,19 @@ To delete all of your failed jobs from the `failed_jobs` table, you may use the 
 <a name="ignoring-missing-models"></a>
 ### Ignoring Missing Models
 
-When injecting an Obvious model into an object job, the model is automatically serialized before being placed on the queue. However, if the model has been deleted, your job may fail with a `ModelNotFoundException`. Array Callables bypass this requirement entirely since you fetch models explicitly in your own method logic.
+Because queued tasks automatically rehydrate fresh model instances from the database, your job will fail with a `ModelNotFoundException` if the underlying database record is deleted before the worker processes the payload.
 
-For convenience, you may choose to automatically delete jobs with missing models by setting your job's `deleteWhenMissingModels` property to `true`. When this property is set to `true`, Framework will quietly discard the job without raising an exception:
+If you are queuing a Storable Object (like a Mailable, Notification, Broadcast Event or you are using a normal class) and want the worker to silently discard the job if the model no longer exists, you may add the `$deleteWhenMissingModels` public property to your class and set it to `true`:
 
-    /**
-     * Delete the job if its models no longer exist.
-     *
-     * @var bool
-     */
-    public $deleteWhenMissingModels = true;
+    <?php
+
+        /**
+         * Delete the job if its models no longer exist.
+         */
+        public bool $deleteWhenMissingModels = true;
+
+
+When this property is set to `true`, the queue worker will quietly discard the job without raising an exception or sending it to the `failed_jobs` table.
 
 <a name="pruning-failed-jobs"></a>
 ### Pruning Failed Jobs
@@ -2226,16 +2189,9 @@ To test job chains, you will need to utilize the bus service's faking capabiliti
         UpdateInventory::class
     ]);
 
-As you can see in the example above, the array of chained jobs may be an array of the job's class names. However, you may also provide an array of actual job instances. When doing so, Framework will ensure that the job instances are of the same class and have the same property values of the chained jobs dispatched by your application. If you have enabled Strict Security Mode, you must use Storable Array Callables for your assertions:
+As you can see in the example above, the array of chained jobs may be an array of the job's class names. However, if you need to assert against specific parameters, you must provide an array of Storable Array Callables:
 
-    // Asserting traditional job objects...
-    \app('bus')->assertChained([
-        ShipOrder::new(),
-        RecordShipment::new(),
-        UpdateInventory::new(),
-    ]);
-
-    // Asserting Storable Array Callables (Required for Strict Mode)...
+    // Asserting Storable Array Callables...
     \app('bus')->assertChained([
         [ShipOrderService::class, 'handle', ['orderId' => 1]],
         [RecordShipmentService::class, 'handle', ['orderId' => 1]],
