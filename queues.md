@@ -14,17 +14,17 @@ context: queues
   - [Unique Array Callables](#unique-array-callables)
   - [Chains & Batches](#chains-and-batches-arrays)
   - [Job Chaining Exceptions](#job-chaining-exceptions)
-  - [Job Middleware and Rate Limiting](#job-middleware-and-rate-limiting)
   - [Encrypted Array Callables](#encrypted-array-callables)
+- [Handling Cross-Cutting Concerns](#handling-cross-cutting-concerns)
+  - [Rate Limiting](#rate-limiting)
+  - [Preventing Job Overlaps](#preventing-job-overlaps)
+  - [Throttling Exceptions](#throttling-exceptions)
+  - [Checking Batch Cancellation](#checking-batch-cancellation)
 - [Creating Jobs](#creating-jobs)
   - [Generating Job Classes](#generating-job-classes)
   - [Class Structure](#class-structure)
   - [Unique Jobs](#unique-jobs)
   - [Encrypted Jobs](#encrypted-jobs)
-- [Job Middleware](#job-middleware)
-  - [Rate Limiting](#rate-limiting)
-  - [Preventing Job Overlaps](#preventing-job-overlaps)
-  - [Throttling Exceptions](#throttling-exceptions)
 - [Dispatching Jobs](#dispatching-jobs)
   - [Delayed Dispatching](#delayed-dispatching)
   - [Synchronous Dispatching](#synchronous-dispatching)
@@ -252,13 +252,36 @@ Similarly, when defining failure callbacks on the dispatch, you must use the Arr
     \dispatch([ReportGenerator::class, 'run', ['reportId' => 10]])
         ->catch([ReportGenerator::class, 'failed', ['reportId' => 10]]);
 
-#### Job Middleware and Rate Limiting
+#### Encrypted Array Callables
 
-Because Array Callables are not traditional Job classes, you cannot define a `middleware()` method on them. If you need to apply rate limiting or prevent job overlaps, you should use Framework's caching and throttling instances directly inside your targeted method.
+Storable Array Callables fully support Framework's built-in payload encryption. If the target class referenced in your array callable implements the `MacropaySolutions\Kernel\Contracts\Queue\ShouldBeEncrypted` interface, the framework will intelligently detect it and automatically encrypt the queued job's metadata and arguments.
 
-Because the Storable Array Callable engine seamlessly injects the underlying queue worker, you can type-hint the `Job` interface to manually release or fail the job if it is rate-limited!
+    namespace App\CallablesAsArray;
 
-**✅ Correct (Rate Limiting via Method Injection):**
+    use MacropaySolutions\Kernel\Contracts\Queue\ShouldBeEncrypted;
+
+    class ProcessPayroll implements ShouldBeEncrypted
+    {
+        public function handle(int $employeeId): void
+        {
+            // ...
+        }
+    }
+
+    // The payload for this array callable will be automatically encrypted...
+    \dispatch([ProcessPayroll::class, 'handle', ['employeeId' => 5]]);
+
+<a name="handling-cross-cutting-concerns"></a>
+## Handling Cross-Cutting Concerns
+
+Because PHP-Framework enforces a strict, stateless architecture to maximize background worker throughput, hidden execution pipelines are not used. Cross-cutting concerns like rate limiting, locks, and exception throttling must be handled via explicit code inside your executing methods. 
+
+The Storable Array Callable engine automatically injects the native queue `Job` interface into your methods, giving you full control to manually release, fail, or inspect the running task.
+
+<a name="rate-limiting"></a>
+### Rate Limiting
+
+To rate limit a background task, utilize the framework's native Redis throttling directly inside your targeted method.
 
     use MacropaySolutions\Kernel\Contracts\Queue\Job;
 
@@ -279,35 +302,82 @@ Because the Storable Array Callable engine seamlessly injects the underlying que
         }
     }
 
-> [!CAUTION]  
-> **The Silent Data Loss Trap:** The framework relies entirely on PHP's native `json_encode()` for high-performance payload flattening. If you nest a standard PHP object or DTO inside your array payload and **forget** to implement `JsonSerializable`, the dispatcher will **NOT** throw an error. 
-> 
-> Instead, PHP will silently strip away all `protected` and `private` properties. The background worker will receive a fragmented associative array containing only the public properties. If your target method expects the original DTO class type, the worker will crash with a fatal `TypeError`. If it expects an array, you will experience silent state loss. Always double-check that your nested objects implement `JsonSerializable` or use ONLY public primitive properties!
+<a name="preventing-job-overlaps"></a>
+### Preventing Job Overlaps
 
-> [!WARNING]  
-> **Manual Serialization & POI Vulnerabilities:** The framework protects your application from PHP Object Injection (POI) by preventing the automatic unserialization of objects. Do **not** attempt to bypass this by manually serializing objects into strings (e.g., `['data' => \serialize($obj)]`) before dispatching.
->
-> For maximum performance, the dispatcher does not run regex scans on text strings. If you manually execute `\unserialize()` inside your worker methods to decode these strings, you are actively re-introducing POI attack vectors into your own application logic.
+To prevent jobs from overlapping and corrupting data (e.g., preventing two workers from updating the same user's credit score simultaneously), you should use the cache system's atomic locks. 
 
-<a name="encrypted-array-callables"></a>
-#### Encrypted Array Callables
+    use MacropaySolutions\Kernel\Contracts\Queue\Job;
 
-Storable Array Callables fully support Framework's built-in payload encryption. If the target class referenced in your array callable implements the `MacropaySolutions\Kernel\Contracts\Queue\ShouldBeEncrypted` interface, the framework will intelligently detect it and automatically encrypt the queued job's metadata and arguments.
-
-    namespace App\CallablesAsArray;
-
-    use MacropaySolutions\Kernel\Contracts\Queue\ShouldBeEncrypted;
-
-    class ProcessPayroll implements ShouldBeEncrypted
+    class CreditScoreService
     {
-        public function handle(int $employeeId): void
+        // The native Job instance is injected automatically!
+        public function updateScore(int $userId, Job $job): void
         {
-            // ...
+            $lock = \app('cache')->lock('update-score-' . $userId, 10);
+ 
+            if (!$lock->get()) {
+                // Another worker is processing this user. Release back to the queue for 5 seconds.
+                return $job->release(5);
+            }
+
+            try {
+                // Lock acquired. Update the credit score...
+            } finally {
+                // Always ensure the lock is explicitly released!
+                $lock->release();
+            }
         }
     }
 
-    // The payload for this array callable will be automatically encrypted...
-    \dispatch([ProcessPayroll::class, 'handle', ['employeeId' => 5]]);
+<a name="throttling-exceptions"></a>
+### Throttling Exceptions
+
+If your background task interacts with a third-party API that becomes unstable, you can manually throttle exceptions by catching them, logging the failure, and releasing the job with an exponential backoff.
+
+    use MacropaySolutions\Kernel\Contracts\Queue\Job;
+
+    class ApiIntegrationService
+    {
+        // The native Job instance is injected automatically!
+        public function syncData(int $recordId, Job $job): void
+        {
+            try {
+                // Attempt third-party API integration...
+            } catch (\Throwable $e) {
+                // API failed. Implement an exponential backoff: 60s, 120s, 180s...
+                $attempts = $job->attempts();
+                
+                if ($attempts >= 5) {
+                    return $job->fail($e); // Fail permanently after 5 tries
+                }
+
+                $job->release($attempts * 60);
+            }
+        }
+    }
+
+<a name="checking-batch-cancellation"></a>
+### Checking Batch Cancellation
+
+When running Array Callables inside a Batch, you may want to stop processing if the overall batch has been cancelled by another failing task. 
+
+The dispatcher automatically injects the `CallQueuedCallable` instance itself into your method if you type-hint it. You can use this to inspect the batch state.
+
+    use MacropaySolutions\Kernel\Queue\CallQueuedCallable;
+
+    class ImportService
+    {
+        // The native $callable instance is injected automatically!
+        public function processRow(int $rowId, CallQueuedCallable $callable): void
+        {
+            if ($callable->batch()?->cancelled()) {
+                return; // Silently abort processing
+            }
+
+            // Process the CSV row...
+        }
+    }
 
 <a name="creating-jobs"></a>
 ## Creating Jobs
@@ -481,7 +551,7 @@ Behind the scenes, when a `ShouldBeUnique` job is dispatched, Framework attempts
     }
 
 > [!NOTE]  
-> If you only need to limit the concurrent processing of a job, use the [`WithoutOverlapping`](/queues#preventing-job-overlaps) job middleware instead.
+> If you only need to limit the concurrent processing of a job, use the [`WithoutOverlapping`](/queues#preventing-job-overlaps) instead.
 
 <a name="encrypted-jobs"></a>
 ### Encrypted Jobs
@@ -498,286 +568,6 @@ Framework allows you to ensure the privacy and integrity of a job's data via [en
         // ...
     }
 
-<a name="job-middleware"></a>
-## Job Middleware
-
-> [!WARNING]  
-> Job Middleware is typically only applicable to legacy Object Jobs. Array callables should handle middleware logic via direct dependency injection in the executing method.
-
-Job middleware allow you to wrap custom logic around the execution of queued jobs, reducing boilerplate in the jobs themselves. For example, consider the following `handle` method which leverages Framework's Redis rate limiting features to allow only one job to process every five seconds:
-
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-        \app('redis')->throttle('key')->block(0)->allow(1)->every(5)->then(function () {
-            info('Lock obtained...');
-
-            // Handle job...
-        }, function () {
-            // Could not obtain lock...
-
-            return $this->release(5);
-        });
-    }
-
-While this code is valid, the implementation of the `handle` method becomes noisy since it is cluttered with Redis rate limiting logic. In addition, this rate limiting logic must be duplicated for any other jobs that we want to rate limit.
-
-Instead of rate limiting in the handle method, we could define a job middleware that handles rate limiting. Framework does not have a default location for job middleware, so you are welcome to place job middleware anywhere in your application. In this example, we will place the middleware in an `app/Jobs/Middleware` directory:
-
-    <?php
-
-    namespace App\Jobs\Middleware;
-
-    use Closure;
-
-    class RateLimited
-    {
-        /**
-         * Process the queued job.
-         *
-         * @param  \Closure(object): void  $next
-         */
-        public function handle(object $job, Closure $next): void
-        {
-            \app('redis')->throttle('key')
-                    ->block(0)->allow(1)->every(5)
-                    ->then(function () use ($job, $next) {
-                        // Lock obtained...
-
-                        $next($job);
-                    }, function () use ($job) {
-                        // Could not obtain lock...
-
-                        $job->release(5);
-                    });
-        }
-    }
-
-As you can see, like [route middleware](/middleware), job middleware receive the job being processed and a callback that should be invoked to continue processing the job.
-
-After creating job middleware, they may be attached to a job by returning them from the job's `middleware` method. This method does not exist on jobs scaffolded by the `make:job` Run command, so you will need to manually add it to your job class:
-
-    use App\Jobs\Middleware\RateLimited;
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [new RateLimited];
-    }
-
-<a name="rate-limiting"></a>
-### Rate Limiting
-
-Although we just demonstrated how to write your own rate limiting job middleware, Framework actually includes a rate limiting middleware that you may utilize to rate limit jobs. Like [route rate limiters](/routing#defining-rate-limiters), job rate limiters are defined using the core `RateLimiter` class configuration.
-
-For example, you may wish to allow users to backup their data once per hour while imposing no such limit on premium customers. To accomplish this, you may define a `RateLimiter` in the `boot` method of your `AppServiceProvider`:
-
-    use MacropaySolutions\Kernel\Cache\RateLimiting\Limit;
-
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
-        \app(\MacropaySolutions\Kernel\Cache\RateLimiter::class)->for('backups', function (object $job) {
-            return $job->user->vipCustomer()
-                        ? Limit::none()
-                        : Limit::perHour(1)->by($job->user->id);
-        });
-    }
-
-Once you have defined your rate limit, you may attach the rate limiter to your job using the `MacropaySolutions\Kernel\Queue\Middleware\RateLimited` middleware:
-
-    use MacropaySolutions\Kernel\Queue\Middleware\RateLimited;
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [new RateLimited('backups')];
-    }
-
-Releasing a rate limited job back onto the queue will still increment the job's total number of `attempts`. You may wish to tune your `tries` and `maxExceptions` properties on your job class accordingly. Or, you may wish to use the [`retryUntil` method](#time-based-attempts) to define the amount of time until the job should no longer be attempted.
-
-If you do not want a job to be retried when it is rate limited, you may use the `dontRelease` method:
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [(new RateLimited('backups'))->dontRelease()];
-    }
-
-> [!NOTE]  
-> If you are using Redis, you may use the `MacropaySolutions\Kernel\Queue\Middleware\RateLimitedWithRedis` middleware, which is fine-tuned for Redis and more efficient than the basic rate limiting middleware.
-
-<a name="preventing-job-overlaps"></a>
-### Preventing Job Overlaps
-
-Framework includes an `MacropaySolutions\Kernel\Queue\Middleware\WithoutOverlapping` middleware that allows you to prevent job overlaps based on an arbitrary key. This can be helpful when a queued job is modifying a resource that should only be modified by one job at a time.
-
-For example, let's imagine you have a queued job that updates a user's credit score and you want to prevent credit score update job overlaps for the same user ID. To accomplish this, you can return the `WithoutOverlapping` middleware from your job's `middleware` method:
-
-    use MacropaySolutions\Kernel\Queue\Middleware\WithoutOverlapping;
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [new WithoutOverlapping($this->user->id)];
-    }
-
-Any overlapping jobs of the same type will be released back to the queue. You may also specify the number of seconds that must elapse before the released job will be attempted again:
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [(new WithoutOverlapping($this->order->id))->releaseAfter(60)];
-    }
-
-If you wish to immediately delete any overlapping jobs so that they will not be retried, you may use the `dontRelease` method:
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [(new WithoutOverlapping($this->order->id))->dontRelease()];
-    }
-
-The `WithoutOverlapping` middleware is powered by Framework's atomic lock feature. Sometimes, your job may unexpectedly fail or timeout in such a way that the lock is not released. Therefore, you may explicitly define a lock expiration time using the `expireAfter` method. For example, the example below will instruct Framework to release the `WithoutOverlapping` lock three minutes after the job has started processing:
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [(new WithoutOverlapping($this->order->id))->expireAfter(180)];
-    }
-
-> [!WARNING]  
-> The `WithoutOverlapping` middleware requires a cache driver that supports [locks](/cache#atomic-locks). Currently, the `memcached`, `redis`, `dynamodb`, `database`, `file`, and `array` cache drivers support atomic locks.
-
-<a name="sharing-lock-keys"></a>
-#### Sharing Lock Keys Across Job Classes
-
-By default, the `WithoutOverlapping` middleware will only prevent overlapping jobs of the same class. So, although two different job classes may use the same lock key, they will not be prevented from overlapping. However, you can instruct Framework to apply the key across job classes using the `shared` method:
-
-```php
-use MacropaySolutions\Kernel\Queue\Middleware\WithoutOverlapping;
-
-class ProviderIsDown
-{
-    // ...
-
-
-    public function middleware(): array
-    {
-        return [
-            (new WithoutOverlapping("status:{$this->provider}"))->shared(),
-        ];
-    }
-}
-
-class ProviderIsUp
-{
-    // ...
-
-
-    public function middleware(): array
-    {
-        return [
-            (new WithoutOverlapping("status:{$this->provider}"))->shared(),
-        ];
-    }
-}
-```
-
-<a name="throttling-exceptions"></a>
-### Throttling Exceptions
-
-Framework includes a `MacropaySolutions\Kernel\Queue\Middleware\ThrottlesExceptions` middleware that allows you to throttle exceptions. Once the job throws a given number of exceptions, all further attempts to execute the job are delayed until a specified time interval lapses. This middleware is particularly useful for jobs that interact with third-party services that are unstable.
-
-For example, let's imagine a queued job that interacts with a third-party API that begins throwing exceptions. To throttle exceptions, you can return the `ThrottlesExceptions` middleware from your job's `middleware` method. Typically, this middleware should be paired with a job that implements [time based attempts](#time-based-attempts):
-
-    use DateTime;
-    use MacropaySolutions\Kernel\Queue\Middleware\ThrottlesExceptions;
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [new ThrottlesExceptions(10, 5)];
-    }
-
-    /**
-     * Determine the time at which the job should timeout.
-     */
-    public function retryUntil(): DateTime
-    {
-        return now()->addMinutes(5);
-    }
-
-The first constructor argument accepted by the middleware is the number of exceptions the job can throw before being throttled, while the second constructor argument is the number of minutes that should elapse before the job is attempted again once it has been throttled. In the code example above, if the job throws 10 exceptions within 5 minutes, we will wait 5 minutes before attempting the job again.
-
-When a job throws an exception but the exception threshold has not yet been reached, the job will typically be retried immediately. However, you may specify the number of minutes such a job should be delayed by calling the `backoff` method when attaching the middleware to the job:
-
-    use MacropaySolutions\Kernel\Queue\Middleware\ThrottlesExceptions;
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [(new ThrottlesExceptions(10, 5))->backoff(5)];
-    }
-
-Internally, this middleware uses Framework's cache system to implement rate limiting, and the job's class name is utilized as the cache "key". You may override this key by calling the `by` method when attaching the middleware to your job. This may be useful if you have multiple jobs interacting with the same third-party service and you would like them to share a common throttling "bucket":
-
-    use MacropaySolutions\Kernel\Queue\Middleware\ThrottlesExceptions;
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [(new ThrottlesExceptions(10, 10))->by('key')];
-    }
-
-> [!NOTE]  
-> If you are using Redis, you may use the `MacropaySolutions\Kernel\Queue\Middleware\ThrottlesExceptionsWithRedis` middleware, which is fine-tuned for Redis and more efficient than the basic exception throttling middleware.
-
-<a name="dispatching-jobs"></a>
 ## Dispatching Jobs
 
 You may dispatch tasks using the `\dispatch` global helper method. The arguments passed to the `\dispatch` method will automatically wrap array callables or storable job classes:
@@ -1373,17 +1163,58 @@ Sometimes you may need to cancel a given batch's execution. This can be accompli
         }
     }
 
-As you may have noticed in the previous examples, batched jobs should typically determine if their corresponding batch has been cancelled before continuing execution. However, for convenience, you may assign the `SkipIfBatchCancelled` [middleware](#job-middleware) to the job instead. As its name indicates, this middleware will instruct Framework to not process the job if its corresponding batch has been cancelled:
+As you may have noticed in the previous examples, batched jobs should typically determine if their corresponding batch has been cancelled before continuing execution to save resources:
 
-    use MacropaySolutions\Kernel\Queue\Middleware\SkipIfBatchCancelled;
+1. In Storable Array Callables (Recommended)
+   The dispatcher automatically injects the active CallQueuedCallable instance into your method when you type-hint it. You can inspect the batch directly before performing heavy processing:
 
-    /**
-     * Get the middleware the job should pass through.
-     */
-    public function middleware(): array
-    {
-        return [new SkipIfBatchCancelled];
-    }
+       namespace App\Services;
+       
+       use MacropaySolutions\Kernel\Queue\CallQueuedCallable;
+       
+       class CsvImportService
+       {
+           /**
+            * Process a chunk of records.
+            */
+           public function processChunk(array $chunk, CallQueuedCallable $callable): void
+           {
+               // 1. Explicitly check if the parent batch was cancelled
+               if ($callable->batch()?->cancelled()) {
+                   return; // Silently abort to save CPU and database resources
+               }
+       
+               // 2. Perform heavy business logic
+               foreach ($chunk as $row) {
+                   // ...
+               }   
+           }
+       }
+
+2. In Job Classes (using the Batchable trait)
+    If you are using a class that imports the MacropaySolutions\Kernel\Bus\Batchable trait, call $this->batch()?->cancelled() at the beginning of the handle() method:
+
+       namespace App\Jobs;
+       
+       use MacropaySolutions\Kernel\Bus\Batchable;
+       use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
+       
+       class ImportCsvRow implements ShouldQueue
+       {
+           use Batchable;
+       
+           public function handle(): void
+           {
+               // Explicit check before executing
+               if ($this->batch()?->cancelled()) {
+                   return;
+               }
+       
+               // Process job...
+           }
+       }
+
+This pattern is documented under: [Handling Cross-Cutting Concerns](#handling-cross-cutting-concerns) Sub-section: [Checking Batch Cancellation](#checking-batch-cancellation)
 
 <a name="batch-failures"></a>
 ### Batch Failures
@@ -1565,34 +1396,6 @@ Similarly, when defining failure callbacks on the dispatch, you must use the Arr
     // Succeeds because the catch callback is a storable array
     \dispatch([ReportGenerator::class, 'run', ['reportId' => 10]])
         ->catch([ReportGenerator::class, 'failed', ['reportId' => 10]]);
-```
-
-#### Job Middleware and Rate Limiting
-
-Because Array Callables are not traditional Job classes, you cannot define a `middleware()` method on them. If you need to apply rate limiting or prevent job overlaps, you should use Framework's caching and throttling directly inside your targeted method.
-
-Because the Storable Array Callable engine seamlessly injects the underlying queue worker, you can type-hint the `Job` interface to manually release or fail the job if it is rate-limited!
-
-**✅ Correct (Rate Limiting via Method Injection):**
-```php
-use MacropaySolutions\Kernel\Contracts\Queue\Job;
-
-class EmailService
-{
-    // The native Job instance is injected automatically!
-    public function sendWelcomeEmail(int $userId, Job $job): void
-    {
-        \app('redis')->throttle('welcome-emails')
-            ->allow(10)->every(60)
-            ->then(function () use ($userId) {
-                // Lock obtained, process the email...
-                User::query()->findOrFail($userId)->sendWelcome();
-            }, function () use ($job) {
-                // Rate limit exceeded, release the job back to the queue for 10 seconds
-                $job->release(10);
-            });
-    }
-}
 ```
 
 <a name="storable-objects"></a>
