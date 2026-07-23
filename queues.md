@@ -14,6 +14,7 @@ context: queues
   - [Unique Array Callables](#unique-array-callables)
   - [Chains & Batches](#chains-and-batches-arrays)
   - [Job Chaining Exceptions](#job-chaining-exceptions)
+  - [Storable Objects](#storable-objects)
   - [Encrypted Array Callables](#encrypted-array-callables)
 - [Handling Cross-Cutting Concerns](#handling-cross-cutting-concerns)
   - [Rate Limiting](#rate-limiting)
@@ -203,8 +204,8 @@ Storable array callables seamlessly integrate with Framework's batching and chai
         [ImageProcessor::class, 'optimize', ['path' => 'photo2.jpg']],
     ])->dispatch();
 
-> [!WARNING]
-> **Important Limitations:** To guarantee 100% protection against PHP Object Injection, `dispatch` strictly forbids objects in payloads or chained arrays. Obvious models are not automatically serialized and re-fetched natively; developers are responsible for passing primitive IDs and querying fresh database state inside their array callables. Alternatively, if capturing the exact current state of the model is important, you can pass its array shape (e.g., `$model->toArray()`).
+> [!NOTE]
+> **Automatic Model Serialization:** Any `Model` or `Collection` instances passed as arguments to a Storable Array Callable are automatically serialized into lightweight database identifier arrays via `SerializesModelsHelper`. On worker execution, fresh instances are automatically re-queried from the database.
 
 #### Job Chaining Exceptions
 
@@ -222,7 +223,7 @@ When chaining jobs onto an Array Callable, you cannot chain a standard instantia
         new SendWelcomeEmail(5) 
     ]);
     
-    \dispatch($job);
+    \dispatch($job); // or $job->dispatch();
 
 **✅ Correct (Using Array Callables):**
 
@@ -233,7 +234,7 @@ When chaining jobs onto an Array Callable, you cannot chain a standard instantia
         [SendWelcomeEmail::class, 'handle', ['userId' => 5]]
     ]);
     
-    \dispatch($job);
+    \dispatch($job); // or $job->dispatch();
 
 Failure Callbacks (catch)
 Similarly, when defining failure callbacks on the dispatch, you must use the Array Callable syntax instead of standard Closures or invokable objects.
@@ -251,6 +252,59 @@ Similarly, when defining failure callbacks on the dispatch, you must use the Arr
     // Succeeds because the catch callback is a storable array
     \dispatch([ReportGenerator::class, 'run', ['reportId' => 10]])
         ->catch([ReportGenerator::class, 'failed', ['reportId' => 10]]);
+
+<a name="storable-objects"></a>
+#### Storable Objects
+Because the framework uses a strict JSON transport layer to eliminate PHP Object Injection (POI) vulnerabilities, traditional objects silently lose their class routing identity when encoded. To prevent un-routable payloads, if a developer attempts to dispatch a traditional instantiated job object (that does not implement `StorableCallable`), a queued closure, or attempts to chain an object, the queue dispatcher will explicitly throw an `InvalidArgumentException` or `RuntimeException`. However, objects nested *inside* valid array payloads will not throw an exception and will suffer silent data loss.
+
+**How Storable Objects & `SerializesModels` Work**
+
+While traditional objects are banned, the framework natively supports routing objects that implement the `StorableCallable` interface (Mailables, Notifications, Broadcast Events, and Queued Events). 
+
+When you dispatch a `StorableCallable` or a class utilizing `SerializesModels` (Mailables, Notifications, Broadcast Events, and Queued Events), the framework intercepts the object *before* serialization. It extracts the object's **public properties** into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
+
+<a name="model-serialization-and-rehydration"></a>
+#### Automatic Model Serialization & Rehydration
+
+When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCollection`) into Storable Array Callables or as public properties on Storable Objects (Mailables, Notifications, Events), the framework **does not** serialize the entire object or its loaded relationships into the queue payload.
+
+Instead, the framework intercepts the model and converts it into a lightweight `ModelIdentifier` structure containing only the class name and primary key. 
+
+When the background worker picks up the job, it automatically queries the database to **rehydrate** a completely fresh instance of the model before invoking your logic. This guarantees your background workers always operate on the most up-to-date database state, preventing stale data bugs. This does not work on composite primary keys! For those cases manually dispatch the identifiers and do not use the object.
+
+> [!WARNING]  
+> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a QueueableCollection or QueueableEntity) as a public property to your `StorableCallable` (e.g., Mailable, Notification, Broadcast Event) will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your methods expect an actual Model instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and re-fetch your records on the worker.
+
+> [!WARNING]  
+> **The Broadcast Exception:** While Mailables and Notifications rely on public properties for their payload, **Broadcast Events** operate differently. Queued Broadcast Events are strictly required to define a `broadcastWith()` method that returns an associative array of primitive data. The framework will throw a `RuntimeException` if a queued Broadcast Event attempts to rely on property reflection instead of an explicit `broadcastWith()` payload.
+
+> [!NOTE]  
+> **Queued Events Parity:** When an Event handled by a `ShouldQueue` listener contains `Model` or `Collection` instances in its public properties, `CallQueuedListener` automatically converts those properties into storable ID arrays over the wire and re-queries fresh instances from the database on the worker thread before reconstructing the Event object.
+
+Only Storable Array Callables, objects implementing the `StorableCallable` contract, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
+
+#### Passing JSON-Ready Objects and DTOs
+
+Because the transport engine utilizes `json_encode()`, you can pass rich Data Transfer Objects (DTOs) or custom value objects within your job arguments, provided they implement the native `JsonSerializable` interface. 
+
+When the job is dispatched, the framework automatically triggers the object's `jsonSerialize()` method, flattening it into a secure, queue-legal primitive structure.
+
+> [!WARNING]  
+> **The One-Way Array Rule:** The transformation is entirely destructive to the original object type. Because the background worker unpacks the payload using `json_decode($command, true)`, **the object will arrive at your target method as a native PHP associative array**, not the original class instance. Your background processing methods must type-hint `array` accordingly.
+
+    // Dispatching a DTO that implements \JsonSerializable or a model:
+    \dispatch([BillingService::class, 'provisionAccount', ['data' => $dtoOrModel]]);
+
+    // Worker implementation receiving the flattened payload:
+    class BillingService 
+    {
+        public function provisionAccount(array $data): void
+        {
+            // $data is received as associative array e.g. ['name' => 'John Doe', 'role' => 'admin']
+        }
+    }
+
+If your background logic specifically requires a literal, raw JSON string representation (e.g., to store directly into a database text column or forward to a third-party API wrapper), you must explicitly run `json_encode()` on the object *prior* to passing it to the dispatcher. This ensures the transport layer treats it as an escaped string primitive rather than a processable array layout.
 
 #### Encrypted Array Callables
 
@@ -1308,168 +1362,6 @@ If you defined your DynamoDB table with a `ttl` attribute, you may define config
     'ttl_attribute' => 'ttl',
     'ttl' => 60 * 60 * 24 * 7, // 7 days...
 ],
-```
-
-<a name="queueing-storable-array-callables-recommended"></a>
-## Queueing Storable Array Callables (Recommended)
-
-Framework introduces **Storable Array Callables** as a high-performance, lightweight, and mathematically secure alternative to `SerializableClosure` and traditional object-based jobs. By allowing developers to pass structured arrays instead of closures to the Queue system, we significantly reduce serialization overhead and SQS/Redis payload sizes while maintaining full Dependency Injection support.
-
-This architecture brings a **significant increase in total worker throughput** by eliminating the high overhead of PHP object serialization and reconstruction.
-
-You can pass an array in the format `[Class::class, 'method', ['named' => 'param']]` to almost any framework entry point that previously required a Job object or a Closure.
-
-#### Basic Dispatching
-
-No need to create a Job class for simple logic. The container will autowire dependencies into the target method.
-
-    use App\Services\EmailService;
-
-    // Primitive arguments passed explicitly. Dependencies autowired.
-    dispatch([EmailService::class, 'sendWelcomeEmail', ['userId' => $user->id]]);
-
-    // If a developer chains an Object (BLOCKED):
-    dispatch(['Class', 'method'])->chain([
-        new SendEmailJob()
-    ]);
-    
-    // If a developer chains an Array (ALLOWED & WORKING):
-    
-    dispatch(['Class', 'method'])->chain([
-        ['EmailService', 'sendWelcomeEmail']
-    ]);
-
-#### Chains and Batches Arrays
-
-Storable array callables seamlessly integrate with Framework's batching and chaining systems.
-```php
-    use App\Services\ImageProcessor;
-
-    \app('bus')->batch([
-        [ImageProcessor::class, 'optimize', ['path' => 'photo1.jpg']],
-        [ImageProcessor::class, 'optimize', ['path' => 'photo2.jpg']],
-    ])->dispatch();
-```
-> [!WARNING]
-> **Important Limitations:** To guarantee 100% protection against PHP Object Injection, `dispatch` strictly forbids objects in payloads or chained arrays. Obvious models are not automatically serialized and re-fetched natively; developers are responsible for passing primitive IDs and querying fresh database state inside their array callables. Alternatively, if capturing the exact current state of the model is important, you can pass its array shape (e.g., $model->toArray()`).
-
-#### Job Chaining Exceptions
-
-When chaining jobs onto an Array Callable, you cannot chain a standard instantiated Job object. You must chain other Array Callables.
-
-**❌ Incorrect (Throws Exception):**
-```php
-    $job = \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create([ProcessUserRegistration::class, 'handle', ['userId' => 5]]);
-    
-    // Fails because `SendWelcomeEmail` is an instantiated object
-    $job->chain([
-        new SendWelcomeEmail(5) 
-    ]);
-    
-    $job->dispatch();
-```
-**✅ Correct (Using Array Callables):**
-```php
-    // Succeeds because the chain uses primitive arrays and strings
-    $job = \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create([ProcessUserRegistration::class, 'handle', ['userId' => 5]]);
-
-    // Succeeds because the chain uses primitive arrays and strings
-    $job->chain([
-        [SendWelcomeEmail::class, 'handle', ['userId' => 5]]
-    ]);
-    
-    $job->dispatch();
-```
-Failure Callbacks (catch)
-Similarly, when defining failure callbacks on the dispatch, you must use the Array Callable syntax instead of standard Closures or invokable objects.
-
-**❌ Incorrect (Throws Exception):**
-```php
-    // Fails because a Closure is an object under the hood
-    \dispatch([ReportGenerator::class, 'run', ['reportId' => 10]])
-        ->catch(function (\Throwable $e) {
-            // ...
-        });
-```
-**✅ Correct (Using Array Callables):**
-```php
-    // Succeeds because the catch callback is a storable array
-    \dispatch([ReportGenerator::class, 'run', ['reportId' => 10]])
-        ->catch([ReportGenerator::class, 'failed', ['reportId' => 10]]);
-```
-
-<a name="storable-objects"></a>
-#### Storable Objects
-Because the framework uses a strict JSON transport layer to eliminate PHP Object Injection (POI) vulnerabilities, traditional objects silently lose their class routing identity when encoded. To prevent un-routable payloads, if a developer attempts to dispatch a traditional instantiated job object (that does not implement `StorableCallable`), a queued closure, or attempts to chain an object, the queue dispatcher will explicitly throw an `InvalidArgumentException` or `RuntimeException`. However, objects nested *inside* valid array payloads will not throw an exception and will suffer silent data loss.
-
-**How Storable Objects & `SerializesModels` Work**
-
-While traditional objects are banned, the framework natively supports routing objects that implement the `StorableCallable` interface (Mailables, Notifications, Broadcast Events, and Queued Events). 
-
-When you dispatch a `StorableCallable` or a class utilizing `SerializesModels` (Mailables, Notifications, Broadcast Events, and Queued Events), the framework intercepts the object *before* serialization. It extracts the object's **public properties** into a flat, primitive array using `get_object_vars()` and completely discards the object shell. The queue payload written to Redis/SQS is 100% object-free.
-
-<a name="model-serialization-and-rehydration"></a>
-#### Automatic Model Serialization & Rehydration
-
-When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCollection`) into Storable Array Callables or as public properties on Storable Objects (Mailables, Notifications, Events), the framework **does not** serialize the entire object or its loaded relationships into the queue payload.
-
-Instead, the framework intercepts the model and converts it into a lightweight `ModelIdentifier` structure containing only the class name and primary key. 
-
-When the background worker picks up the job, it automatically queries the database to **rehydrate** a completely fresh instance of the model before invoking your logic. This guarantees your background workers always operate on the most up-to-date database state, preventing stale data bugs. This does not work on composite primary keys! For those cases manually dispatch the identifiers and do not use the object.
-
-> [!WARNING]  
-> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a QueueableCollection or QueueableEntity) as a public property to your `StorableCallable` (e.g., Mailable, Notification, Broadcast Event) will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your methods expect an actual Model instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and re-fetch your records on the worker.
-
-> [!WARNING]  
-> **The Broadcast Exception:** While Mailables and Notifications rely on public properties for their payload, **Broadcast Events** operate differently. Queued Broadcast Events are strictly required to define a `broadcastWith()` method that returns an associative array of primitive data. The framework will throw a `RuntimeException` if a queued Broadcast Event attempts to rely on property reflection instead of an explicit `broadcastWith()` payload.
-
-> [!WARNING]  
-> **The Queued Event Trap:** If you dispatch an Event that triggers a Queued Listener, the **Event class itself** must obey the Primitive Property Rule. You cannot pass an Obvious Model or object into your Event's public properties, or the dispatcher will crash when queueing the listener. Pass primitive IDs into your Event constructor and re-hydrate the models inside your Queued Listener's `handle()` method.
-
-Only Storable Array Callables, objects implementing the `StorableCallable` contract, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
-
-#### Passing JSON-Ready Objects and DTOs
-
-Because the transport engine utilizes `json_encode()`, you can pass rich Data Transfer Objects (DTOs) or custom value objects within your job arguments, provided they implement the native `JsonSerializable` interface. 
-
-When the job is dispatched, the framework automatically triggers the object's `jsonSerialize()` method, flattening it into a secure, queue-legal primitive structure.
-
-> [!WARNING]  
-> **The One-Way Array Rule:** The transformation is entirely destructive to the original object type. Because the background worker unpacks the payload using `json_decode($command, true)`, **the object will arrive at your target method as a native PHP associative array**, not the original class instance. Your background processing methods must type-hint `array` accordingly.
-
-    // Dispatching a DTO that implements \JsonSerializable or a model:
-    \dispatch([BillingService::class, 'provisionAccount', ['data' => $dtoOrModel]]);
-
-    // Worker implementation receiving the flattened payload:
-    class BillingService 
-    {
-        public function provisionAccount(array $data): void
-        {
-            // $data is received as associative array e.g. ['name' => 'John Doe', 'role' => 'admin']
-        }
-    }
-
-If your background logic specifically requires a literal, raw JSON string representation (e.g., to store directly into a database text column or forward to a third-party API wrapper), you must explicitly run `json_encode()` on the object *prior* to passing it to the dispatcher. This ensures the transport layer treats it as an escaped string primitive rather than a processable array layout.
-
-<a name="encrypted-array-callables"></a>
-#### Encrypted Array Callables
-Storable Array Callables fully support Framework's built-in payload encryption. If the target class referenced in your array callable implements the `MacropaySolutions\Kernel\Contracts\Queue\ShouldBeEncrypted` interface, the framework will intelligently detect it and automatically encrypt the queued job's metadata and arguments.
-
-```PHP
-namespace App\CallablesAsArray;
-
-use MacropaySolutions\Kernel\Contracts\Queue\ShouldBeEncrypted;
-
-class ProcessPayroll implements ShouldBeEncrypted
-{
-    public function handle(int $employeeId): void
-    {
-        // ...
-    }
-}
-
-// The payload for this array callable will be automatically encrypted...
-dispatch([ProcessPayroll::class, 'handle', ['employeeId' => 5]]);
 ```
 <a name="queueing-closures"></a>
 ## Queueing Closures
