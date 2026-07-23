@@ -20,6 +20,7 @@ context: events
     - [Queued Event Listeners and Database Transactions](#queued-event-listeners-and-database-transactions)
     - [Handling Failed Jobs](#handling-failed-jobs)
 - [Dispatching Events](#dispatching-events)
+    - [Payload Array Shapes: Class vs. String Events](#payload-array-shapes-class-vs-string-events)
     - [Dispatching Events After Database Transactions](#dispatching-events-after-database-transactions)
 - [Event Subscribers](#event-subscribers)
     - [Writing Event Subscribers](#writing-event-subscribers)
@@ -565,6 +566,30 @@ To dispatch an event, you may use the global `event` helper function or the appl
 
 > [!NOTE]  
 > Regardless of which dispatch style you choose, the event dispatcher automatically hydrates the `OrderShipped` object so that both synchronous and queued listeners receive the exact same typed `$event` object in `handle(OrderShipped $event)`.
+
+<a name="payload-array-shapes"></a>
+### Payload Array Shapes: Class vs. String Events
+
+When dispatching events using arrays, the shape of the array you pass depends entirely on the type of event you are dispatching:
+
+**1. Class-Based Events (Use Associative Arrays)**
+When dispatching an event by its class string, the array is passed to the IoC container to build the event object. The array **must be associative**, where the keys exactly match the variable names in the Event's `__construct()` method:
+
+    // ✅ Correct: Container maps 'order' to __construct(Order $order)
+    event(OrderShipped::class, ['order' => $order]);
+
+    // ❌ WRONG: Container doesn't know which parameter this belongs to
+    event(OrderShipped::class, [$order]);
+
+**2. String-Based Events (Use Indexed Lists)**
+When dispatching a purely string-named event, no object is constructed. The array elements are unpacked sequentially into the Listener's `handle()` method. The array **must be a positional list**:
+
+    // ✅ Correct: Maps to handle(User $user, string $ip) in exact order
+    event('user.login', [$user, '192.168.1.1']);
+
+    // ⚠️ Note: Associative arrays will work if the order or keys match perfectly,
+    // but indexed lists guarantee strict positional mapping and avoid PHP 8 named-argument errors.
+    event('user.login', ['user' => $user, 'ip' => '192.168.1.1']);
 
 <a name="dispatching-events-after-database-transactions"></a>
 ### Dispatching Events After Database Transactions
