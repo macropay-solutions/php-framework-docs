@@ -226,6 +226,9 @@ As you can see, this event class contains no complex logic. It is a container fo
 > [!NOTE]
 > **Automatic Model & Collection Serialization:** You may freely pass `Model` and `Collection` instances inside event object properties or parameters. When an event handled by a queued listener is dispatched, `SerializesModelsHelper` automatically converts model properties into lightweight database identifier arrays before pushing the job to the queue. On the worker thread, fresh model instances are automatically re-queried from the database before being passed to your listener's `handle` method.
 
+> [!WARNING]  
+> **Raw Arrays of Models Forbidden:** Do not pass raw PHP arrays of model instances (e.g., `public array $orders = [$order1, $order2]`). Raw PHP arrays bypass `SerializesModelsHelper`, preventing model identifier conversion and failing worker-side database rehydration. Always use a `Collection` instance for multiple models (e.g., `public Collection $orders`), or pass an array of primitive IDs (e.g., `public array $orderIds = [1, 2]`).
+
 <a name="defining-listeners"></a>
 ## Defining Listeners
 
