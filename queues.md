@@ -268,6 +268,9 @@ When you dispatch a `StorableCallable` or a class utilizing `SerializesModels` (
 
 When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCollection`) into Storable Array Callables or as public properties on Storable Objects (Mailables, Notifications, Events), the framework **does not** serialize the entire object or its loaded relationships into the queue payload.
 
+> [!WARNING]  
+> **Raw Arrays of Models Forbidden:** Model serialization strictly targets individual `QueueableEntity` objects and `QueueableCollection` instances. Never pass raw PHP arrays containing model instances (e.g., `[$model1, $model2]`). Raw arrays bypass `SerializesModelsHelper`, resulting in bloated queue payloads and stale model state on the background worker. Always pass a `Collection` instance or an array of primitive IDs instead.
+
 Instead, the framework intercepts the model and converts it into a lightweight `ModelIdentifier` structure containing only the class name and primary key. 
 
 When the background worker picks up the job, it automatically queries the database to **rehydrate** a completely fresh instance of the model before invoking your logic. This guarantees your background workers always operate on the most up-to-date database state, preventing stale data bugs. This does not work on composite primary keys! For those cases manually dispatch the identifiers and do not use the object.
