@@ -223,6 +223,12 @@ An event class is essentially a data container which holds the information relat
 
 As you can see, this event class contains no complex logic. It is a container for the `App\Models\Order` instance.
 
+> [!WARNING]  
+> **Constructor Mapping & Virtual Property Hooks (PHP 8.4+):**
+> Because queued events are reconstructed on the worker via `app($eventClass, $publicProperties)`, every public property extracted via `get_object_vars()` must match an event constructor parameter name.
+> - **Virtual Properties Forbidden:** Do not define public virtual properties (e.g., `public string $summary { get => ... }`) on Event objects. Because virtual properties cannot be constructor arguments, worker rehydration will fail with an `Unknown named parameter` exception. Use helper methods instead (e.g., `public function summary(): string`).
+> - **Backed Hooks & Asymmetric Visibility Allowed:** Property hooks on constructor-promoted parameters (`public string $x { set => ... }`) and asymmetric visibility (`public private(set) string $y`) are fully supported.
+
 > [!NOTE]
 > **Automatic Model & Collection Serialization:** You may freely pass `Model` and `Collection` instances inside event object properties or parameters. When an event handled by a queued listener is dispatched, `SerializesModelsHelper` automatically converts model properties into lightweight database identifier arrays before pushing the job to the queue. On the worker thread, fresh model instances are automatically re-queried from the database before being passed to your listener's `handle` method.
 
