@@ -88,7 +88,7 @@ Typically, events should be registered via the `EventServiceProvider` `$listen` 
      */
     public function boot(): void
     {
-        app('events')->listen(
+        \app('events')->listen(
             PodcastProcessed::class,
             SendPodcastNotification::class,
         );
@@ -119,7 +119,7 @@ You must wrap an array callable within the `MacropaySolutions\Kernel\Events\queu
 
 You may even register listeners using the `*` as a wildcard parameter, allowing you to catch multiple events on the same listener. Wildcard listeners receive the event name as their first argument and the entire event data array as their second argument:
 
-    app('events')->listen('event.*', \App\Listeners\WildcardListener::class);
+    \app('events')->listen('event.*', \App\Listeners\WildcardListener::class);
 
 <a name="event-discovery"></a>
 ### Event Discovery
@@ -590,7 +590,7 @@ When dispatching a purely string-named event, no object is constructed. The arra
     // ⚠️ Works, but keys are ignored!
     // The dispatcher applies `array_values()` before unpacking. The keys are stripped,
     // meaning the array is still passed strictly by its internal order.
-    event('user.login', ['user' => $user, 'ip' => '192.168.1.1']);
+    \event('user.login', ['user' => $user, 'ip' => '192.168.1.1']);
 
 <a name="dispatching-events-after-database-transactions"></a>
 ### Dispatching Events After Database Transactions
@@ -752,6 +752,7 @@ You may instantiate `MacropaySolutions\KernelDev\Support\Testing\Fakes\EventFake
 
     use App\Events\OrderFailedToShip;
     use App\Events\OrderShipped;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
     use MacropaySolutions\KernelDev\Support\Testing\Fakes\EventFake;
     use Tests\TestCase;
 
@@ -762,9 +763,11 @@ You may instantiate `MacropaySolutions\KernelDev\Support\Testing\Fakes\EventFake
          */
         public function test_orders_can_be_shipped(): void
         {
-            $fake = new EventFake(app('events'));
+            $fake = new EventFake(\app('events'));
 
-            app()->instance('events', $fake);
+            \app()->instance('events', $fake);
+            Model::setEventDispatcher($fake);
+            \app('cache')->refreshEventDispatcher();
 
             // Perform order shipping...
 
@@ -803,16 +806,20 @@ If you would simply like to assert that an event listener is registered for a gi
 
 If you only want to fake event listeners for a specific set of events, you may pass an array of event classes to the `EventFake` constructor:
 
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+
     /**
      * Test order process.
      */
     public function test_orders_can_be_processed(): void
     {
-        $fake = new EventFake(app('events'), [
+        $fake = new EventFake(\app('events'), [
             OrderCreated::class,
         ]);
 
-        app()->instance('events', $fake);
+        \app()->instance('events', $fake);
+        Model::setEventDispatcher($fake);
+        \app('cache')->refreshEventDispatcher();
 
         $order = Order::factory()->create();
 
