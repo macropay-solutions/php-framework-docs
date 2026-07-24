@@ -124,51 +124,6 @@ Because PHP is inherently stateless and designed for short-lived request lifecyc
 
 ##### Pattern 1: Direct Plain-JSON Queue Consumption (Cross-Language Broker)
 
-Instead of running a PHP queue worker to process broadcast jobs, your PHP application can push raw JSON payloads directly into a shared queue broker (such as a Redis List/Stream, RabbitMQ, or Amazon SQS). A high-concurrency daemon written in Go or Node.js directly consumes this queue, parses the plain JSON, and fans out the event over WebSockets.
-
-To push plain JSON payloads directly to your queue connection without wrapping them in serialized PHP objects, use the queue manager's `pushRaw` method:
-
-    app('queue')->connection('redis')->pushRaw(json_encode([
-        'event' => 'OrderStatusUpdated',
-        'channel' => 'private-orders.1',
-        'data' => [
-            'orderId' => 1,
-            'status' => 'shipped',
-        ],
-    ]), 'broadcast_queue');
-
-**The Architecture Flow:**
-
-1. **The Trigger:** Your PHP application pushes a raw JSON string directly to the queue broker using `pushRaw`.
-2. **The Consumer:** Your custom WebSocket server (written in Go, Rust, Node.js, etc.) directly pops the raw JSON payload from the queue broker.
-3. **The Fan-out:** The WebSocket server parses the payload and pushes the message to connected clients over WebSockets.
-
-##### Pattern 2: Queued Redis Pub/Sub (PHP Worker Hand-off)
-
-Framework also supports broadcasting via Redis Pub/Sub using the standard `redis` broadcast driver. 
-
-When using the `redis` driver, PHP dispatches a queued broadcast job as normal. When a PHP queue worker processes the job, it serializes the event payload and publishes it to a Redis Pub/Sub channel.
-
-**The Architecture Flow:**
-
-1. **The Trigger:** Your PHP application fires a `ShouldBroadcast` event.
-2. **The Queue:** A PHP queue worker processes the job and publishes the JSON payload to a Redis Pub/Sub channel (e.g., `framework_database_private-orders.1`).
-3. **The Consumer:** Your independent WebSocket server maintains a persistent subscription to the Redis Pub/Sub channel.
-4. **The Fan-out:** Upon receiving the message from Redis Pub/Sub, the WebSocket server pushes the event to connected clients.
-
-To configure the Redis Pub/Sub driver, set the `BROADCAST_DRIVER` environment variable:
-
-    BROADCAST_DRIVER=redis
-
-You will also need to ensure your Redis connection is properly configured in `config/database.php`. Your custom WebSocket server simply needs to connect to the same Redis instance and subscribe to the appropriately prefixed channels.
-
-<a name="custom-websocket-microservices"></a>
-#### Custom WebSocket Microservices
-
-Because PHP is inherently stateless and designed for short-lived request lifecycles, maintaining thousands of persistent WebSocket connections directly in PHP is an anti-pattern. While commercial solutions like Pusher handle this by accepting HTTP payloads from your PHP workers, you may wish to build or use your own WebSocket microservice in a language built for high concurrency (such as Go, Rust, or Node.js).
-
-##### Pattern 1: Direct Plain-JSON Queue Consumption (Cross-Language Broker)
-
 In this architecture, your external WebSocket daemon (written in Go, Rust, or Node.js) consumes the shared queue broker (Redis List/Stream, RabbitMQ, or Amazon SQS) directly. Because Framework serializes queued jobs into pure, object-free JSON strings, foreign daemons can unmarshal and process payloads without a PHP worker in the loop.
 
 ###### Built-in Event Dispatching (Recommended)
