@@ -65,6 +65,7 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Queues https://macropay-solutions.github.io/php-framework-docs/1.x/queues.html
 - Mail https://macropay-solutions.github.io/php-framework-docs/1.x/mail.html
 - Notifications https://macropay-solutions.github.io/php-framework-docs/1.x/notifications.html
+- Broadcasting https://macropay-solutions.github.io/php-framework-docs/1.x/broadcasting.html
 
 #### Testing & Verification
 - Testing https://macropay-solutions.github.io/php-framework-docs/1.x/testing.html
