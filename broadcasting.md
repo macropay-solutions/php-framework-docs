@@ -124,7 +124,7 @@ Because PHP is inherently stateless and designed for short-lived request lifecyc
 
 ##### Pattern 1: Direct Plain-JSON Queue Consumption (Cross-Language Broker)
 
-In this architecture, your external WebSocket daemon (written in Go, Rust, or Node.js) consumes the shared queue broker (Redis List/Stream, RabbitMQ, or Amazon SQS) directly. Because Framework serializes queued jobs into pure, object-free JSON strings, foreign daemons can unmarshal and process payloads without a PHP worker in the loop.
+In this architecture, your external WebSocket daemon (written in Go, Rust, or Node.js) consumes the shared queue broker (Redis List/Stream, RabbitMQ, or Amazon SQS) directly. Because Framework packages the queued broadcast work into a JSON-storable envelope (via storableCallable) that the daemon can interpret cross-language, foreign daemons can unmarshal and process payloads without a PHP worker in the loop.
 
 ###### Built-in Event Dispatching (Recommended)
 
