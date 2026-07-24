@@ -875,7 +875,7 @@ When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCo
 >
 > **The "Dumb" Constructor Caveat:** Because the worker passes `null` to build the initial shell, your constructor must *only* be used for property assignment. Do not execute database queries or business logic on the passed arguments inside the constructor, as it will crash the worker.
 >
-> **❌ BAD (Crashes on Worker):** `$this->invoice = Order::find($orderId)->invoice;` // Crashes because $orderId is null on the worker!
+> **❌ BAD (Crashes on Worker):** `$this->invoice = Order::query()->find($orderId)->invoice;` // Crashes because $orderId is null on the worker!
 > **✅ GOOD (Safe):** Fetch the order inside the `envelope()`, `content()`, or `build()` methods. The framework will have fully hydrated the real `$orderId` integer by the time those methods execute.
 
 If you wish to delay the delivery of a queued email message, you may use the `later` method. As its first argument, the `later` method accepts a `DateTime` or Carbon instance indicating when the message should be sent:
