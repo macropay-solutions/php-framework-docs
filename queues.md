@@ -1834,21 +1834,22 @@ You may use the queue engine's `fake` method to prevent queued jobs from actuall
     {
         public function test_orders_can_be_shipped(): void
         {
-            \app('queue')->fake();
+            $fake = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\QueueFake(\app(), [], \app('queue'));
+            \app()->instance('queue', $fake);
 
             // Perform order shipping...
 
             // Assert that no jobs were pushed...
-            \app('queue')->assertNothingPushed();
+            $fake->assertNothingPushed();
 
             // Assert a Storable Array Callable was pushed to a given queue...
-            \app('queue')->assertPushedOn('queue-name', [ShipOrder::class, 'handle']);
+            $fake->assertPushedOn('queue-name', [ShipOrder::class, 'handle']);
 
             // Assert a job was pushed twice...
-            \app('queue')->assertPushed([ShipOrder::class, 'handle'], 2);
+            $fake->assertPushed([ShipOrder::class, 'handle'], 2);
 
             // Assert the total number of jobs that were pushed...
-            \app('queue')->assertCount(4);
+            $fake->assertCount(4);
         }
     }
 
@@ -1859,14 +1860,15 @@ If you only need to fake specific jobs while allowing your other jobs to execute
 
     public function test_orders_can_be_shipped(): void
     {
-        \app('queue')->fake([
+        $fake = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\QueueFake(\app(), [
             [ShipOrder::class, 'handle'],
-        ]);
+        ], \app('queue'));
+        \app()->instance('queue', $fake);
 
         // Perform order shipping...
 
         // Assert a job was pushed twice...
-        \app('queue')->assertPushed([ShipOrder::class, 'handle'], 2);
+        $fake->assertPushed([ShipOrder::class, 'handle'], 2);
     }
 
 <a name="testing-job-chains"></a>
@@ -1877,11 +1879,12 @@ To test job chains, you will need to utilize the bus service's faking capabiliti
     use App\Jobs\ShipOrder;
     use App\Jobs\UpdateInventory;
 
-    \app('bus')->fake();
+    $fake = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\BusFake(\app('bus'));
+    \app()->instance('bus', $fake);
 
     // ...
 
-    \app('bus')->assertChained([
+    $fake->assertChained([
         ShipOrder::class,
         RecordShipment::class,
         UpdateInventory::class
@@ -1890,7 +1893,7 @@ To test job chains, you will need to utilize the bus service's faking capabiliti
 As you can see in the example above, the array of chained jobs may be an array of the job's class names. However, if you need to assert against specific parameters, you must provide an array of Storable Array Callables:
 
     // Asserting Storable Array Callables...
-    \app('bus')->assertChained([
+    $fake->assertChained([
         [ShipOrderService::class, 'handle', ['orderId' => 1]],
         [RecordShipmentService::class, 'handle', ['orderId' => 1]],
         [UpdateInventoryService::class, 'handle', ['orderId' => 1]],
@@ -1898,7 +1901,7 @@ As you can see in the example above, the array of chained jobs may be an array o
 
 You may use the `assertDispatchedWithoutChain` method to assert that a job was pushed without a chain of jobs:
 
-    \app('bus')->assertDispatchedWithoutChain(ShipOrder::class);
+    $fake->assertDispatchedWithoutChain(ShipOrder::class);
 
 ### Testing Job Batches
 
@@ -1906,22 +1909,23 @@ The `assertBatched` method may be used to assert that a batch of jobs was dispat
 
     use MacropaySolutions\Kernel\Bus\PendingBatch;
 
-    \app('bus')->fake();
+    $fake = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\BusFake(\app('bus'));
+    \app()->instance('bus', $fake);
 
     // ...
 
-    \app('bus')->assertBatched(function (PendingBatch $batch) {
+    $fake->assertBatched(function (PendingBatch $batch) {
         return $batch->name == 'import-csv' &&
                $batch->jobs->count() === 10;
     });
 
 You may use the `assertBatchCount` method to assert that a given number of batches were dispatched:
 
-    \app('bus')->assertBatchCount(3);
+    $fake->assertBatchCount(3);
 
 You may use `assertNothingBatched` to assert that no batches were dispatched:
 
-    \app('bus')->assertNothingBatched();
+    $fake->assertNothingBatched();
 
 <a name="testing-job-batch-interaction"></a>
 #### Testing Job / Batch Interaction
