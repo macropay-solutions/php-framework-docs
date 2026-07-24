@@ -157,6 +157,7 @@ or
 
     foreach ([...] as $email) {
         Mail::to($email)->queue((new ChildMailable())->onQueue('emails'));
+    }
 
 <a name="model-serialization-and-rehydration"></a>
 #### Automatic Model Serialization & Rehydration
