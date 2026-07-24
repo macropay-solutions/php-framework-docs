@@ -482,17 +482,14 @@ Job classes are very simple, normally containing only a `handle` method that is 
         /**
          * Execute the job.
          */
-        public function handle(AudioProcessor $processor, array $podcast): void
+        public function handle(AudioProcessor $processor, Podcast $podcast): void
         {
-            $podcast = Podcast::query()->findOrFail($podcast['id']);
             // Process uploaded podcast...
         }
     }
 
     ProcessPodcast::new([
         'podcast' => $podcast,
-        // or
-        // 'podcast' => $podcast->toArray(), // the json_encode will convert it into a json and the worker will reconstruct it as array
     ])->dispatch();
 
 <a name="handle-method-dependency-injection"></a>
@@ -1618,9 +1615,8 @@ When a particular job fails, you may want to send an alert to your users or reve
         /**
          * Execute the job.
          */
-        public function handle(AudioProcessor $processor, array $podcast): void
+        public function handle(AudioProcessor $processor, Podcast $podcast): void
         {
-            $podcast = Podcast::query()->findOrFail($podcast['id']);
             // Process uploaded podcast...
         }
 
@@ -1680,8 +1676,6 @@ To delete all of your failed jobs from the `failed_jobs` table, you may use the 
 Because queued tasks automatically rehydrate fresh model instances from the database, your job will fail with a `ModelNotFoundException` if the underlying database record is deleted before the worker processes the payload.
 
 If you are queuing a Storable Object (like a Mailable, Notification, Broadcast Event or you are using a normal class) and want the worker to silently discard the job if the model no longer exists, you may add the `$deleteWhenMissingModels` public property to your class and set it to `true`:
-
-    <?php
 
         /**
          * Delete the job if its models no longer exist.

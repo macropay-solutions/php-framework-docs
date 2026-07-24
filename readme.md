@@ -60,6 +60,8 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Responses https://macropay-solutions.github.io/php-framework-docs/1.x/responses
 - Controllers https://macropay-solutions.github.io/php-framework-docs/1.x/controllers
 - Encryption https://macropay-solutions.github.io/php-framework-docs/1.x/encryption
+- Authentication https://macropay-solutions.github.io/php-framework-docs/1.x/authentication
+- Authorization https://macropay-solutions.github.io/php-framework-docs/1.x/authorization
 
 #### System Services
 - Service Container https://macropay-solutions.github.io/php-framework-docs/1.x/container
@@ -70,6 +72,7 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Notifications https://macropay-solutions.github.io/php-framework-docs/1.x/notifications
 - Broadcasting https://macropay-solutions.github.io/php-framework-docs/1.x/broadcasting
 - Providers https://macropay-solutions.github.io/php-framework-docs/1.x/providers
+- Errors https://macropay-solutions.github.io/php-framework-docs/1.x/errors
 
 #### Testing & Verification
 - Testing https://macropay-solutions.github.io/php-framework-docs/1.x/testing
