@@ -64,6 +64,7 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Cache https://macropay-solutions.github.io/php-framework-docs/1.x/cache.html
 - Queues https://macropay-solutions.github.io/php-framework-docs/1.x/queues.html
 - Mail https://macropay-solutions.github.io/php-framework-docs/1.x/mail.html
+- Notifications https://macropay-solutions.github.io/php-framework-docs/1.x/notifications.html
 
 #### Testing & Verification
 - Testing https://macropay-solutions.github.io/php-framework-docs/1.x/testing.html
@@ -77,3 +78,4 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Obvious Mutators & Casting https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-mutators.html
 - Obvious Relationships https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-relationships.html
 - Obvious Serialization https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-serialization.html
+- Events https://macropay-solutions.github.io/php-framework-docs/1.x/events.html
