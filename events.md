@@ -587,8 +587,9 @@ When dispatching a purely string-named event, no object is constructed. The arra
     // ✅ Correct: Maps to handle(User $user, string $ip) in exact order
     event('user.login', [$user, '192.168.1.1']);
 
-    // ⚠️ Note: Associative arrays will work if the order or keys match perfectly,
-    // but indexed lists guarantee strict positional mapping and avoid PHP 8 named-argument errors.
+    // ⚠️ Works, but keys are ignored!
+    // The dispatcher applies `array_values()` before unpacking. The keys are stripped,
+    // meaning the array is still passed strictly by its internal order.
     event('user.login', ['user' => $user, 'ip' => '192.168.1.1']);
 
 <a name="dispatching-events-after-database-transactions"></a>
