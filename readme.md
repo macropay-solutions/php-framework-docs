@@ -57,6 +57,7 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Validation https://macropay-solutions.github.io/php-framework-docs/1.x/validation.html
 - API Resources https://macropay-solutions.github.io/php-framework-docs/1.x/api-resources.html
 - Configuration https://macropay-solutions.github.io/php-framework-docs/1.x/configuration.html
+- Responses https://macropay-solutions.github.io/php-framework-docs/1.x/responses.html
 
 #### System Services
 - Service Container https://macropay-solutions.github.io/php-framework-docs/1.x/container.html
