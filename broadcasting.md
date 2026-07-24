@@ -162,6 +162,81 @@ To configure the Redis Pub/Sub driver, set the `BROADCAST_DRIVER` environment va
 
 You will also need to ensure your Redis connection is properly configured in `config/database.php`. Your custom WebSocket server simply needs to connect to the same Redis instance and subscribe to the appropriately prefixed channels.
 
+<a name="custom-websocket-microservices"></a>
+#### Custom WebSocket Microservices
+
+Because PHP is inherently stateless and designed for short-lived request lifecycles, maintaining thousands of persistent WebSocket connections directly in PHP is an anti-pattern. While commercial solutions like Pusher handle this by accepting HTTP payloads from your PHP workers, you may wish to build or use your own WebSocket microservice in a language built for high concurrency (such as Go, Rust, or Node.js).
+
+##### Pattern 1: Direct Plain-JSON Queue Consumption (Cross-Language Broker)
+
+In this architecture, your external WebSocket daemon (written in Go, Rust, or Node.js) consumes the shared queue broker (Redis List/Stream, RabbitMQ, or Amazon SQS) directly. Because Framework serializes queued jobs into pure, object-free JSON strings, foreign daemons can unmarshal and process payloads without a PHP worker in the loop.
+
+###### Built-in Event Dispatching (Recommended)
+
+When you dispatch a standard event class that implements `ShouldBroadcast`:
+
+    use App\Events\OrderShipmentStatusUpdated;
+
+    \event(new OrderShipmentStatusUpdated($order));
+
+Framework automatically serializes the job into a standardized, un-serialized JSON envelope targeting the internal `BroadcastEvent` handler:
+
+    {
+      "storableCallable": [
+        "MacropaySolutions\\Kernel\\Broadcasting\\BroadcastEvent",
+        "executeStorable",
+        {
+          "name": "orders.updated",
+          "channels": ["private-orders.1"],
+          "payload": {
+            "orderId": 1,
+            "status": "shipped"
+          },
+          "connections": [null]
+        }
+      ]
+    }
+
+Your Go/Rust daemon simply unmarshals the `storableCallable` array, matches the `BroadcastEvent@executeStorable` route, extracts `channels` and `payload`, and fans out the message to connected clients.
+
+###### Ad-hoc `pushRaw` Dispatching
+
+If you wish to bypass event classes entirely, you can manually write arbitrary JSON strings to the queue connection using `pushRaw`:
+
+    app('queue')->connection('redis')->pushRaw(json_encode([
+        'event' => 'OrderStatusUpdated',
+        'channel' => 'private-orders.1',
+        'data' => [
+            'orderId' => 1,
+            'status' => 'shipped',
+        ],
+    ]), 'broadcast_queue');
+
+**The Architecture Flow:**
+
+1. **The Trigger:** Your PHP application dispatches a `ShouldBroadcast` event or pushes an ad-hoc JSON payload via `pushRaw`.
+2. **The Consumer:** Your custom WebSocket daemon directly pops the raw JSON payload from the queue broker.
+3. **The Fan-out:** The daemon parses the payload and pushes the message to connected clients over WebSockets.
+
+##### Pattern 2: Queued Redis Pub/Sub (PHP Worker Hand-off)
+
+Framework also supports broadcasting via Redis Pub/Sub using the standard `redis` broadcast driver. 
+
+When using the `redis` driver, PHP dispatches a queued broadcast job as normal. When a PHP queue worker processes the job, it serializes the event payload and publishes it to a Redis Pub/Sub channel.
+
+**The Architecture Flow:**
+
+1. **The Trigger:** Your PHP application fires a `ShouldBroadcast` event.
+2. **The Queue:** A PHP queue worker processes the job and publishes the JSON payload to a Redis Pub/Sub channel (e.g., `framework_database_private-orders.1`).
+3. **The Consumer:** Your independent WebSocket server maintains a persistent subscription to the Redis Pub/Sub channel.
+4. **The Fan-out:** Upon receiving the message from Redis Pub/Sub, the WebSocket server pushes the event to connected clients.
+
+To configure the Redis Pub/Sub driver, set the `BROADCAST_DRIVER` environment variable:
+
+    BROADCAST_DRIVER=redis
+
+You will also need to ensure your Redis connection is properly configured in `config/database.php`. Your custom WebSocket server simply needs to connect to the same Redis instance and subscribe to the appropriately prefixed channels.
+
 <a name="concept-overview"></a>
 ## Concept Overview
 
@@ -181,7 +256,7 @@ In our application, let's assume we have a page that allows users to view the sh
 
     use App\Events\OrderShipmentStatusUpdated;
 
-    OrderShipmentStatusUpdated::dispatch($order);
+    \event(new OrderShipmentStatusUpdated($order));
 
 <a name="the-shouldbroadcast-interface"></a>
 #### The `ShouldBroadcast` Interface
@@ -533,11 +608,11 @@ Finally, you may place the authorization logic for your channel in the channel c
 <a name="broadcasting-events"></a>
 ## Broadcasting Events
 
-Once you have defined an event and marked it with the `ShouldBroadcast` interface, you only need to fire the event using the event's dispatch method. The event dispatcher will notice that the event is marked with the `ShouldBroadcast` interface and will queue the event for broadcasting:
+Once you have defined an event and marked it with the `ShouldBroadcast` interface, you only need to fire the event using the global `\event` helper function. The event dispatcher will notice that the event is marked with the `ShouldBroadcast` interface and will queue the event for broadcasting:
 
     use App\Events\OrderShipmentStatusUpdated;
 
-    OrderShipmentStatusUpdated::dispatch($order);
+    \event(new OrderShipmentStatusUpdated($order));
 
 <a name="only-to-others"></a>
 ### Only to Others
