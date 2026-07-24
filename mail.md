@@ -775,7 +775,7 @@ To send a message, use the `to` method on the main mailer instance resolved out 
          */
         public function store(Request $request): JsonResponse
         {
-            $order = Order::queue()->findOrFail($request->getFiltered('order_id'));
+            $order = Order::query()->findOrFail($request->getFiltered('order_id'));
 
             // Process delivery logic...
 
@@ -852,7 +852,7 @@ Inside your targeted service implementation, pull a fresh record from the databa
          */
         public function sendOrderShippedEmail(int $orderId, string $recipient): void
         {
-            $order = Order::queue()->findOrFail($orderId);
+            $order = Order::query()->findOrFail($orderId);
 
             \app('mailer')->to($recipient)->send(new OrderShipped($order));
         }
@@ -923,7 +923,7 @@ Sometimes you may wish to capture the HTML content of a mailable without sending
     use App\Mail\InvoicePaid;
     use App\Models\Invoice;
 
-    $invoice = Invoice::queue()->find(1);
+    $invoice = Invoice::query()->find(1);
 
     return (new InvoicePaid($invoice))->render();
 
@@ -1022,32 +1022,36 @@ When validating email dispatch routines, assert directly against the queue servi
         public function test_orders_trigger_background_emails(): void
         {
             // Mock the internal queue dispatch matrix
-            \app('queue')->fake();
+            $fakeQueue = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\QueueFake(\app(), [], \app('queue'));
+            \app()->instance('queue', $fakeQueue);
 
             // Execute target controller logic...
             $this->post('/api/orders/ship', ['order_id' => 99]);
 
             // Verify the Array Callable was securely pushed to the queue
-            \app('queue')->assertPushed([OrderMailService::class, 'sendOrderShippedEmail']);
+            $fakeQueue->assertPushed([OrderMailService::class, 'sendOrderShippedEmail']);
         }
     }
 
 If you are queueing mailables for delivery in the background, use `assertQueued` instead of `assertSent`:
 
-    \app('mailer')->assertQueued(OrderShipped::class);
-    \app('mailer')->assertNotQueued(OrderShipped::class);
-    \app('mailer')->assertNothingQueued();
-    \app('mailer')->assertQueuedCount(3);
+    $fakeMail = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\MailFake(\app('mailer'));
+    \app()->instance('mailer', $fakeMail);
+
+    $fakeMail->assertQueued(OrderShipped::class);
+    $fakeMail->assertNotQueued(OrderShipped::class);
+    $fakeMail->assertNothingQueued();
+    $fakeMail->assertQueuedCount(3);
 
 You may pass a closure to the `assertSent`, `assertNotSent`, `assertQueued`, or `assertNotQueued` methods in order to assert that a mailable was sent that passes a given "truth test". If at least one mailable was sent that passes the given truth test then the assertion will be successful:
 
-    \app('mailer')->assertSent(function (OrderShipped $mail) use ($order) {
+    $fakeMail->assertSent(function (OrderShipped $mail) use ($order) {
         return $mail->order->id === $order->id;
     });
 
 When calling the mail engine's assertion methods, the mailable instance accepted by the provided closure exposes helpful methods for examining the mailable:
 
-    \app('mailer')->assertSent(OrderShipped::class, function (OrderShipped $mail) use ($user) {
+    $fakeMail->assertSent(OrderShipped::class, function (OrderShipped $mail) use ($user) {
         return $mail->hasTo($user->email) &&
                $mail->hasCc('...') &&
                $mail->hasBcc('...') &&
@@ -1060,7 +1064,7 @@ The mailable instance also includes several helpful methods for examining the at
 
     use MacropaySolutions\Kernel\Mail\Mailables\Attachment;
 
-    \app('mailer')->assertSent(OrderShipped::class, function (OrderShipped $mail) {
+    $fakeMail->assertSent(OrderShipped::class, function (OrderShipped $mail) {
         return $mail->hasAttachment(
             Attachment::fromPath('/path/to/file')
                 ->as('name.pdf')
