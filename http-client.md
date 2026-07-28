@@ -492,8 +492,7 @@ For example, to instruct the HTTP client to return empty, `200` status code resp
 
 
     $factory = app(\MacropaySolutions\Kernel\Http\Client\Factory::class);
-    app()->instance(\MacropaySolutions\Kernel\Http\Client\Factory::class, $factory->fake());$response = \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->post(/* ... */);
-
+    app()->instance(\MacropaySolutions\Kernel\Http\Client\Factory::class, $factory->fake());
     $response = \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->post(/* ... */);
 
 <a name="faking-specific-urls"></a>
