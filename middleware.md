@@ -287,3 +287,4 @@ $router->post('user/billing/card', [
     'uses' => 'BillingController@update',
 ]);
 ```
+See more in [Authentication](/authentication#password-confirmation)
