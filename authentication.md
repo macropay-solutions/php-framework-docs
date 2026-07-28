@@ -13,6 +13,10 @@ context: authentication
   - [Authentication Service Provider](#authentication-service-provider)
   - [Accessing The Authenticated User](#accessing-the-authenticated-user)
 - [Protecting Routes](#protecting-routes)
+- [Password Confirmation](#password-confirmation)
+  - [Configuration](#configuration)
+  - [Routing](#routing)
+  - [Protecting Routes With Password Confirmation](#protecting-routes-with-password-confirmation)
 - [Adding Custom Guards](#adding-custom-guards)
 - [Adding Custom User Providers](#adding-custom-user-providers)
   - [The User Provider Contract](#the-user-provider-contract)
@@ -129,6 +133,92 @@ $router->get('user/profile', [
     'uses' => 'UserController@profile',
 ]);
 ```
+
+<a name="password-confirmation"></a>
+## Password Confirmation
+
+While building your application, you may occasionally have actions that should require the user to confirm their password before the action is performed or before the user is redirected to a sensitive area of the application. Framework includes built-in middleware to make this process a breeze. Implementing this feature requires you to define two routes: one route to display a view asking the user to confirm their password, and another route to validate the password and redirect the user to their intended destination.
+
+> [!NOTE]  
+> **Session Requirement:** Password confirmation relies on session persistence via `$request->session()`. Sessions must be explicitly enabled (e.g., via the `StartSession` middleware) on any routes using this feature. See [Session](/session).
+
+<a name="password-confirmation-configuration"></a>
+### Configuration
+
+After confirming their password, a user will not be asked to confirm their password again for three hours by default. However, you may configure the length of time before the user is re-prompted by changing the `password_timeout` value within your application's `config/auth.php` configuration file.
+
+<a name="password-confirmation-routing"></a>
+### Routing
+
+> [!WARNING]  
+> **Route Closures are Forbidden:** To maintain O(1) routing performance, route closures cannot be used. All routes must point explicitly to controller methods.
+
+<a name="the-password-confirmation-form"></a>
+#### The Password Confirmation Form
+
+First, define a route to display the password confirmation view:
+
+    $router->get('confirm-password', [
+        'middleware' => 'auth',
+        'as' => 'password.confirm',
+        'uses' => 'ConfirmPasswordController@show',
+    ]);
+
+The view returned by `ConfirmPasswordController@show` should contain a form with a `password` field submitting to your confirmation handler.
+
+<a name="confirming-the-password"></a>
+#### Confirming the Password
+
+Next, define the route that handles the password confirmation form submission:
+
+    $router->post('confirm-password', [
+        'middleware' => ['auth', 'throttle:6,1'],
+        'uses' => 'ConfirmPasswordController@store',
+    ]);
+
+Inside your `ConfirmPasswordController` class, validate the password and update the session timestamp:
+
+    namespace App\Http\Controllers\Auth;
+
+    use App\Http\Controllers\Controller;
+    use MacropaySolutions\Kernel\Http\Request;
+    use Symfony\Component\HttpFoundation\Response;
+
+    class ConfirmPasswordController extends Controller
+    {
+        public function show()
+        {
+            return view('auth.confirm-password');
+        }
+
+        public function store(Request $request): Response
+        {
+            if (!\app('hash')->check((string)$request->getFiltered('password'), $request->user()->password)) {
+                throw \MacropaySolutions\Kernel\Validation\ValidationException::withMessages([
+                    'password' => ['The provided password does not match our records.']
+                ]);
+            }
+
+            $request->session()->put('auth.password_confirmed_at', time());
+
+            return redirect($request->session()->pull('url.intended', '/'));
+        }
+    }
+
+<a name="password-confirmation-protecting-routes"></a>
+### Protecting Routes With Password Confirmation
+
+Ensure that any route performing an action requiring recent password confirmation is assigned the `password.confirm` middleware alias or FQN (`MacropaySolutions\Kernel\Auth\Middleware\RequirePassword`):
+
+    $router->get('settings', [
+        'middleware' => ['auth', 'password.confirm'],
+        'uses' => 'UserSettingsController@show',
+    ]);
+
+    $router->post('settings', [
+        'middleware' => ['auth', 'password.confirm'],
+        'uses' => 'UserSettingsController@update',
+    ]);
 
 <a name="adding-custom-guards"></a>
 ## Adding Custom Guards
