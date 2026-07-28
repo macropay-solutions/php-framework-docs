@@ -106,7 +106,7 @@ return response($content)
 <a name="other-response-types"></a>
 ## Other Response Types
 
-The `response` helper function may be used to conveniently generate other types of response instances. When the `response` helper is called without arguments, an implementation of the `MacropaySolutions\Kernel\Contracts\Routing\ResponseFactory` class is returned. This class provides several helpful methods for generating responses.
+The `response` helper function may be used to conveniently generate other types of response instances. When the `response` helper is called without arguments, an implementation of the `MacropaySolutions\Framework\Http\ResponseFactory` class is returned. This class provides several helpful methods for generating responses.
 
 <a name="json-responses"></a>
 #### JSON Responses

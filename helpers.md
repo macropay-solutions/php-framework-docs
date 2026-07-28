@@ -1516,7 +1516,7 @@ The `url` function generates a fully qualified URL to the given path:
 
     $url = url('user/profile', [1]);
 
-If no path is provided, an `MacropaySolutions\Kernel\Routing\UrlGenerator` instance is returned:
+If no path is provided, an `MacropaySolutions\Framework\Routing\UrlGenerator` instance is returned:
 
     $current = url()->current();
 
