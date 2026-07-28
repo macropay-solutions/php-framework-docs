@@ -4,11 +4,6 @@ description: Guide to converting Obvious models and collections to arrays or JSO
 context: obvious-serialization
 ---
 
----
-title: Obvious Serialization
-description: Serializing Obvious ORM models to arrays and JSON.
-context: obvious-serialization
----
 # Obvious: Serialization
 
 - [Introduction](#introduction)

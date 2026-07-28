@@ -575,7 +575,7 @@ If you would like to ensure that all requests sent via the HTTP client have been
     app()->instance(\MacropaySolutions\Kernel\Http\Client\Factory::class, $factory->preventStrayRequests());
 
     app()->instance(\MacropaySolutions\Kernel\Http\Client\Factory::class, $factory->fake([
-        '[github.com/](https://github.com/)*' => $factory->response('ok'),
+        'https://github.com/*' => $factory->response('ok'),
     ]));
 
     // An "ok" response is returned...
@@ -650,7 +650,8 @@ You may use the `recorded` method to gather all requests and their corresponding
 ```php
 $factory = app(\MacropaySolutions\Kernel\Http\Client\Factory::class);
 app()->instance(\MacropaySolutions\Kernel\Http\Client\Factory::class, $factory->fake([
-    'https://domain.com' => $factory->response(status: 500),     +    'https://subdomain.domain.com/' =>$factory->response(),
+    'https://domain.com' => $factory->response(status: 500),
+    'https://subdomain.domain.com/' =>$factory->response(),
 ]));
 
 \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->get('https://domain.com');
@@ -669,7 +670,8 @@ use MacropaySolutions\Kernel\Http\Client\Response;
 
 $factory = app(\MacropaySolutions\Kernel\Http\Client\Factory::class);
 app()->instance(\MacropaySolutions\Kernel\Http\Client\Factory::class, $factory->fake([
-    'https://domain.com' => $factory->response(status: 500),     +    'https://a.domain.com/' =>$factory->response(),
+    'https://domain.com' => $factory->response(status: 500),
+    'https://a.domain.com/' =>$factory->response(),
 ]));
 
 \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->get('https://domain.com');

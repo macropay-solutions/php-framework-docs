@@ -4,11 +4,6 @@ description: Guide to validating incoming request data, creating form requests, 
 context: basics
 ---
 
----
-title: Validation
-description: Validating incoming data and handling validation errors in PHP Framework.
-context: validation
----
 # Validation
 
 - [Introduction](#introduction)
