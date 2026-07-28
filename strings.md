@@ -712,13 +712,13 @@ The `Str::mask` method masks a portion of a string with a repeated character, an
 
     $string = Str::mask('surname@example.com', '*', 3);
 
-    // tay***************
+    // tsur***************
 
 If needed, you provide a negative number as the third argument to the `mask` method, which will instruct the method to begin masking at the given distance from the end of the string:
 
     $string = Str::mask('surname@example.com', '*', -15, 3);
 
-    // tay***@example.com
+    // tsur***@example.com
 
 <a name="method-str-ordered-uuid"></a>
 #### `Str::orderedUuid()` {.collection-method}
@@ -1200,7 +1200,7 @@ The `Str::toBase64` method converts the given string to Base64:
 
     $base64 = Str::toBase64('Framework');
 
-    // TGFyYXZlbA==
+    // RnJhbWV3b3Jr
 
 <a name="method-str-to-html-string"></a>
 #### `Str::toHtmlString()` {.collection-method}
@@ -1976,13 +1976,13 @@ The `mask` method masks a portion of a string with a repeated character, and may
 
     $string = Str::of('surname@example.com')->mask('*', 3);
 
-    // tay***************
+    // sur***************
 
 If needed, you may provide negative numbers as the third or fourth argument to the `mask` method, which will instruct the method to begin masking at the given distance from the end of the string:
 
     $string = Str::of('surname@example.com')->mask('*', -15, 3);
 
-    // tay***@example.com
+    // sur***@example.com
 
     $string = Str::of('surname@example.com')->mask('*', 4, -4);
 

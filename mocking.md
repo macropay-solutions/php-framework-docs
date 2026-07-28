@@ -130,7 +130,7 @@ If you would like to [spy](http://docs.mockery.io/en/latest/reference/spies.html
 
         $response->assertStatus(200);
 
-        Cache::shouldHaveReceived('put')->once()->with('name', 'Surname', 10);
+        app('cache')->shouldHaveReceived('put')->once()->with('name', 'Surname', 10);
     }
 
 <a name="interacting-with-time"></a>
