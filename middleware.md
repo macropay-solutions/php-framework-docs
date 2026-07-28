@@ -14,6 +14,7 @@ context: middleware
   - [Assigning Middleware To Routes](#assigning-middleware-to-routes)
 - [Middleware Parameters](#middleware-parameters)
 - [Terminable Middleware](#terminable-middleware)
+- [Password Confirmation Middleware](#password-confirmation-middleware)
 
 <a name="introduction"></a>
 ## Introduction
@@ -238,3 +239,51 @@ When calling the `terminate` method on your middleware, Framework will resolve a
             ],
         ];
     }
+
+<a name="password-confirmation-middleware"></a>
+## Password Confirmation Middleware
+
+Framework includes a built-in `RequirePassword` middleware (`MacropaySolutions\Kernel\Auth\Middleware\RequirePassword`) to protect sensitive endpoints—such as updating billing information or changing account settings—by ensuring the user has confirmed their password within a given timeframe.
+
+By default, the password confirmation window remains valid for **3 hours (10,800 seconds)** before requiring re-confirmation via the session (`auth.password_confirmed_at`).
+
+> [!NOTE]  
+> **Session Requirement:** Because `RequirePassword` reads from `$request->session()`, sessions must be explicitly enabled on the route or group (e.g., via the `StartSession` middleware). Stateless API routes without an active session layer will be unable to persist the password confirmation timestamp.
+
+#### Registering the Middleware
+
+Register the middleware alias in your `app/Application.php` file:
+
+```php
+    protected $routeMiddleware = [
+        'password.confirm' => \MacropaySolutions\Kernel\Auth\Middleware\RequirePassword::class,
+    ];
+// or use it with its full FQN to gain execution speed.
+```
+
+#### Protecting Routes
+
+Attach the middleware to sensitive routes:
+
+```php
+$router->post('user/security/keys', [
+    'middleware' => 'password.confirm',
+    'uses' => 'SecurityController@store',
+]);
+```
+
+#### Customizing Redirect Routes and Timeouts
+
+If an unconfirmed web request hits the endpoint, it redirects to the `password.confirm` named route by default. If the request expects JSON (`Accept: application/json`), the middleware returns a `423 Locked` HTTP response instead.
+
+You can customize the target redirect route or timeout window (in seconds) using the static `using()` helper method:
+
+```php
+use MacropaySolutions\Kernel\Auth\Middleware\RequirePassword;
+
+// Custom redirect route and a 15-minute timeout window
+$router->post('user/billing/card', [
+    'middleware' => RequirePassword::using('auth.custom_confirm', 900),
+    'uses' => 'BillingController@update',
+]);
+```

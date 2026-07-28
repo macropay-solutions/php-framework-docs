@@ -39,7 +39,7 @@ If you are building a package that integrates with multiple PHP frameworks you m
 
 So, how do you get an implementation of a contract? It's actually quite simple.
 
-Many types of classes in Framework are resolved through the [service container](/container), including controllers, event listeners, middleware, queued jobs, and even route closures. So, to get an implementation of a contract, you can just "type-hint" the interface in the constructor of the class being resolved.
+Many types of classes in Framework are resolved through the [service container](/container), including controllers, event listeners, middleware, queued jobs. So, to get an implementation of a contract, you can just "type-hint" the interface in the constructor of the class being resolved.
 
 For example, take a look at this event listener:
 
@@ -76,8 +76,8 @@ When the event listener is resolved, the service container will read the type-hi
 
 This table provides a quick reference to all the Framework contracts and their equivalent container bindings:
 
-| Contract                                                                                                                                               | Container Binding         |
-|--------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| Contract                                                                                                                                                                                      | Container Binding         |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
 | [MacropaySolutions\Kernel\Contracts\Auth\Access\Authorizable](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Auth/Access/Authorizable.php)                 |  &nbsp;                   |
 | [MacropaySolutions\Kernel\Contracts\Auth\Access\Gate](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Auth/Access/Gate.php)                                 | `Gate`                    |
 | [MacropaySolutions\Kernel\Contracts\Auth\Authenticatable](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Auth/Authenticatable.php)                         |  &nbsp;                   |
@@ -134,10 +134,8 @@ This table provides a quick reference to all the Framework contracts and their e
 | [MacropaySolutions\Kernel\Contracts\Queue\QueueableEntity](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Queue/QueueableEntity.php)                       | &nbsp;                    |
 | [MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Queue/ShouldQueue.php)                               | &nbsp;                    |
 | [MacropaySolutions\Kernel\Contracts\Redis\Factory](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Redis/Factory.php)                                       | `Redis`                   |
-| [MacropaySolutions\Kernel\Contracts\Routing\BindingRegistrar](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Routing/BindingRegistrar.php)                 | `Route`                   |
-| [MacropaySolutions\Kernel\Contracts\Routing\Registrar](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Routing/Registrar.php)                               | `Route`                   |
-| [MacropaySolutions\Kernel\Contracts\Routing\ResponseFactory](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Routing/ResponseFactory.php)                   | `Response`                |
-| [MacropaySolutions\Kernel\Contracts\Routing\UrlGenerator](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Routing/UrlGenerator.php)                         | `URL`                     |
+| [MacropaySolutions\Framework\Http\ResponseFactory](https://github.com/macropay-solutions/php-kernel/tree/production/src/Http/ResponseFactory.php)                                              | `Response`                |
+| [MacropaySolutions\Framework\Routing\UrlGenerator](https://github.com/macropay-solutions/php-kernel/tree/production/src/Routing/UrlGenerator.php)                                             | `URL`                     |
 | [MacropaySolutions\Kernel\Contracts\Routing\UrlRoutable](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Routing/UrlRoutable.php)                           | &nbsp;                    |
 | [MacropaySolutions\Kernel\Contracts\Session\Session](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Session/Session.php)                                   | `Session::driver()`       |
 | [MacropaySolutions\Kernel\Contracts\Support\Arrayable](https://github.com/macropay-solutions/php-kernel/tree/production/kernel/Contracts/Support/Arrayable.php)                               | &nbsp;                    |
