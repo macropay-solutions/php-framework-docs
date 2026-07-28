@@ -712,13 +712,13 @@ The `Str::mask` method masks a portion of a string with a repeated character, an
 
     $string = Str::mask('surname@example.com', '*', 3);
 
-    // tsur***************
+    // sur***************
 
 If needed, you provide a negative number as the third argument to the `mask` method, which will instruct the method to begin masking at the given distance from the end of the string:
 
     $string = Str::mask('surname@example.com', '*', -15, 3);
 
-    // tsur***@example.com
+    // sur***@example.com
 
 <a name="method-str-ordered-uuid"></a>
 #### `Str::orderedUuid()` {.collection-method}
