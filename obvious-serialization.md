@@ -65,7 +65,7 @@ Alternatively, you may cast a model or collection to a string, which will automa
 
 Since models and collections are converted to JSON when cast to a string, you can return Obvious objects directly from your application's routes or controllers. Framework will automatically serialize your Obvious models and collections to JSON when they are returned from routes or controllers:
 
-    Route::get('users', function () {
+    $router->get('users', function () {
         return User::query()->all();
     });
 

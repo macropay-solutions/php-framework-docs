@@ -67,8 +67,8 @@ First, let's assume we have the following routes defined in our `routes/web.php`
 
     use App\Http\Controllers\PostController;
 
-    Route::get('/post/create', [PostController::class, 'create']);
-    Route::post('/post', [PostController::class, 'store']);
+    $router->get('/post/create', [PostController::class, 'create']);
+    $router->post('/post', [PostController::class, 'store']);
 
 The `GET` route will display a form for the user to create a new blog post, while the `POST` route will store the new blog post in the database.
 
@@ -460,7 +460,7 @@ The form request class also contains an `authorize` method. Within this method, 
 
 Since all form requests extend the base Framework request class, we may use the `user` method to access the currently authenticated user. Also, note the call to the `route` method in the example above. This method grants you access to the URI parameters defined on the route being called, such as the `{comment}` parameter in the example below:
 
-    Route::post('/comment/{comment}');
+    $router->post('/comment/{comment}');
 
 Therefore, if your application is taking advantage of [route model binding](/routing#route-model-binding), your code may be made even more succinct by accessing the resolved model as a property of the request:
 
@@ -1048,7 +1048,7 @@ When additional values are provided to the `array` rule, each key in the input a
     $input = [
         'user' => [
             'name' => 'Surname Name',
-            'username' => 'taylorotwell',
+            'username' => 'surnamename',
             'admin' => true,
         ],
     ];
@@ -1994,7 +1994,7 @@ As discussed in the [`array` validation rule documentation](#rule-array), the `a
     $input = [
         'user' => [
             'name' => 'Surname Name',
-            'username' => 'taylorotwell',
+            'username' => 'surnamename',
             'admin' => true,
         ],
     ];
