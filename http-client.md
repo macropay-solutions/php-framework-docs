@@ -37,7 +37,7 @@ composer require guzzlehttp/guzzle
 <a name="making-requests"></a>
 ## Making Requests
 
-To make requests, you may use the `head`, `get`, `post`, `put`, `patch`, and `delete` methods provided by the `app(\MacropaySolutions\Kernel\Http\Client\Factory::class')`. First, let's examine how to make a basic `GET` request to another URL:
+To make requests, you may use the `head`, `get`, `post`, `put`, `patch`, and `delete` methods provided by the `app(\MacropaySolutions\Kernel\Http\Client\Factory::class)`. First, let's examine how to make a basic `GET` request to another URL:
 
 
 
@@ -482,7 +482,7 @@ $response = \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->github()
 <a name="testing"></a>
 ## Testing
 
-Many Framework services provide functionality to help you easily and expressively write tests, and Framework's HTTP client is no exception. The `app(\MacropaySolutions\Kernel\Http\Client\Factory::class')`'s `fake` method allows you to instruct the HTTP client to return stubbed / dummy responses when requests are made.
+Many Framework services provide functionality to help you easily and expressively write tests, and Framework's HTTP client is no exception. The `app(\MacropaySolutions\Kernel\Http\Client\Factory::class)`'s `fake` method allows you to instruct the HTTP client to return stubbed / dummy responses when requests are made.
 
 <a name="faking-responses"></a>
 ### Faking Responses
@@ -498,7 +498,7 @@ For example, to instruct the HTTP client to return empty, `200` status code resp
 <a name="faking-specific-urls"></a>
 #### Faking Specific URLs
 
-Alternatively, you may pass an array to the `fake` method. The array's keys should represent URL patterns that you wish to fake and their associated responses. The `*` character may be used as a wildcard character. Any requests made to URLs that have not been faked will actually be executed. You may use the `app(\MacropaySolutions\Kernel\Http\Client\Factory::class')`'s `response` method to construct stub / fake responses for these endpoints:
+Alternatively, you may pass an array to the `fake` method. The array's keys should represent URL patterns that you wish to fake and their associated responses. The `*` character may be used as a wildcard character. Any requests made to URLs that have not been faked will actually be executed. You may use the `app(\MacropaySolutions\Kernel\Http\Client\Factory::class)`'s `response` method to construct stub / fake responses for these endpoints:
 
     $factory = app(\MacropaySolutions\Kernel\Http\Client\Factory::class);
     app()->instance(\MacropaySolutions\Kernel\Http\Client\Factory::class, $factory->fake([
