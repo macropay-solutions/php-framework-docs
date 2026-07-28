@@ -62,6 +62,11 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Encryption https://macropay-solutions.github.io/php-framework-docs/1.x/encryption
 - Authentication https://macropay-solutions.github.io/php-framework-docs/1.x/authentication
 - Authorization https://macropay-solutions.github.io/php-framework-docs/1.x/authorization
+- CSRF Protection [https://macropay-solutions.github.io/php-framework-docs/1.x/csrf](https://macropay-solutions.github.io/php-framework-docs/1.x/csrf)
+- HTTP Client [https://macropay-solutions.github.io/php-framework-docs/1.x/http-client](https://macropay-solutions.github.io/php-framework-docs/1.x/http-client)
+- Rate Limiting [https://macropay-solutions.github.io/php-framework-docs/1.x/rate-limiting](https://macropay-solutions.github.io/php-framework-docs/1.x/rate-limiting)
+- Redirects [https://macropay-solutions.github.io/php-framework-docs/1.x/redirects](https://macropay-solutions.github.io/php-framework-docs/1.x/redirects)
+- URL Generation [https://macropay-solutions.github.io/php-framework-docs/1.x/urls](https://macropay-solutions.github.io/php-framework-docs/1.x/urls)
 
 #### System Services
 - Service Container https://macropay-solutions.github.io/php-framework-docs/1.x/container
@@ -73,9 +78,22 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Broadcasting https://macropay-solutions.github.io/php-framework-docs/1.x/broadcasting
 - Providers https://macropay-solutions.github.io/php-framework-docs/1.x/providers
 - Errors https://macropay-solutions.github.io/php-framework-docs/1.x/errors
+- Collections [https://macropay-solutions.github.io/php-framework-docs/1.x/collections](https://macropay-solutions.github.io/php-framework-docs/1.x/collections)
+- Contracts [https://macropay-solutions.github.io/php-framework-docs/1.x/contracts](https://macropay-solutions.github.io/php-framework-docs/1.x/contracts)
+- File Storage [https://macropay-solutions.github.io/php-framework-docs/1.x/filesystem](https://macropay-solutions.github.io/php-framework-docs/1.x/filesystem)
+- Hashing [https://macropay-solutions.github.io/php-framework-docs/1.x/hashing](https://macropay-solutions.github.io/php-framework-docs/1.x/hashing)
+- Helpers [https://macropay-solutions.github.io/php-framework-docs/1.x/helpers](https://macropay-solutions.github.io/php-framework-docs/1.x/helpers)
+- Localization [https://macropay-solutions.github.io/php-framework-docs/1.x/localization](https://macropay-solutions.github.io/php-framework-docs/1.x/localization)
+- Logging [https://macropay-solutions.github.io/php-framework-docs/1.x/logging](https://macropay-solutions.github.io/php-framework-docs/1.x/logging)
+- Processes [https://macropay-solutions.github.io/php-framework-docs/1.x/processes](https://macropay-solutions.github.io/php-framework-docs/1.x/processes)
+- Prompts [https://macropay-solutions.github.io/php-framework-docs/1.x/prompts](https://macropay-solutions.github.io/php-framework-docs/1.x/prompts)
+- Strings [https://macropay-solutions.github.io/php-framework-docs/1.x/strings](https://macropay-solutions.github.io/php-framework-docs/1.x/strings)
+- Task Scheduling [https://macropay-solutions.github.io/php-framework-docs/1.x/scheduling](https://macropay-solutions.github.io/php-framework-docs/1.x/scheduling)
+- Blade Templates [https://macropay-solutions.github.io/php-framework-docs/1.x/blade](https://macropay-solutions.github.io/php-framework-docs/1.x/blade)
 
 #### Testing & Verification
 - Testing https://macropay-solutions.github.io/php-framework-docs/1.x/testing
+- Mocking [https://macropay-solutions.github.io/php-framework-docs/1.x/mocking](https://macropay-solutions.github.io/php-framework-docs/1.x/mocking)
 
 #### Obvious ORM & Database Layer
 - Database Overview https://macropay-solutions.github.io/php-framework-docs/1.x/database
@@ -87,3 +105,7 @@ https://github.com/macropay-solutions/php-framework-docs/blob/production/llms.tx
 - Obvious Relationships https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-relationships
 - Obvious Serialization https://macropay-solutions.github.io/php-framework-docs/1.x/obvious-serialization
 - Events https://macropay-solutions.github.io/php-framework-docs/1.x/events
+- Query Builder [https://macropay-solutions.github.io/php-framework-docs/1.x/queries](https://macropay-solutions.github.io/php-framework-docs/1.x/queries)
+- Database: Pagination [https://macropay-solutions.github.io/php-framework-docs/1.x/pagination](https://macropay-solutions.github.io/php-framework-docs/1.x/pagination)
+- Database: Seeding [https://macropay-solutions.github.io/php-framework-docs/1.x/seeding](https://macropay-solutions.github.io/php-framework-docs/1.x/seeding)
+- Redis [https://macropay-solutions.github.io/php-framework-docs/1.x/redis](https://macropay-solutions.github.io/php-framework-docs/1.x/redis)

@@ -521,7 +521,7 @@ As an example, we will define a custom cast class that casts multiple model valu
          */
         public function set(Model $model, string $key, mixed $value, array $attributes): array
         {
-            if (! $value instanceof AddressValueObject) {
+            if (!$value instanceof AddressValueObject) {
                 throw new InvalidArgumentException('The given value is not an Address instance.');
             }
 
