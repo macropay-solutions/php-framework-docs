@@ -66,7 +66,7 @@ Template views may be returned from routes or controllers using the global `view
 <a name="html-entity-encoding"></a>
 ### HTML Entity Encoding
 
-By default, Template (and the Framework `e` function) will double encode HTML entities. If you would like to disable double encoding, call the `Template::withoutDoubleEncoding` method from the `boot` method of your `AppServiceProvider`:
+By default, Template (and the Framework `e` function) will double encode HTML entities. If you would like to disable double encoding, call the `app('template.compiler')->withoutDoubleEncoding` method from the `boot` method of your `AppServiceProvider`:
 
     <?php
 
@@ -1418,7 +1418,7 @@ When component paths are registered without a specified prefix as in the example
 
 Prefix "namespaces" may be provided as the second argument to the `anonymousComponentPath` method:
 
-    Template::anonymousComponentPath(__DIR__.'/../components', 'dashboard');
+    app('template.compiler')->anonymousComponentPath(__DIR__.'/../components', 'dashboard');
 
 When a prefix is provided, components within that "namespace" may be rendered by prefixing to the component's namespace to the component name when the component is rendered:
 
@@ -1702,7 +1702,7 @@ return app('template.compiler')->render('Hello, {{ $name }}', ['name' => 'Julian
 Framework renders inline View templates by writing them to the `storage/framework/views` directory. If you would like Framework to remove these temporary files after rendering the Template template, you may provide the `deleteCachedView` argument to the method:
 
 ```php
-return Template::render(
+return app('template.compiler')->render(
     'Hello, {{ $name }}',
     ['name' => 'Julian Bashir'],
     deleteCachedView: true
