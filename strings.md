@@ -1205,7 +1205,7 @@ The `Str::toBase64` method converts the given string to Base64:
 <a name="method-str-to-html-string"></a>
 #### `Str::toHtmlString()` {.collection-method}
 
-The `Str::toHtmlString` method converts the string instance to an instance of `MacropaySolutions\Kernel\Support\HtmlString`, which may be displayed in Blade templates:
+The `Str::toHtmlString` method converts the string instance to an instance of `MacropaySolutions\Kernel\Support\HtmlString`, which may be displayed in View templates:
 
     use MacropaySolutions\Kernel\Support\Str;
 

@@ -98,7 +98,7 @@ You may use the `withInput` method provided by the `RedirectResponse` instance t
 
     return back()->withInput();
 
-After the user is redirected, you may display the flashed message from the [session](/session). For example, using [Blade syntax](/blade):
+After the user is redirected, you may display the flashed message from the [session](/session). For example, using [Template syntax](/template):
 
     @if (session('status'))
         <div class="alert alert-success">

@@ -23,7 +23,7 @@ In case you're not familiar with cross-site request forgeries, let's discuss an 
 
 Without CSRF protection, a malicious website could create an HTML form that points to your application's `/user/email` route and submits the malicious user's own email address:
 
-```blade
+```template
 <form action="https://your-application.com/user/email" method="POST">
     <input type="email" value="malicious-email@example.com">
 </form>
@@ -54,9 +54,9 @@ The current session's CSRF token can be accessed via the request's session or vi
         // ...
     });
 
-Anytime you define a "POST", "PUT", "PATCH", or "DELETE" HTML form in your application, you should include a hidden CSRF `_token` field in the form so that the CSRF protection middleware can validate the request. For convenience, you may use the `@csrf` Blade directive to generate the hidden token input field:
+Anytime you define a "POST", "PUT", "PATCH", or "DELETE" HTML form in your application, you should include a hidden CSRF `_token` field in the form so that the CSRF protection middleware can validate the request. For convenience, you may use the `@csrf` Template directive to generate the hidden token input field:
 
-```blade
+```template
 <form method="POST" action="/profile">
     @csrf
 
@@ -107,7 +107,7 @@ Typically, you should place these kinds of routes outside of the `web` middlewar
 
 In addition to checking for the CSRF token as a POST parameter, the `App\Http\Middleware\VerifyCsrfToken` middleware will also check for the `X-CSRF-TOKEN` request header. You could, for example, store the token in an HTML `meta` tag:
 
-```blade
+```template
 <meta name="csrf-token" content="{{ csrf_token() }}">
 ```
 

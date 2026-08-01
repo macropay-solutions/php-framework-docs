@@ -1,6 +1,6 @@
 ---
 title: Views
-description: Creating, rendering, and optimizing Blade views in PHP-Framework.
+description: Creating, rendering, and optimizing Template views in PHP-Framework.
 context: views
 ---
 
@@ -24,10 +24,10 @@ context: views
 
 Of course, it's not practical to return entire HTML documents strings directly from your routes and controllers. Thankfully, views provide a convenient way to place all of our HTML in separate files.
 
-Views separate your controller / application logic from your presentation logic and are stored in the `resources/views` directory. When using Framework, view templates are usually written using the [Blade templating language](/blade). A simple view might look something like this:
+Views separate your controller / application logic from your presentation logic and are stored in the `resources/views` directory. When using Framework, view templates are usually written using the [Template templating language](/template). A simple view might look something like this:
 
-```blade
-<!-- View stored in resources/views/greeting.blade.php -->
+```template
+<!-- View stored in resources/views/greeting.template.php -->
 
 <html>
     <body>
@@ -36,7 +36,7 @@ Views separate your controller / application logic from your presentation logic 
 </html>
 ```
 
-Since this view is stored at `resources/views/greeting.blade.php`, we may return it using the global `view` helper from within a controller method:
+Since this view is stored at `resources/views/greeting.template.php`, we may return it using the global `view` helper from within a controller method:
 
     namespace App\Http\Controllers;
 
@@ -49,17 +49,17 @@ Since this view is stored at `resources/views/greeting.blade.php`, we may return
     }
 
 > [!NOTE]  
-> Looking for more information on how to write Blade templates? Check out the full [Blade documentation](/blade) to get started.
+> Looking for more information on how to write View templates? Check out the full [Template documentation](/template) to get started.
 
 <a name="writing-views-in-react-or-vue"></a>
 ### Writing Views in React / Vue
 
-Instead of writing their frontend templates in PHP via Blade, many developers have begun to prefer to write their templates using React or Vue. Framework makes this painless thanks to [Inertia](https://inertiajs.com/), a library that makes it a cinch to tie your React / Vue frontend to your Framework backend without the typical complexities of building an SPA.
+Instead of writing their frontend templates in PHP via Template, many developers have begun to prefer to write their templates using React or Vue. Framework makes this painless thanks to [Inertia](https://inertiajs.com/), a library that makes it a cinch to tie your React / Vue frontend to your Framework backend without the typical complexities of building an SPA.
 
 <a name="explicit-view-opt-in-flow"></a>
 ### Explicit View Opt-In Flow
 
-Because PHP-Framework is optimized for headless JSON APIs, the HTML View rendering engine is completely disabled by default to conserve memory. To utilize Blade views, you must actively toggle the engine on within the application lifecycle:
+Because PHP-Framework is optimized for headless JSON APIs, the HTML View rendering engine is completely disabled by default to conserve memory. To utilize Template views, you must actively toggle the engine on within the application lifecycle:
 
 1. **Composer Realignment**: Open your `composer.json` file and remove the `"vendor/macropay-solutions/php-kernel/kernel/View/"` string from the `exclude-from-classmap` array.
 2. **Container Activation**: Open `App\Application.php` and uncomment the view factory container bindings inside the `$availableBindings` array:
@@ -70,7 +70,7 @@ Because PHP-Framework is optimized for headless JSON APIs, the HTML View renderi
         'view' => 'registerViewBindings',
         \MacropaySolutions\Kernel\Contracts\View\Factory::class => 'registerViewBindings',
         'view.finder' => 'registerViewBindings',
-        'blade.compiler' => 'registerViewBindings',
+        'template.compiler' => 'registerViewBindings',
         'view.engine.resolver' => 'registerViewBindings',
         \MacropaySolutions\Kernel\View\Engines\EngineResolver::class => 'registerViewBindings',
     ];
@@ -83,13 +83,13 @@ Once uncommented, run `composer dump-autoload` in your terminal to rebuild the c
 <a name="creating-and-rendering-views"></a>
 ## Creating and Rendering Views
 
-You may create a view by placing a file with the `.blade.php` extension in your application's `resources/views` directory or by using the `make:view` Run command:
+You may create a view by placing a file with the `.template.php` extension in your application's `resources/views` directory or by using the `make:view` Run command:
 
 ```shell
 php run make:view greeting
 ```
 
-The `.blade.php` extension informs the framework that the file contains a [Blade template](/blade). Blade templates contain HTML as well as Blade directives that allow you to easily echo values, create "if" statements, iterate over data, and more.
+The `.template.php` extension informs the framework that the file contains a [Template template](/template). View templates contain HTML as well as Template directives that allow you to easily echo values, create "if" statements, iterate over data, and more.
 
 Once you have created a view, you may return it from one of your application's controllers using the global `view` helper:
 
@@ -105,12 +105,12 @@ Views may also be rendered explicitly by resolving the view factory directly fro
         return \app('view')->make('greeting', ['name' => 'James']);
     }
 
-As you can see, the first argument passed to the `view` helper corresponds to the name of the view file in the `resources/views` directory. The second argument is an array of data that should be made available to the view. In this case, we are passing the `name` variable, which is displayed in the view using [Blade syntax](/blade).
+As you can see, the first argument passed to the `view` helper corresponds to the name of the view file in the `resources/views` directory. The second argument is an array of data that should be made available to the view. In this case, we are passing the `name` variable, which is displayed in the view using [Template syntax](/template).
 
 <a name="nested-view-directories"></a>
 ### Nested View Directories
 
-Views may also be nested within subdirectories of the `resources/views` directory. "Dot" notation may be used to reference nested views. For example, if your view is stored at `resources/views/admin/profile.blade.php`, you may return it from your controller like so:
+Views may also be nested within subdirectories of the `resources/views` directory. "Dot" notation may be used to reference nested views. For example, if your view is stored at `resources/views/admin/profile.template.php`, you may return it from your controller like so:
 
     return view('admin.profile', $data);
 
@@ -288,7 +288,7 @@ View "creators" are very similar to view composers; however, they are executed i
 <a name="optimizing-views"></a>
 ## Optimizing Views
 
-By default, Blade template views are compiled on demand. When a request is executed that renders a view, Framework will determine if a compiled version of the view exists. If the file exists, Framework will then determine if the uncompiled view has been modified more recently than the compiled view. If the compiled view either does not exist, or the uncompiled view has been modified, Framework will recompile the view.
+By default, Template template views are compiled on demand. When a request is executed that renders a view, Framework will determine if a compiled version of the view exists. If the file exists, Framework will then determine if the uncompiled view has been modified more recently than the compiled view. If the compiled view either does not exist, or the uncompiled view has been modified, Framework will recompile the view.
 
 Compiling views during the request may have a small negative impact on performance, so Framework provides the `view:cache` Run command to precompile all the views utilized by your application. For increased performance, you may wish to run this command as part of your deployment process:
 

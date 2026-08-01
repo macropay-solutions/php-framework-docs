@@ -242,7 +242,7 @@ php run make:mail OrderShipped
 
 Once you have generated a mailable class, open it up so we can explore its contents. Mailable class configuration is done in several methods, including the `envelope`, `content`, and `attachments` methods.
 
-The `envelope` method returns an `MacropaySolutions\Kernel\Mail\Mailables\Envelope` object that defines the subject and, sometimes, the recipients of the message. The `content` method returns an `MacropaySolutions\Kernel\Mail\Mailables\Content` object that defines the [Blade template](/blade) that will be used to generate the message content.
+The `envelope` method returns an `MacropaySolutions\Kernel\Mail\Mailables\Envelope` object that defines the subject and, sometimes, the recipients of the message. The `content` method returns an `MacropaySolutions\Kernel\Mail\Mailables\Content` object that defines the [Template template](/template) that will be used to generate the message content.
 
 <a name="configuring-the-sender"></a>
 ### Configuring the Sender
@@ -293,7 +293,7 @@ In addition, you may define a global "reply_to" address within your `config/mail
 <a name="configuring-the-view"></a>
 ### Configuring the View
 
-Within a mailable class's `content` method, you may define the `view`, or which template should be used when rendering the email's contents. Since each email typically uses a [Blade template](/blade) to render its contents, you have the full power and convenience of the Blade templating engine when building your email's HTML:
+Within a mailable class's `content` method, you may define the `view`, or which template should be used when rendering the email's contents. Since each email typically uses a [Template template](/template) to render its contents, you have the full power and convenience of the Template templating engine when building your email's HTML:
 
     use MacropaySolutions\Kernel\Mail\Mailables\Content;
 
@@ -373,7 +373,7 @@ Typically, you will want to pass some data to your view that you can utilize whe
         }
     }
 
-Once the data has been set to a public property, it will automatically be available in your view, so you may access it like you would access any other data in your Blade templates:
+Once the data has been set to a public property, it will automatically be available in your view, so you may access it like you would access any other data in your View templates:
 
     <div>
         Order ID: {{ $orderId }}
@@ -400,7 +400,7 @@ If you would like to customize the format of your email's data before it is sent
             );
     }
 
-Once the data has been passed to the `with` method, it will automatically be available in your view, so you may access it like you would access any other data in your Blade templates:
+Once the data has been passed to the `with` method, it will automatically be available in your view, so you may access it like you would access any other data in your View templates:
 
     <div>
         Price: {{ $orderPrice }}
@@ -513,7 +513,7 @@ The `fromData` attachment method may be used to attach a raw string of bytes as 
 
 Embedding inline images into your emails is typically cumbersome; however, Framework provides a convenient way to attach images to your emails. To embed an inline image, use the `embed` method on the `$message` variable within your email template. Framework automatically makes the `$message` variable available to all of your email templates, so you don't need to worry about passing it in manually:
 
-```blade
+```template
 <body>
     Here is an image:
 
@@ -529,7 +529,7 @@ Embedding inline images into your emails is typically cumbersome; however, Frame
 
 If you already have a raw image data string you wish to embed into an email template, you may call the `embedData` method on the `$message` variable. When calling the `embedData` method, you will need to provide a filename that should be assigned to the embedded image:
 
-```blade
+```template
 <body>
     Here is an image from raw data:
 
@@ -700,9 +700,9 @@ Then, when configuring the mailable `Content` definition within its `content` me
 <a name="writing-markdown-messages"></a>
 ### Writing Markdown Messages
 
-Markdown mailables use a combination of Blade components and Markdown syntax which allow you to easily construct mail messages while leveraging Framework's pre-built email UI components:
+Markdown mailables use a combination of Template components and Markdown syntax which allow you to easily construct mail messages while leveraging Framework's pre-built email UI components:
 
-```blade
+```template
 <x-mail::message>
 # Order Shipped
 
@@ -725,7 +725,7 @@ Thanks,<br>
 
 The button component renders a centered button link. The component accepts two arguments, a `url` and an optional `color`. Supported colors are `primary`, `success`, and `error`. You may add as many button components to a message as you wish:
 
-```blade
+```template
 <x-mail::button :url="$url" color="success">
 View Order
 </x-mail::button>
@@ -736,7 +736,7 @@ View Order
 
 The panel component renders the given block of text in a panel that has a slightly different background color than the rest of the message. This allows you to draw attention to a given block of text:
 
-```blade
+```template
 <x-mail::panel>
 This is the panel content.
 </x-mail::panel>
@@ -747,7 +747,7 @@ This is the panel content.
 
 The table component allows you to transform a Markdown table into an HTML table. The component accepts the Markdown table as its content. Table column alignment is supported using the default Markdown table alignment syntax:
 
-```blade
+```template
 <x-mail::table>
 | Framework       | Table         | Example  |
 | ------------- |:-------------:| --------:|
@@ -866,7 +866,7 @@ When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCo
 > [!CAUTION]  
 > **The Protected / Private Property Loss Trap:** The queue transport layer relies entirely on `get_object_vars()` and `json_encode()` to flatten queued Mailables into 100% object-free JSON payloads. As a result, **all `protected` and `private` instance properties are permanently stripped during serialization**.
 >
-> **The Recommended Fix:** To pass primitive data cleanly without exposing it as public properties (or leaking it to Blade templates), **pass your primitive arguments directly to your execution methods** (`handle()`, `content()`, `envelope()`, or `build()`) or use Storable Array Callables. The container and queue engine will hydrate parameters dynamically at execution time.
+> **The Recommended Fix:** To pass primitive data cleanly without exposing it as public properties (or leaking it to View templates), **pass your primitive arguments directly to your execution methods** (`handle()`, `content()`, `envelope()`, or `build()`) or use Storable Array Callables. The container and queue engine will hydrate parameters dynamically at execution time.
 
 > [!WARNING]  
 > **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a `QueueableCollection` or `QueueableEntity`) as a public property to your Mailable will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your Mailable methods expect an actual instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and fetch the database records inside your `envelope()` or `build()` methods.
