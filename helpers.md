@@ -906,7 +906,7 @@ $classes = Arr::toCssStyles($array);
 */
 ```
 
-This method powers Framework's functionality allowing [merging classes with a Blade component's attribute bag](/blade#conditionally-merge-classes) as well as the `@class` [Blade directive](/blade#conditional-classes).
+This method powers Framework's functionality allowing [merging classes with a Template component's attribute bag](/template#conditionally-merge-classes) as well as the `@class` [Template directive](/template#conditional-classes).
 
 <a name="method-array-undot"></a>
 #### `Arr::undot()` {.collection-method}
@@ -1675,7 +1675,7 @@ The `cookie` function creates a new [cookie](/requests#cookies) instance:
 <a name="method-csrf-field"></a>
 #### `csrf_field()` {.collection-method}
 
-The `csrf_field` function generates an HTML `hidden` input field containing the value of the CSRF token. For example, using [Blade syntax](/blade):
+The `csrf_field` function generates an HTML `hidden` input field containing the value of the CSRF token. For example, using [Template syntax](/template):
 
     {{ csrf_field() }}
 
@@ -1760,7 +1760,7 @@ The `event` function dispatches the given [event](/events) to its listeners:
 
 The `fake` function resolves a [Faker](https://github.com/FakerPHP/Faker) singleton from the container, which can be useful when creating fake data in model factories, database seeding, tests, and prototyping views:
 
-```blade
+```template
 @for($i = 0; $i < 10; $i++)
     <dl>
         <dt>Name</dt>
@@ -1825,7 +1825,7 @@ A [logger](/errors#logging) instance will be returned if no value is passed to t
 <a name="method-method-field"></a>
 #### `method_field()` {.collection-method}
 
-The `method_field` function generates an HTML `hidden` input field containing the spoofed value of the form's HTTP verb. For example, using [Blade syntax](/blade):
+The `method_field` function generates an HTML `hidden` input field containing the spoofed value of the form's HTTP verb. For example, using [Template syntax](/template):
 
     <form method="POST">
         {{ method_field('DELETE') }}

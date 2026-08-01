@@ -1,5 +1,5 @@
 ---
-title: Database: Migrations
+title: Database Migrations
 description: Database migrations, schema version control, and structure management for PHP Framework.
 context: migrations
 ---

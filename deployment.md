@@ -182,7 +182,7 @@ When deploying your application to production, you should make sure that you run
 php run view:cache
 ```
 
-This command precompiles all your Blade views so they are not compiled on demand, improving the performance of each request that returns a view.
+This command precompiles all your Template views so they are not compiled on demand, improving the performance of each request that returns a view.
 
 <a name="caching-autowiring"></a>
 ### Caching Autowiring
