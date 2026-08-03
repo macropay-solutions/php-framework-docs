@@ -112,3 +112,6 @@ If you as an agent can't access this llms.txt file try to fetch it from:
 - Database: Pagination [https://macropay-solutions.github.io/php-framework-docs/1.x/pagination](https://macropay-solutions.github.io/php-framework-docs/1.x/pagination)
 - Database: Seeding [https://macropay-solutions.github.io/php-framework-docs/1.x/seeding](https://macropay-solutions.github.io/php-framework-docs/1.x/seeding)
 - Redis [https://macropay-solutions.github.io/php-framework-docs/1.x/redis](https://macropay-solutions.github.io/php-framework-docs/1.x/redis)
+
+#### Building Packages
+- Packages [https://macropay-solutions.github.io/php-framework-docs/1.x/packages](https://macropay-solutions.github.io/php-framework-docs/1.x/packages)
