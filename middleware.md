@@ -38,7 +38,7 @@ To create a new middleware, copy the base template or duplicate an existing clas
 
     use Closure;
     use MacropaySolutions\Kernel\Http\Request;
-    use MacropaySolutions\Kernel\Http\Base\Response;
+    use Symfony\Component\HttpFoundation\Response;
 
     class EnsureTokenIsValid
     {
@@ -73,7 +73,7 @@ Whether a middleware runs before or after a request is handled depends on the st
 
     use Closure;
     use MacropaySolutions\Kernel\Http\Request;
-    use MacropaySolutions\Kernel\Http\Base\Response;
+    use Symfony\Component\HttpFoundation\Response;
 
     class BeforeMiddleware
     {
@@ -93,7 +93,7 @@ Conversely, this middleware performs its task **after** the request is handled b
 
     use Closure;
     use MacropaySolutions\Kernel\Http\Request;
-    use MacropaySolutions\Kernel\Http\Base\Response;
+    use Symfony\Component\HttpFoundation\Response;
 
     class AfterMiddleware
     {
@@ -170,7 +170,7 @@ Custom parameters will be passed as trailing arguments to the middleware's `hand
 
     use Closure;
     use MacropaySolutions\Kernel\Http\Request;
-    use MacropaySolutions\Kernel\Http\Base\Response;
+    use Symfony\Component\HttpFoundation\Response;
 
     class EnsureUserHasRole
     {
@@ -207,7 +207,7 @@ To achieve this behavior, define your middleware as "terminable" by adding a pub
 
     use Closure;
     use MacropaySolutions\Kernel\Http\Request;
-    use MacropaySolutions\Kernel\Http\Base\Response;
+    use Symfony\Component\HttpFoundation\Response;
 
     class StartSession
     {
@@ -225,7 +225,7 @@ To achieve this behavior, define your middleware as "terminable" by adding a pub
         }
     }
 
-The `terminate` method must accept both a `MacropaySolutions\Kernel\Http\Request` and a `MacropaySolutions\Kernel\Http\Base\Response` instance. Once implemented, register the terminable middleware as a global or route-specific entry point inside your configuration loops.
+The `terminate` method must accept both a `MacropaySolutions\Kernel\Http\Request` and a `Symfony\Component\HttpFoundation\Response` instance. Once implemented, register the terminable middleware as a global or route-specific entry point inside your configuration loops.
 
 When calling the `terminate` method on your middleware, Framework will resolve a fresh instance of the middleware from the [service container](/container). If you would like to use the same middleware instance when the `handle` and `terminate` methods are called, register the middleware with the container using the container's `singleton` method.
 

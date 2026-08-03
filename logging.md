@@ -225,14 +225,14 @@ Occasionally, you may wish to specify some contextual information that should be
     use Closure;
     use MacropaySolutions\Kernel\Http\Request;
     use MacropaySolutions\Kernel\Support\Str;
-    use MacropaySolutions\Kernel\Http\Base\Response;
+    use Symfony\Component\HttpFoundation\Response;
 
     class AssignRequestId
     {
         /**
          * Handle an incoming request.
          *
-         * @param  \Closure(\MacropaySolutions\Kernel\Http\Request): (\MacropaySolutions\Kernel\Http\Base\Response)  $next
+         * @param  \Closure(\MacropaySolutions\Kernel\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
          */
         public function handle(Request $request, Closure $next): Response
         {
@@ -259,14 +259,14 @@ If you would like to share contextual information across _all_ logging channels,
     use Closure;
     use MacropaySolutions\Kernel\Http\Request;
     use MacropaySolutions\Kernel\Support\Str;
-    use MacropaySolutions\Kernel\Http\Base\Response;
+    use Symfony\Component\HttpFoundation\Response;
 
     class AssignRequestId
     {
         /**
          * Handle an incoming request.
          *
-         * @param  \Closure(\MacropaySolutions\Kernel\Http\Request): (\MacropaySolutions\Kernel\Http\Base\Response)  $next
+         * @param  \Closure(\MacropaySolutions\Kernel\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
          */
         public function handle(Request $request, Closure $next): Response
         {

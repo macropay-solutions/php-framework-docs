@@ -177,7 +177,7 @@ namespace App\Exceptions;
 
 use Exception;
 use MacropaySolutions\Kernel\Contracts\Support\Responsable;
-use MacropaySolutions\Kernel\Http\Base\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class CustomApiException extends Exception implements Responsable
 {
@@ -202,7 +202,7 @@ To throw an HTTP exception and stop processing immediately, call the `abort` glo
 \abort(404, 'The requested resource was not found.');
 ```
 
-Passing `404` throws a `MacropaySolutions\Kernel\Http\Base\NotFoundHttpException`. Any other HTTP status code throws a `MacropaySolutions\Kernel\Http\Base\HttpException`.
+Passing `404` throws a `Symfony\Component\HttpKernel\Exception\NotFoundHttpException`. Any other HTTP status code throws a `Symfony\Component\HttpKernel\Exception\HttpException`.
 
 <a name="http-response-formatting"></a>
 ### HTTP Response Formatting

@@ -52,7 +52,7 @@ If the controller method requires input from a route parameter, list the route a
 <a name="basic-request-information"></a>
 ### Basic Request Information
 
-The `MacropaySolutions\Kernel\Http\Request` instance extends `MacropaySolutions\Kernel\Http\Base\Request` to analyze incoming execution context.
+The `MacropaySolutions\Kernel\Http\Request` instance extends `Symfony\Component\HttpFoundation\Request` to analyze incoming execution context.
 
 #### Retrieving The Request URI and Host
 
