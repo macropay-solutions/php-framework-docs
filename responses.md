@@ -43,7 +43,7 @@ The returned string will automatically be converted into an HTTP response by the
 
 #### Response Objects
 
-However, for most controller actions, you will be returning a full `MacropaySolutions\Kernel\Http\Response` instance. Returning a full `Response` instance allows you to customize the response's HTTP status code and headers. A `Response` instance inherits from the `Symfony\Component\HttpFoundation\Response` class, providing a variety of methods for building HTTP responses:
+However, for most controller actions, you will be returning a full `MacropaySolutions\Kernel\Http\Response` instance. Returning a full `Response` instance allows you to customize the response's HTTP status code and headers. A `Response` instance inherits from the `MacropaySolutions\Kernel\Http\Base\Response` class, providing a variety of methods for building HTTP responses:
 
 ```php
 namespace App\Http\Controllers;
