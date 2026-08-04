@@ -151,26 +151,44 @@ $router->post('/package/action', '\Vendor\Package\Http\Controllers\PackageContro
 
 ### Migrations
 
-If your package contains database migrations, instruct your users to copy them in their migrations folder.
+Because `loadMigrationsFrom()` does NOT exist in `ServiceProvider`, package migrations must reside in the application's `database/migrations` directory.
 
+#### Automated Installation (Recommended)
 
-Once registered, they will automatically run when consumers execute `php run migrate`.
+Add the migration folder mapping to your package's `composer.json`:
 
-> **Warning:** You should instruct your users to manually copy the migration files into their application's `database/migrations` folder as the `loadMigrationsFrom` method does NOT exist in the ServiceProvider.
+    "extra": {
+        "publish-assets": {
+            "your-path/migrations": "database/migrations"
+        }
+    }
+
+When consumers install or update your package, Composer automatically places the migrations into their `database/migrations` directory without overwriting existing files.
+
+#### Manual Installation Alternative
+
+If consumers do not use the asset publisher plugin, instruct them in your `README.md` to copy the migration files manually:
+
+    cp -r vendor/my-vendor/my-package/your-path/migrations/* database/migrations/
 
 ### Views & Language Files
 
-**Note:** PHP-Framework is optimized for stateless JSON APIs. The `loadViewsFrom` and `loadTranslationsFrom` helpers (as well as double-colon namespaces like `namespace::view` and `namespace::file.key`) **do NOT exist** to eliminate runtime container closure bindings and filesystem scans on every request.
+Because `loadViewsFrom()`, `loadTranslationsFrom()`, and double-colon namespace syntax (`namespace::view`) do **NOT** exist in PHP-Framework, view templates and language files must reside in the application space.
 
-If your package includes HTML views or translation files, instruct users to copy them directly into the application space (`resources/views/vendor/{package}` and `resources/lang/en/{file}.php`). Resources are then referenced using standard dot-notation:
+Instruct consumers to publish these via `publish-assets`:
 
-```php
-// Resolves resources/views/vendor/my-package/mail.template.php
-return view('vendor.my-package.mail', $data);
-```
+    "extra": {
+        "publish-assets": {
+            "resources/views": "resources/views/vendor/my-package",
+            "resources/lang": "resources/lang"
+        }
+    }
 
-## Commands
+View files in the application space are then rendered using standard dot-notation:
 
+    return view('vendor.my-package.invoice', $data);
+
+### Commands
 To register your package's console commands, you may use the `commands` method in your service provider's `boot` method when the application is running in console mode:
 
 ```php
@@ -204,7 +222,10 @@ In your package's `composer.json`, instruct the plugin which files to publish by
         "extra": {
             "publish-assets": {
                 "config/my-package.php": "config/my-package.php",
-                "resources/views/mail": "resources/views/vendor/my-package"
+                "database/migrations": "database/migrations",
+                "resources/views": "resources/views/vendor/my-package",
+                "resources/lang": "resources/lang",
+                "public": "public/vendor/my-package"
             }
         }
     }
