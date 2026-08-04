@@ -487,15 +487,15 @@ The `Arr::join` method joins array elements with a string. Using this method's s
 
     use MacropaySolutions\Kernel\Support\Arr;
 
-    $array = ['Tailwind', 'Alpine', 'Framework', 'Livewire'];
+    $array = ['Alpine', 'Framework'];
 
     $joined = Arr::join($array, ', ');
 
-    // Tailwind, Alpine, Framework, Livewire
+    // Alpine, Framework
 
     $joined = Arr::join($array, ', ', ' and ');
 
-    // Tailwind, Alpine, Framework and Livewire
+    // Alpine and Framework
 
 <a name="method-array-keyby"></a>
 #### `Arr::keyBy()` {.collection-method}

@@ -521,11 +521,9 @@ By default, the email notification will be sent using the default mailer defined
 <a name="customizing-the-templates"></a>
 ### Customizing the Templates
 
-You can modify the HTML and plain-text template used by mail notifications by publishing the notification package's resources. After running this command, the mail notification templates will be located in the `resources/views/vendor/notifications` directory:
+You can modify the HTML and plain-text template used by mail notifications by copying the notification view files from the kernel package (`vendor/macropay-solutions/php-kernel/kernel/Notifications/resources/views`) directly into your application's `resources/views/vendor/notifications` directory.
 
-```shell
-php run vendor:publish --tag=framework-notifications
-```
+Once placed in `resources/views/vendor/notifications/email.template.php`, the framework will load the custom template using standard dot-notation (`vendor.notifications.email`).
 
 <a name="mail-attachments"></a>
 ### Attachments
@@ -795,13 +793,10 @@ The table component allows you to transform a Markdown table into an HTML table.
 <a name="customizing-the-components"></a>
 ### Customizing the Components
 
-You may export all the Markdown notification components to your own application for customization. To export the components, use the `vendor:publish` Run command to publish the `framework-mail` asset tag:
+You may copy all the Markdown notification component templates to your own application for customization. Copy the view templates from the kernel's mail resources into your application's `resources/views/vendor/mail` directory.
 
-```shell
-php run vendor:publish --tag=framework-mail
-```
 
-This command will publish the Markdown mail components to the `resources/views/vendor/mail` directory. The `mail` directory will contain an `html` and a `text` directory, each containing their respective representations of every available component. You are free to customize these components however you like.
+The `resources/views/vendor/mail` directory should contain an `html` and a `text` directory, each containing their respective representations of every available component. You are free to customize these components however you like.
 
 <a name="customizing-the-css"></a>
 #### Customizing the CSS

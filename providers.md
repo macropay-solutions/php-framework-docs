@@ -11,12 +11,13 @@ context: providers
 - [Writing Service Providers](#writing-service-providers)
   - [The Register Method](#the-register-method)
   - [The Boot Method](#the-boot-method)
+  - [Deferred Providers](#deferred-providers)
 - [Registering Providers](#registering-providers)
 
 <a name="introduction"></a>
 ## Introduction
 
-In this Framework, **Service Providers are completely optional** and stripped of legacy architectural weight.
+In this Framework, **Service Providers are completely optional** and stripped of legacy architectural weight. Dynamic asset registration helpers (`loadViewsFrom`, `loadTranslationsFrom`, `loadJsonTranslationsFrom`, `loadMigrationsFrom`, and `publishes`) **do NOT exist** in the `ServiceProvider` base class to eliminate runtime container closure bindings and per-request filesystem scans.
 
 Because instantiating provider classes and executing `register()` methods on every request adds unnecessary filesystem and boot overhead, the framework natively defers container resolution by default at the application level.
 
@@ -107,6 +108,16 @@ class AppServiceProvider extends ServiceProvider
     }
 }
 ```
+
+<a name="deferred-providers"></a>
+### Deferred Providers
+
+If your provider is **only** registering bindings in the service container or performing component registration (such as calling `loadViewComponentsAs()`), you should defer its registration until one of the provided services is actually needed. Deferring the loading of such a provider will improve the performance of your application because it is not loaded from the filesystem on every request.
+
+To defer a provider you must follow the logic of `MailServiceProvider` from your `\App\Application` file. Implementing the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface will not help.
+
+> [!NOTE]  
+> Component and view helper registrations like `$this->loadViewComponentsAs()` **must only be invoked from a deferred service provider** (such as `MailServiceProvider`). This guarantees that component registration closures never get pushed into the container during standard HTTP API requests.
 
 <a name="registering-providers"></a>
 ## Registering Providers
