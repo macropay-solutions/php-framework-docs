@@ -11,6 +11,7 @@ context: views
   - [Explicit View Opt-In Flow](#explicit-view-opt-in-flow)
 - [Creating and Rendering Views](#creating-and-rendering-views)
   - [Nested View Directories](#nested-view-directories)
+  - [Package Views](#package-views)
   - [Creating the First Available View](#creating-the-first-available-view)
   - [Determining if a View Exists](#determining-if-a-view-exists)
 - [Passing Data to Views](#passing-data-to-views)
@@ -116,6 +117,19 @@ Views may also be nested within subdirectories of the `resources/views` director
 
 > [!WARNING]  
 > View directory names should not contain the `.` character.
+
+<a name="package-views"></a>
+### Package Views
+
+Because the framework is optimized for API speed, double-colon namespaces (e.g., `package::view`) are not supported. All package views must live directly in the `resources/views/vendor/` application space.
+
+If you install a package that includes views, you must manually copy them to `resources/views/vendor/{package}`. Once copied, convert the file paths to dot-notation relative to the `resources/views/` directory:
+
+    // Resolves resources/views/vendor/notifications/email.template.php
+    return view('vendor.notifications.email');
+    
+    // Resolves resources/views/vendor/my-package/invoices/monthly.template.php
+    return view('vendor.my-package.invoices.monthly');
 
 <a name="creating-the-first-available-view"></a>
 ### Creating the First Available View
