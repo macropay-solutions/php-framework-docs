@@ -24,11 +24,57 @@ Packages are the primary way of adding functionality to PHP-Framework. Some pack
 
 *Note: You must always use global helper functions (e.g., `app()`, `config()`, `response()`) or autowiring when building packages.*
 
+### Recommended Package Structure
+
+Packages should include copyable asset directories for consumers to easily publish manually:
+
+    my-org/my-package/
+    ├── src/
+    │   ├── MyPackageProvider.php
+    │   └── Services/
+    ├── config/
+    │   └── my-package.php
+    ├── resources/
+    │   ├── views/
+    │   │   ├── invoice.template.php
+    │   │   └── mail/
+    │   │       └── welcome.template.php
+    │   └── lang/
+    │       ├── en/
+    │       │   └── messages.php
+    │       └── es/
+    │           └── messages.php
+    ├── composer.json
+    └── README.md
+
 ## Service Providers
 
 Service providers are the connection point between your package and PHP-Framework. A service provider is responsible for binding things into the framework's service container (which directly manages its own explicit `$availableBindings` map) and informing PHP-Framework where to load package resources.
 
 A service provider extends the `MacropaySolutions\Kernel\Support\ServiceProvider` class and contains two methods: `register` and `boot`.
+
+### What Works vs. What Does NOT Work
+
+Because the framework is heavily optimized for zero-overhead boot times, dynamic asset registration methods have been removed.
+
+**What Works (Do This):**
+Only use the `register()` method with container bindings:
+
+```php
+public function register(): void
+{
+    $this->app->singleton(InvoiceService::class, function () {
+        return new InvoiceService(config('my-package'));
+    });
+}
+```
+
+**What Does NOT Work (MISSING Methods):**
+- ❌ `loadViewsFrom()` — Use manual file copying instead.
+- ❌ `loadTranslationsFrom()` — Use manual file copying instead.
+- ❌ `loadJsonTranslationsFrom()` — Use manual file copying instead.
+- ❌ `loadMigrationsFrom()` — Use manual file copying instead.
+- ❌ `publishes()` — Use manual file copying instead.
 
 ### Registering Your Package Provider
 
@@ -105,14 +151,8 @@ $router->post('/package/action', '\Vendor\Package\Http\Controllers\PackageContro
 
 ### Migrations
 
-If your package contains database migrations, use the `loadMigrationsFrom` method to inform PHP-Framework how to load them. This method accepts the path to your package's migrations as its only argument:
+If your package contains database migrations, instruct your users to copy them in their migrations folder.
 
-```php
-public function boot(): void
-{
-    $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-}
-```
 
 Once registered, they will automatically run when consumers execute `php run migrate`.
 
