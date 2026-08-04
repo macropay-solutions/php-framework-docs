@@ -156,7 +156,7 @@ If your package contains database migrations, instruct your users to copy them i
 
 Once registered, they will automatically run when consumers execute `php run migrate`.
 
-> **Warning:** To avoid this directory being scanned by the framework on every boot cycle, you should instruct your users to manually copy the migration files into their application's `database/migrations` folder and omit the `loadMigrationsFrom` call entirely in production.
+> **Warning:** You should instruct your users to manually copy the migration files into their application's `database/migrations` folder as the `loadMigrationsFrom` method does NOT exist in the ServiceProvider.
 
 ### Views & Language Files
 
