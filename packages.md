@@ -193,3 +193,24 @@ public function boot(): void
 ## Manual Asset Installation
 
 Because PHP-Framework is tailored for maximum API performance, if your package requires configuration files, public assets, database migrations, or HTML view templates (such as pagination or email layouts) to be moved into the consuming application, you must document the manual copy commands directly in your `README.md` so consumers can add them to their installation steps or CI/CD build scripts.
+
+### Automated Asset Installation (Composer Alternative)
+
+While documenting manual copy commands works, the recommended approach is to utilize the framework's built-in Composer asset publisher plugin. The `macropay-solutions/php-kernel-dev` dependency ships with a Composer plugin that completely bypasses the HTTP boot sequence while automating asset deployment.
+
+In your package's `composer.json`, instruct the plugin which files to publish by defining the `publish-assets` configuration within the `extra` block:
+
+    {
+        "extra": {
+            "publish-assets": {
+                "config/my-package.php": "config/my-package.php",
+                "resources/views/mail": "resources/views/vendor/my-package"
+            }
+        }
+    }
+
+The keys are the original package local path and the values are the destination path.
+
+> **NOTE**
+> When consumers **install** or **update** your package, Composer will automatically synchronize these files into their application space **without overwriting** any existing files. If you need them republished, simply delete the local copies and run `composer reinstall <vendor>/<package>`.
+> Consumers will still need to manually register the service provider.
