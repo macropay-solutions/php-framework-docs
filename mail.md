@@ -26,6 +26,7 @@ context: mail
 - [Markdown Mailables](#markdown-mailables)
   - [Generating Markdown Mailables](#generating-markdown-mailables)
   - [Writing Markdown Messages](#writing-markdown-messages)
+    - [Customizing the Components](#customizing-the-components)
 - [Sending Mail](#sending-mail)
   - [Queueing Mail](#queueing-mail)
 - [Rendering Mailables](#rendering-mailables)
@@ -66,6 +67,8 @@ Once these configurations are active, execute:
 composer require symfony/mailer
 composer dump-autoload
 ```
+
+> **Note:** The default email component templates are automatically published into your application space at `resources/views/vendor/mail/` by Composer upon installing or updating `macropay-solutions/php-kernel`.
 
 You may use this mail implementation logic to implement your own deferred service provider.
 
@@ -755,6 +758,19 @@ The table component allows you to transform a Markdown table into an HTML table.
 | Col 3 is      | Right-Aligned | $20      |
 </x-mail::table>
 ```
+
+<a name="customizing-the-components"></a>
+#### Customizing the Components
+
+All Markdown email components are automatically published by Composer into your application's `resources/views/vendor/mail` directory when `macropay-solutions/php-kernel` is installed or updated.
+
+Published mail components are split into two dedicated subdirectories:
+* `resources/views/vendor/mail/html`: HTML layouts and components. The Template `<x-mail::*>` component tags statically resolve to these templates.
+* `resources/views/vendor/mail/text`: Plain-text layout counterparts. To render plain-text email alternatives, reference these templates directly using standard dot-notation (e.g., `vendor.mail.text.message`).
+
+If you ever need to restore or republish the default framework mail components, delete the `resources/views/vendor/mail` directory and run:
+
+    composer reinstall macropay-solutions/php-kernel
 
 <a name="sending-mail"></a>
 ## Sending Mail
