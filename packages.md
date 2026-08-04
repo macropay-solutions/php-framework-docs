@@ -120,13 +120,13 @@ Once registered, they will automatically run when consumers execute `php run mig
 
 ### Views & Language Files
 
-**Note:** PHP-Framework is optimized for stateless JSON APIs. Components like HTML Views are disabled by default. If the consuming application has actively opted into these components inside `App\Application.php`, you may load them using `loadViewsFrom`:
+**Note:** PHP-Framework is optimized for stateless JSON APIs. The `loadViewsFrom` and `loadTranslationsFrom` helpers (as well as double-colon namespaces like `namespace::view` and `namespace::file.key`) **do NOT exist** to eliminate runtime container closure bindings and filesystem scans on every request.
+
+If your package includes HTML views or translation files, instruct users to copy them directly into the application space (`resources/views/vendor/{package}` and `resources/lang/en/{file}.php`). Resources are then referenced using standard dot-notation:
 
 ```php
-public function boot(): void
-{
-    $this->loadViewsFrom(__DIR__ . '/../resources/views', 'package');
-}
+// Resolves resources/views/vendor/my-package/mail.template.php
+return view('vendor.my-package.mail', $data);
 ```
 
 ## Commands
@@ -152,4 +152,4 @@ public function boot(): void
 
 ## Manual Asset Installation
 
-Because PHP-Framework is tailored for maximum API performance, if your package requires configuration files, public assets, or database migrations to be moved into the consuming application, you must document the manual copy commands directly in your `README.md` so consumers can add them to their installation steps or CI/CD build scripts.
+Because PHP-Framework is tailored for maximum API performance, if your package requires configuration files, public assets, database migrations, or HTML view templates (such as pagination or email layouts) to be moved into the consuming application, you must document the manual copy commands directly in your `README.md` so consumers can add them to their installation steps or CI/CD build scripts.
