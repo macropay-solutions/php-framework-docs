@@ -274,6 +274,9 @@ When calling the `links` method on a paginator instance, you may pass the view n
 
 However, to customize the default pagination views, copy the template files from the framework's pagination package (`vendor/macropay-solutions/php-kernel/kernel/Pagination/resources/views`) into your application's `resources/views/vendor/pagination` directory.
 
+> **Note**
+> Pagination views are automatically published into `resources/views/vendor/pagination` by Composer upon installing or updating `macropay-solutions/php-kernel`.
+
 When views are present at `resources/views/vendor/pagination/default.template.php`, the framework will render them via dot-notation (`vendor.pagination.default`).
 
 The `default.template.php` file within this directory corresponds to the default pagination view. You may edit this file directly to modify the pagination HTML.
