@@ -253,8 +253,6 @@ PHP-Framework can invoke a closure or callback of your choice when it spends too
 <a name="obvious-orm"></a>
 #### Obvious ORM
 
-If you would like to use the Obvious ORM, you should uncomment the `$app->withObvious()` call in your `bootstrap/app.php` file.
-
 Of course, you may easily use the full Obvious ORM with PHP-Framework. To learn how to use Obvious, check out the [Obvious ORM documentation](/obvious).
 
 <a name="database-transactions"></a>

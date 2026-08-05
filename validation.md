@@ -1310,9 +1310,6 @@ The field under validation will be excluded from the request data returned by th
 <a name="rule-exists"></a>
 #### exists:_table_,_column_
 
-> [!NOTE]
-> **Enable Obvious ORM:** If you would like to use the `exists` or `unique` validation rules, you should uncomment the `$app->withObvious()` method call in your `bootstrap/app.php` file.
-
 > [!WARNING]  
 > **Security Restriction:** For security reasons, the `exists` rule strictly accepts a maximum of two string parameters (`table` and `column`). Attempting to pass additional query conditions via comma-separated string parameters will instantly trigger a `RuntimeException`. All additional query constraints must be applied fluently using the `Rule::exists` object method.
 
@@ -1806,9 +1803,6 @@ The arguments [accepted by the `DateTimeZone::listIdentifiers` method](https://w
 
 <a name="rule-unique"></a>
 #### unique:_table_,_column_
-
-> [!NOTE]
-> **Enable Obvious ORM:** If you would like to use the `exists` or `unique` validation rules, you should uncomment the `$app->withObvious()` method call in your `bootstrap/app.php` file.
 
 > [!WARNING]  
 > **Security Restriction:** For security reasons, the `unique` rule strictly accepts a maximum of two string parameters (`table` and `column`). Attempting to pass an ignored ID or additional query conditions via comma-separated string parameters will instantly trigger a `RuntimeException`. All exclusions and query constraints must be applied fluently using the `Rule::unique` object method.
