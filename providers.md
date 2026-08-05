@@ -117,7 +117,8 @@ If your provider is **only** registering bindings in the service container or pe
 To defer a provider you must follow the logic of `MailServiceProvider` from your `\App\Application` file. Implementing the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface will not help.
 
 > [!NOTE]  
-> Component and view helper registrations like `$this->loadViewComponentsAs()` **must only be invoked from a deferred service provider** (such as `MailServiceProvider`). This guarantees that component registration closures never get pushed into the container during standard HTTP API requests.
+> Component and view helper registrations like `$this->loadViewComponentsAs()` or `$this->callAfterResolving()` **must only be invoked from a deferred service provider** (such as `MailServiceProvider`). This guarantees that component registration closures never get pushed into the container during standard HTTP API requests.
+> While the container manages lazy-loading natively without requiring interfaces, **if your deferred provider utilizes delayed resolution hooks (like `$this->callAfterResolving()` or `$this->loadViewComponentsAs()`), you MUST implement the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface** and explicitly define the `provides()` method. Failing to do so will throw a `RuntimeException` to prevent silent loading failures.
 
 <a name="registering-providers"></a>
 ## Registering Providers
