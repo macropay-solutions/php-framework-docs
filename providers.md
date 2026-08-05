@@ -119,6 +119,7 @@ To defer a provider you must follow the logic of `MailServiceProvider` from your
 > [!NOTE]  
 > Component and view helper registrations like `$this->loadViewComponentsAs()` or `$this->callAfterResolving()` **must only be invoked from a deferred service provider** (such as `MailServiceProvider`). This guarantees that component registration closures never get pushed into the container during standard HTTP API requests.
 > While the container manages lazy-loading natively without requiring interfaces, **if your deferred provider utilizes delayed resolution hooks (like `$this->callAfterResolving()` or `$this->loadViewComponentsAs()`), you MUST implement the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface** and explicitly define the `provides()` method. Failing to do so will throw a `RuntimeException` to prevent silent loading failures.
+> Additionally, the framework strictly enforces this lifecycle. Attempting to eagerly load a provider that uses these hooks (e.g., by registering it directly in `bootstrap/app.php`) will also trigger a `RuntimeException`, as delayed resolution hooks cannot be invoked before the application has fully booted.
 
 <a name="registering-providers"></a>
 ## Registering Providers
