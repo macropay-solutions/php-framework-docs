@@ -32,6 +32,7 @@ context: queues
   - [Jobs & Database Transactions](#jobs-and-database-transactions)
   - [Job Chaining](#job-chaining)
   - [Customizing The Queue and Connection](#customizing-the-queue-and-connection)
+  - [Amazon SQS FIFO Queues](#amazon-sqs-fifo-queues)
   - [Specifying Max Job Attempts / Timeout Values](#max-job-attempts-and-timeout)
   - [Error Handling](#error-handling)
 - [Job Batching](#job-batching)
@@ -811,21 +812,126 @@ You may chain the `onConnection` and `onQueue` methods together to specify the c
                   ->onConnection('sqs')
                   ->onQueue('processing');
 
-**SQS FIFO and Fair Queues**
+<a name="amazon-sqs-fifo-queues"></a>
+### Amazon SQS FIFO Queues
 
-PHP Kernel supports Amazon SQS FIFO (First-In-First-Out) queues through message deduplication.
+Framework provides first-class support for Amazon SQS FIFO (First-In-First-Out) queues. FIFO queues ensure that the order in which messages are sent and received is strictly preserved and that a message is delivered once and remains available until a consumer processes and deletes it.
+
+<a name="fifo-configuration"></a>
+#### Configuration
+
+To utilize an SQS FIFO queue, your queue name must end with the `.fifo` suffix in your `config/queue.php` configuration file:
+
+    'sqs-fifo' => [
+        'driver' => 'sqs',
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'prefix' => env('SQS_PREFIX', 'https://sqs.us-east-1.amazonaws.com/your-account-id'),
+        'queue' => env('SQS_QUEUE', 'production.fifo'), // Must end in .fifo
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+> [!WARNING]  
+> Amazon SQS FIFO queues do not support per-message delays. Any `delay` or `DelaySeconds` applied to a job targeting a `.fifo` queue will be automatically ignored by the framework to prevent AWS API exceptions.
+
+<a name="fifo-message-groups-and-deduplication"></a>
+#### Message Groups and Deduplication
+
+AWS FIFO queues rely on two specific identifiers to manage strict execution order and prevent duplicate processing:
+1. **Message Group ID:** Messages with the same group ID are processed one by one in a strict FIFO order. Messages with different group IDs can be processed concurrently.
+2. **Message Deduplication ID:** Used by AWS to prevent identical messages from being processed twice within a 5-minute window. If omitted, the framework automatically generates a unique UUID (`Str::orderedUuid()`), treating every dispatch as unique.
+
+<a name="fifo-resolution-precedence-and-fallback-behavior"></a>
+#### Resolution Precedence and Fallback Behavior
+
+When a job is dispatched to an SQS queue, the framework resolves the **Message Group ID** in the following order of precedence:
+1. **Fluent `->onGroup()` Call (Highest Priority):** Specified directly on the dispatch call.
+2. **Public `$messageGroup` Property:** Defined on object-based jobs.
+3. **Instance `messageGroup()` Method:** Defined on object-based jobs (used if property is not defined).
+4. **Static `messageGroup(array $args)` Method:** Defined on the target class for Storable Array Callables.
+5. **Queue Name Fallback (Lowest Priority):** On FIFO queues, if no Message Group ID is explicitly provided, the framework falls back to using the queue name as the group ID.
+
+If you specify `->onGroup()` fluently on dispatch, it overrides any class-level group ID while allowing any class `deduplicationId()` method to execute normally.
+
+<a name="fifo-storable-array-callables"></a>
+##### Storable Array Callables (Queued Listeners & Direct Dispatches)
+
+When dispatching array callables, you may specify the Message Group ID fluently using the `onGroup` method:
 
     \dispatch([JobExample::class, 'handle', ['payload' => $payload]])
         ->onGroup('customer-' . $payload['customer_id']);
 
-Implement a deduplicationId method with string return type in your job to prevent for 5 minutes duplicate dispatches (if not, a default Str::orderedUuid()->toString() will be used meaning duplicates will be processed):
 
-    /**
-     * Get the job's deduplication ID.
-     */
-    public function deduplicationId(): string
+    <?php
+
+    namespace App\Listeners;
+
+    class InventoryManager
     {
-        return 'prefix-' . $this->customId;
+        /**
+         * Resolve the SQS FIFO Message Group ID statically.
+         */
+        public static function messageGroup(array $args): string
+        {
+            return 'inventory_updates_' . $args['productId'];
+        }
+
+        /**
+         * Resolve the SQS FIFO Message Deduplication ID statically.
+         */
+        public static function deduplicationId(array $args): string
+        {
+            return 'stock_reserve_' . $args['orderId'];
+        }
+
+        /**
+         * The actual queued execution method.
+         */
+        public function reserveStock(int $orderId, int $productId): void
+        {
+            // Process inventory...
+        }
+    }
+
+<a name="fifo-object-based-jobs"></a>
+##### Object-Based Jobs (Mailables, Notifications, Events, & Broadcasts)
+
+When dispatching instantiated objects (such as `ShouldQueue` Notifications, Mailables, or `ShouldBroadcast` Events), you may define a `public $messageGroup` property **or** a `messageGroup()` method, alongside a `deduplicationId()` method:
+
+    <?php
+
+    namespace App\Notifications;
+
+    use MacropaySolutions\Kernel\Notifications\Notification;
+    use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
+
+    class InvoicePaid extends Notification implements ShouldQueue
+    {
+        /**
+         * The SQS FIFO Message Group ID.
+         */
+        public string $messageGroup;
+
+        public function __construct(public int $invoiceId, public int $userId)
+        {
+            $this->messageGroup = 'user_notifications_' . $this->userId;
+        }
+
+        /**
+         * The SQS FIFO Message Group ID.
+         */
+        public function messageGroup(): string
+        {
+            return 'user_notifications_' . $this->userId;
+        }
+
+        /**
+         * The SQS FIFO Message Deduplication ID.
+         */
+        public function deduplicationId(): string
+        {
+            return 'invoice_paid_' . $this->invoiceId;
+        }
     }
 
 <a name="max-job-attempts-and-timeout"></a>
