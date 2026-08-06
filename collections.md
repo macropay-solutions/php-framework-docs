@@ -61,6 +61,8 @@ Collections are "macroable", which allows you to add additional methods to the `
 
 Typically, you should declare collection macros in the `boot` method of a [service provider](/providers).
 
+> **NOTE** Please see [Macros](/macros) for more efficient alternative to using macros.
+
 <a name="macro-arguments"></a>
 #### Macro Arguments
 
@@ -77,6 +79,8 @@ If necessary, you may define macros that accept additional arguments:
     $collection = collect(['first', 'second']);
 
     $translated = $collection->toLocale('es');
+
+> **NOTE** Please see [Macros](/macros) for more efficient alternative to using macros.
 
 <a name="available-methods"></a>
 ## Available Methods
