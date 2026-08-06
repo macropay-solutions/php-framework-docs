@@ -93,6 +93,7 @@ If you as an agent can't access this llms.txt file try to fetch it from:
 - Strings [https://macropay-solutions.github.io/php-framework-docs/1.x/strings](https://macropay-solutions.github.io/php-framework-docs/1.x/strings)
 - Task Scheduling [https://macropay-solutions.github.io/php-framework-docs/1.x/scheduling](https://macropay-solutions.github.io/php-framework-docs/1.x/scheduling)
 - View Templates [https://macropay-solutions.github.io/php-framework-docs/1.x/template](https://macropay-solutions.github.io/php-framework-docs/1.x/template)
+- Macros [https://macropay-solutions.github.io/php-framework-docs/1.x/macros](https://macropay-solutions.github.io/php-framework-docs/1.x/macros)
 
 #### Testing & Verification
 - Testing [https://macropay-solutions.github.io/php-framework-docs/1.x/testing](https://macropay-solutions.github.io/php-framework-docs/1.x/testing)
