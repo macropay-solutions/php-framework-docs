@@ -213,7 +213,7 @@ Storable array callables seamlessly integrate with Framework's batching and chai
 > [!WARNING]
 > **\app('bus')->chain() Shortcut Is Blocked:** Global execution via the `\app('bus')->chain()` helper shortcut is disabled completely and will throw a `RuntimeException` to avoid massive payload bloating, security issues, and breaks under strict message constraints.
 
-When chaining jobs onto an Array Callable, you cannot chain a standard instantiated Job object. You must chain other Array Callables.
+When chaining jobs onto an Array Callable, you cannot chain a standard instantiated Job object or Command. You must chain other Array Callables.
 
 **❌ Incorrect (Throws Exception):**
 
@@ -256,7 +256,7 @@ Similarly, when defining failure callbacks on the dispatch, you must use the Arr
 
 <a name="storable-objects"></a>
 #### Storable Objects
-Because the framework uses a strict JSON transport layer to eliminate PHP Object Injection (POI) vulnerabilities, traditional objects silently lose their class routing identity when encoded. To prevent un-routable payloads, if a developer attempts to dispatch a traditional instantiated job object (that does not implement `StorableCallable`), a queued closure, or attempts to chain an object, the queue dispatcher will explicitly throw an `InvalidArgumentException` or `RuntimeException`. However, objects nested *inside* valid array payloads will not throw an exception and will suffer silent data loss.
+Because the framework uses a strict JSON transport layer to eliminate PHP Object Injection (POI) vulnerabilities, traditional objects silently lose their class routing identity when encoded. To prevent un-routable payloads, if a developer attempts to dispatch a traditional instantiated job object or command (that does not implement `StorableCallable`), a queued closure, or attempts to chain an object, the queue dispatcher will explicitly throw an `InvalidArgumentException` or `RuntimeException`. However, objects nested *inside* valid array payloads will not throw an exception and will suffer silent data loss.
 
 **How Storable Objects & `SerializesModels` Work**
 
@@ -441,7 +441,7 @@ The dispatcher automatically injects the `CallQueuedCallable` instance itself in
 ## Creating Jobs
 
 > [!WARNING]  
-> Creating and dispatching traditional job objects is completely blocked by the framework. Because the transport layer strictly uses JSON to prevent PHP Object Injection, traditional objects silently lose their class identity when encoded and cannot be routed by the worker. You must use Storable Array Callables or implement the `StorableCallable` interface instead.
+> Creating and dispatching traditional job objects or commands is completely blocked by the framework. Because the transport layer strictly uses JSON to prevent PHP Object Injection, traditional objects silently lose their class identity when encoded and cannot be routed by the worker. You must use Storable Array Callables or implement the `StorableCallable` interface instead.
 
 <a name="generating-job-classes"></a>
 ### Generating Job Classes
@@ -851,15 +851,20 @@ When a job is dispatched to an SQS queue, the framework resolves the **Message G
 4. **Static `messageGroup(array $args)` Method:** Defined on the target class for Storable Array Callables.
 5. **Queue Name Fallback (Lowest Priority):** On FIFO queues, if no Message Group ID is explicitly provided, the framework falls back to using the queue name as the group ID.
 
-If you specify `->onGroup()` fluently on dispatch, it overrides any class-level group ID while allowing any class `deduplicationId()` method to execute normally.
+The framework resolves the **Message Deduplication ID** in the following order of precedence:
+1. **Fluent `->withDeduplicationId()` Call (Highest Priority):** Specified directly on the dispatch call.
+2. **Public `$deduplicationId` Property or `deduplicationId()` Method:** Defined on object-based jobs.
+3. **Static `deduplicationId(array $args)` Method:** Defined on the target class for Storable Array Callables.
+4. **UUID Fallback (Lowest Priority):** Generates an ordered UUID (`Str::orderedUuid()`), treating every dispatch as unique.
 
 <a name="fifo-storable-array-callables"></a>
 ##### Storable Array Callables (Queued Listeners & Direct Dispatches)
 
-When dispatching array callables, you may specify the Message Group ID fluently using the `onGroup` method:
+When dispatching array callables or storable jobs, you may specify the Message Group ID and Message Deduplication ID fluently using `onGroup` and `withDeduplicationId`:
 
     \dispatch([JobExample::class, 'handle', ['payload' => $payload]])
-        ->onGroup('customer-' . $payload['customer_id']);
+        ->onGroup('customer-' . $payload['customer_id'])
+        ->withDeduplicationId('order-dedup-' . $payload['order_id']);
 
 
     <?php
