@@ -68,6 +68,8 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 
 > Using a macro method on a class is 1:1 with creating a child class but if that class needs multiple macros, then the macro path becomes slower! 
 
+> Macros are still around to solve the situation where 2 packages want to add functionalities into the same macroable class.
+
 <a name="extending-the-request-object"></a>
 ## Extending the Request Object
 

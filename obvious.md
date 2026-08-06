@@ -931,6 +931,9 @@ protected ?array $tmpDirtyIfAttributesAreSyncedFromCashedCasts = [];
 
 When this property is initialized as an empty array, the model will not be updatable by default unless `unlockUpdates()` is explicitly invoked to allow mutations.
 
+> **NOTE**
+> If you wonder why the unrelated naming of `$tmpDirtyIfAttributesAreSyncedFromCashedCasts`, this locking feature was a side effect of improving the way the model update works.
+
 <a name="mass-assignment"></a>
 ### Mass Assignment
 
