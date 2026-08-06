@@ -29,6 +29,7 @@ context: obvious
 - [Inserting and Updating Models](#inserting-and-updating-models)
     - [Inserts](#inserts)
     - [Updates](#updates)
+    - [Locking Model Updates](#locking-model-updates)
     - [Mass Assignment](#mass-assignment)
     - [Upserts](#upserts)
 - [Deleting Models](#deleting-models)
@@ -900,6 +901,35 @@ The `getOriginal` method returns an array containing the original attributes of 
 
     $user->getOriginal('name'); // John
     $user->getOriginal(); // Array of original attributes...
+
+<a name="locking-model-updates"></a>
+#### Locking Model Updates
+
+Obvious provides low-level kernel mechanisms to lock a model, preventing accidental attribute updates while still allowing relations to be loaded or updated.
+
+You may call the `lockUpdates` method to prevent updates to the model's attributes. To unlock them, use the `unlockUpdates` method. You can verify if a model has unlocked updates using the `hasUnlockedUpdates` method.
+
+```php
+$flight = Flight::query()->find(1);
+
+// Lock updates
+$flight->lockUpdates();
+
+// Unlock updates and reset state if needed
+if ($flight->unlockUpdates()) {
+    $dirty = $flight->getDirty(); // inspect these if needed
+    $flight->attributes = $flight->original;
+    $flight->classCastCache = [];
+}
+```
+
+If you want a model to be strictly locked by default (preventing any updates unless explicitly unlocked), you can declare the following property on your model class or base configuration model:
+
+```php
+protected ?array $tmpDirtyIfAttributesAreSyncedFromCashedCasts = [];
+```
+
+When this property is initialized as an empty array, the model will not be updatable by default unless `unlockUpdates()` is explicitly invoked to allow mutations.
 
 <a name="mass-assignment"></a>
 ### Mass Assignment
