@@ -40,6 +40,9 @@ context: obvious
 - [Query Scopes](#query-scopes)
     - [Global Scopes](#global-scopes)
     - [Local Scopes](#local-scopes)
+- [Query Macros](#query-macros)
+    - [Local Macros](#local-macros)
+    - [Global Macros](#global-macros)
 - [Comparing Models](#comparing-models)
 - [Events](#events)
     - [Using Closures](#events-using-closures)
@@ -1501,6 +1504,51 @@ Sometimes you may wish to define a scope that accepts parameters. To get started
 Once the expected arguments have been added to your scope method's signature, you may pass the arguments when calling the scope:
 
     $users = User::query()->ofType('admin')->get();
+
+<a name="query-macros"></a>
+## Query Macros
+
+While [Query Scopes](#query-scopes) provide a way to reuse query constraints within a specific model, Query Macros allow you to directly extend the `MacropaySolutions\Kernel\Database\Obvious\Builder` itself.
+
+<a name="local-macros"></a>
+### Local Macros
+
+You may define a "local" macro on a specific query builder instance dynamically at runtime. This is useful when you want to attach a reusable query helper to a specific query chain without polluting the global scope.
+
+When defining a local macro, the closure **does not** use `$this` binding. Instead, the current query builder instance is explicitly injected as the first parameter:
+
+    use App\Models\Flight;
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
+
+    $query = Flight::query();
+
+    // Registering a local macro...
+    $query->macro('active', function (Builder $query) {
+        return $query->where('active', 1);
+    });
+
+    // Executing the local macro...
+    $flights = $query->active()->get();
+
+<a name="global-macros"></a>
+### Global Macros
+
+If you want a macro to be available on every single Obvious query builder across your application, you may define a global macro. Global macros are typically registered in the `boot` method of a service provider.
+
+Unlike local macros, global macros **do** bind `$this` to the underlying query builder instance:
+
+    use MacropaySolutions\Kernel\Database\Obvious\Builder;
+
+    Builder::macro('active', function () {
+        // $this is bound to the Builder instance...
+        return $this->where('active', 1);
+    });
+
+For maximum performance, you should use [**Deferred Macros**](/macros#deferred-macros) for global macros to prevent boot-time memory overhead. Deferred macros strictly require an array callable:
+
+    Builder::deferredMacro('active', [\App\Macros\QueryMacros::class, 'active']);
+
+The active static method should return the closure needed for the macro.
 
 <a name="comparing-models"></a>
 ## Comparing Models

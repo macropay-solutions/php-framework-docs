@@ -7,6 +7,7 @@ context: macros
 # Macros & Extending Core Classes
 
 - [Introduction](#introduction)
+- [Deferred Macros](#deferred-macros)
 - [Extending the Request Object](#extending-the-request-object)
 - [Avoiding Macros via Dependency Injection](#avoiding-macros-via-dependency-injection)
 
@@ -69,6 +70,27 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 > Using a macro method on a class is 1:1 with creating a child class but if that class needs multiple macros, then the macro path becomes slower! 
 
 > Macros are still around to solve the situation where 2 packages want to add functionalities into the same macroable class.
+
+<a name="deferred-macros"></a>
+## Deferred Macros
+
+If you must use macros (for example, to allow multiple packages to hook into the same class), you should use **Deferred Macros** to eliminate boot-time performance penalties.
+
+Standard macros require allocating closures and loading referenced classes during the framework's boot phase, even if the macro is never called during the request lifecycle. To solve this, `Macroable` classes support `deferredMacro`:
+
+```php
+use MacropaySolutions\Kernel\Http\Client\Factory;
+
+// The macro closure will only be resolved if 'customRequest' is actually called
+Factory::deferredMacro('customRequest', [\App\Macros\CustomRequestMacroFactory::class, 'getClosure']);
+```
+
+> **WARNING**
+> The second argument of `deferredMacro` **must** be an array callable that resolves to a static method and returns the macro closure. The closure will be bound to the target class on execution.
+> 
+> Passing an inline closure directly is strictly prevented (it will throw a `\RuntimeException`), as it would allocate memory immediately and defeat the purpose of deferring the macro resolution.
+> 
+> This applies also to the [Obvious Builder](/obvious#query-macros).
 
 <a name="extending-the-request-object"></a>
 ## Extending the Request Object
