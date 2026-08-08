@@ -465,12 +465,23 @@ The Framework HTTP client allows you to define "macros", which can serve as a fl
  */
 public function boot(): void
 {
-    \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)::macro('github', function () {
-        return \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->withHeaders([
-            'X-Example' => 'example',
-        ])->baseUrl('https://github.com');
-    });
+    \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)::deferredMacro('github', [\App\Macros\HttpMacros::class, 'github']);
 }
+
+    namespace App\Macros;
+
+    class HttpMacros
+    {
+        public static function github(): \Closure
+        {
+            // the Closure will be bound to the class it is meant for on execution
+            return function () {
+                return \app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->withHeaders([
+                    'X-Example' => 'example',
+                ])->baseUrl('https://github.com');
+            };
+        }
+    }
 ```
 
 Once your macro has been configured, you may invoke it from anywhere in your application to create a pending request with the specified configuration:

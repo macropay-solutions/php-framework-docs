@@ -1535,18 +1535,25 @@ When defining a local macro, the closure **does not** use `$this` binding. Inste
 
 If you want a macro to be available on every single Obvious query builder across your application, you may define a global macro. Global macros are typically registered in the `boot` method of a service provider.
 
-Unlike local macros, global macros **do** bind `$this` to the underlying query builder instance:
+Unlike local macros, global macros **do** bind `$this` to the underlying query builder instance. However, to prevent boot-time memory overhead, eager global macros are strictly disabled. You **must** use [**Deferred Macros**](/macros#deferred-macros), which strictly require an array callable:
+
+    Builder::deferredMacro('active', [\App\Macros\QueryMacros::class, 'active']);
+
+    namespace App\Macros;
 
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
-    Builder::macro('active', function () {
-        // $this is bound to the Builder instance...
-        return $this->where('active', 1);
-    });
-
-For maximum performance, you should use [**Deferred Macros**](/macros#deferred-macros) for global macros to prevent boot-time memory overhead. Deferred macros strictly require an array callable:
-
-    Builder::deferredMacro('active', [\App\Macros\QueryMacros::class, 'active']);
+    class QueryMacros
+    {
+        public static function active(): \Closure
+        {
+             // the Closure will be bound to the class it is meant for on execution
+             return function (): Builder {
+                // $this is bound to the Builder instance...
+                return $this->where('active', 1);
+            };
+        }
+    }
 
 The active static method should return the closure needed for the macro.
 

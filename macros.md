@@ -74,9 +74,9 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 <a name="deferred-macros"></a>
 ## Deferred Macros
 
-If you must use macros (for example, to allow multiple packages to hook into the same class), you should use **Deferred Macros** to eliminate boot-time performance penalties.
+To completely eliminate boot-time performance penalties, standard eager macros (`Class::macro()`) have been strictly disabled. If you must use macros (for example, to allow multiple packages to hook into the same class), you **must** use **Deferred Macros**.
 
-Standard macros require allocating closures and loading referenced classes during the framework's boot phase, even if the macro is never called during the request lifecycle. To solve this, `Macroable` classes support `deferredMacro`:
+Standard macros used to require allocating closures and loading referenced classes during the framework's boot phase, even if the macro was never called during the request lifecycle. To enforce zero-overhead, `Macroable` classes now only support `deferredMacro`:
 
 ```php
 use MacropaySolutions\Kernel\Http\Client\Factory;
