@@ -42,16 +42,28 @@ As mentioned above, the `collect` helper returns a new `MacropaySolutions\Kernel
 <a name="extending-collections"></a>
 ### Extending Collections
 
-Collections are "macroable", which allows you to add additional methods to the `Collection` class at run time. The `MacropaySolutions\Kernel\Support\Collection` class' `macro` method accepts a closure that will be executed when your macro is called. The macro closure may access the collection's other methods via `$this`, just as if it were a real method of the collection class. For example, the following code adds a `toUpper` method to the `Collection` class:
+Collections are "macroable", which allows you to add additional methods to the `Collection` class at run time. The `MacropaySolutions\Kernel\Support\Collection` class' `deferredMacro` method accepts an array callable that returns a closure that will be executed when your macro is called. The macro closure may access the collection's other methods via `$this`, just as if it were a real method of the collection class. For example, the following code adds a `toUpper` method to the `Collection` class:
 
-    use MacropaySolutions\Kernel\Support\Collection;
+    namespace App\Macros;
+
     use MacropaySolutions\Kernel\Support\Str;
 
-    Collection::macro('toUpper', function () {
-        return $this->map(function (string $value) {
-            return Str::upper($value);
-        });
-    });
+    class CollectionMacros
+    {
+        public static function toUpper(): \Closure
+        {
+            // the Closure will be bound to the class it is meant for on execution
+            return function () {
+                return $this->map(function (string $value) {
+                    return Str::upper($value);
+                });
+            };
+        }
+    }
+
+    use MacropaySolutions\Kernel\Support\Collection;
+
+    Collection::deferredMacro('toUpper', [\App\Macros\CollectionMacros::class, 'toUpper']);
 
     $collection = collect(['first', 'second']);
 
@@ -68,13 +80,24 @@ Typically, you should declare collection macros in the `boot` method of a [servi
 
 If necessary, you may define macros that accept additional arguments:
 
+    namespace App\Macros;
+
+    class CollectionMacros
+    {
+        public static function toLocale(): \Closure
+        {
+            // the Closure will be bound to the class it is meant for on execution
+            return function (string $locale) {
+                return $this->map(function (string $value) use ($locale) {
+                    return \app('translator')->get($value, [], $locale);
+                });
+            };
+        }
+    }
+
     use MacropaySolutions\Kernel\Support\Collection;
 
-    Collection::macro('toLocale', function (string $locale) {
-        return $this->map(function (string $value) use ($locale) {
-            return \app('translator')->get($value, [], $locale);
-        });
-    });
+    Collection::deferredMacro('toLocale', [\App\Macros\CollectionMacros::class, 'toLocale']);
 
     $collection = collect(['first', 'second']);
 
@@ -156,7 +179,7 @@ For the majority of the remaining collection documentation, we'll discuss each m
 [keys](#method-keys)
 [last](#method-last)
 [lazy](#method-lazy)
-[macro](#method-macro)
+[deferredMacro](#method-deferred-macro)
 [make](#method-make)
 [map](#method-map)
 [mapInto](#method-mapinto)
@@ -1396,10 +1419,10 @@ This is especially useful when you need to perform transformations on a huge `Co
 
 By converting the collection to a `LazyCollection`, we avoid having to allocate a ton of additional memory. Though the original collection still keeps _its_ values in memory, the subsequent filters will not. Therefore, virtually no additional memory will be allocated when filtering the collection's results.
 
-<a name="method-macro"></a>
-#### `macro()` {.collection-method}
+<a name="method-deferred-macro"></a>
+#### `deferredMacro()` {.collection-method}
 
-The static `macro` method allows you to add methods to the `Collection` class at run time. Refer to the documentation on [extending collections](#extending-collections) for more information.
+The static `deferredMacro` method allows you to add methods to the `Collection` class at run time without boot-time overhead. Refer to the documentation on [extending collections](#extending-collections) for more information.
 
 <a name="method-make"></a>
 #### `make()` {.collection-method}
