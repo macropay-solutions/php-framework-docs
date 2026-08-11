@@ -271,9 +271,7 @@ Check `bootstrap/cache/autowiring.php`.
 > If you want to prioritize default parameter values (such as `= null`) over attempting to autowire and instantiate unbound classes, you can override the `DEFAULT_PARAMETER_TAKES_PRECEDENCE_WHEN_AUTOWIRING` constant to `true` in your `\App\Application` class. This provides an additional performance boost by safely bypassing dependency resolution attempts (and potential native PHP `\Error`s) for abstract classes or unbound interfaces that have default values. This applies if the parameter is not provided.
 
 > [!NOTE]
-> If the concrete has contextual bindings (and constructor parameters) the old reflection is still used.
->
->If the parameters are sent as array list, concrete will be instantiated directly with them. On failure, it will default to the old reflection but at the cost of building an Exception.
+> If the parameters are sent as array list, concrete will be instantiated directly with them. On failure, it will default to the old reflection but at the cost of building an Exception.
 >
 >If the first parameters are sent as list and the last one(s) need to be auto-resolved, the above exception scenario will happen, which is slow. Always send all parameters as list, in the right order.
 >
