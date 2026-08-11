@@ -12,8 +12,7 @@ context: container
 - [Binding](#binding)
   - [Binding Basics](#binding-basics)
   - [Binding Interfaces to Implementations](#binding-interfaces-to-implementations)
-  - [Contextual Binding](#contextual-binding)
-  - [High-Performance Alternatives to Contextual Binding](#high-performance-alternatives-to-contextual-binding)
+  - [Contextual Injection](#contextual-injection)
   - [Binding Primitives](#binding-primitives)
   - [Binding Typed Variadics](#binding-typed-variadics)
   - [Tagging](#tagging)
@@ -220,36 +219,12 @@ This statement tells the container that it should inject the `RedisEventPusher` 
         protected EventPusher $pusher
     ) {}
 
-<a name="contextual-binding"></a>
-### Contextual Binding
+<a name="contextual-injection"></a>
+### Contextual Injection
 
-> [!NOTE]
-> Avoid using Contextual Bindings (`$this->app->when()->needs()->give()`) because they force the container into a slower execution path for *all* resolved classes across the application.
->
-> **High-Performance Alternative:** If you need to inject a specific implementation based on the consuming class, use the [Explicit Bindings Map](#1-the-explicit-bindings-map) method inside your `app/Application.php` to keep the container's execution path optimized.
+Sometimes you may have two classes that utilize the same interface, but you wish to inject different implementations into each class. For example, two controllers may depend on different implementations of the `MacropaySolutions\Kernel\Contracts\Filesystem\Filesystem` [contract](/contracts).
 
-Sometimes you may have two classes that utilize the same interface, but you wish to inject different implementations into each class. For example, two controllers may depend on different implementations of the `MacropaySolutions\Kernel\Contracts\Filesystem\Filesystem` [contract](/contracts). Framework provides a simple, fluent interface for defining this behavior:
-
-    use App\Http\Controllers\PhotoController;
-    use App\Http\Controllers\UploadController;
-    use App\Http\Controllers\VideoController;
-    use MacropaySolutions\Kernel\Contracts\Filesystem\Filesystem;
-
-    $this->app->when(PhotoController::class)
-              ->needs(Filesystem::class)
-              ->give(function () {
-                  return \app('filesystem')->disk('local');
-              });
-
-    $this->app->when([VideoController::class, UploadController::class])
-              ->needs(Filesystem::class)
-              ->give(function () {
-                  return \app('filesystem')->disk('s3');
-              });
-
-### High-Performance Alternatives to Contextual Binding
-
-While contextual binding provides a fluent way to resolve different implementations for the same interface, it forces the container into a slower execution path for all resolved classes across the application. Below are the recommended high-performance alternatives to achieve the same result without sacrificing execution speed.
+Since PHP-Framework optimizes for absolute maximum execution speed, it does not provide a slower fluent contextual binding builder (like `->when()->needs()->give()`). Instead, you can achieve this with zero overhead using the following methods:
 
 #### 1. The Explicit Bindings Map
 
@@ -320,25 +295,26 @@ By targeting specific concrete dependencies, the container can instantly resolve
 <a name="binding-primitives"></a>
 ### Binding Primitives
 
-Sometimes you may have a class that receives some injected classes, but also needs an injected primitive value such as an integer. You may easily use contextual binding to inject any value your class may need:
+Sometimes you may have a class that receives some injected classes, but also needs an injected primitive value such as an integer. You can easily inject any value your class may need using a manual factory closure:
 
     use App\Http\Controllers\UserController;
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
     
-    $this->app->when(UserController::class)
-              ->needs('$variableName')
-              ->give($value);
+    $this->app->bind(UserController::class, function (Application $app) {
+        return new UserController($app->make(SomeService::class), 'default_value');
+    });
 
-Sometimes a class may depend on an array of [tagged](#tagging) instances. Using the `giveTagged` method, you may easily inject all the container bindings with that tag:
+Sometimes a class may depend on an array of [tagged](#tagging) instances. Using the `tagged` method within a factory closure, you may easily inject all the container bindings with that tag:
 
-    $this->app->when(ReportAggregator::class)
-        ->needs('$reports')
-        ->giveTagged('reports');
+    $this->app->bind(ReportAggregator::class, function (Application $app) {
+        return new ReportAggregator($app->tagged('reports'));
+    });
 
-If you need to inject a value from one of your application's configuration files, you may use the `giveConfig` method:
+If you need to inject a value from one of your application's configuration files, you may manually resolve the `config` service:
 
-    $this->app->when(ReportAggregator::class)
-        ->needs('$timezone')
-        ->giveConfig('app.timezone');
+    $this->app->bind(ReportAggregator::class, function (Application $app) {
+        return new ReportAggregator($app->make('config')->get('app.timezone'));
+    });
 
 <a name="binding-typed-variadics"></a>
 ### Binding Typed Variadics
@@ -349,7 +325,6 @@ Occasionally, you may have a class that receives an array of typed objects using
 
     use App\Models\Filter;
     use App\Services\Logger;
-    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
     class Firewall
     {
@@ -371,36 +346,27 @@ Occasionally, you may have a class that receives an array of typed objects using
         }
     }
 
-Using contextual binding, you may resolve this dependency by providing the `give` method with a closure that returns an array of resolved `Filter` instances:
+You may resolve this dependency by providing the `bind` method with a closure that explicitly injects the resolved `Filter` instances:
 
-    $this->app->when(Firewall::class)
-              ->needs(Filter::class)
-              ->give(function (Application $app) {
-                    return [
-                        $app->make(NullFilter::class),
-                        $app->make(ProfanityFilter::class),
-                        $app->make(TooLongFilter::class),
-                    ];
-              });
+    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-For convenience, you may also just provide an array of class names to be resolved by the container whenever `Firewall` needs `Filter` instances:
-
-    $this->app->when(Firewall::class)
-              ->needs(Filter::class)
-              ->give([
-                  NullFilter::class,
-                  ProfanityFilter::class,
-                  TooLongFilter::class,
-              ]);
+    $this->app->bind(Firewall::class, function (Application $app) {
+        return new Firewall(
+            $app->make(Logger::class),
+            $app->make(NullFilter::class),
+            $app->make(ProfanityFilter::class),
+            $app->make(TooLongFilter::class),
+        );
+    });
 
 <a name="variadic-tag-dependencies"></a>
 #### Variadic Tag Dependencies
 
-Sometimes a class may have a variadic dependency that is type-hinted as a given class (`Report ...$reports`). Using the `needs` and `giveTagged` methods, you may easily inject all the container bindings with that [tag](#tagging) for the given dependency:
+Sometimes a class may have a variadic dependency that is type-hinted as a given class (`Report ...$reports`). Using the spread operator `...` and the `tagged` method within a factory closure, you may easily inject all the container bindings with that [tag](#tagging) for the given dependency:
 
-    $this->app->when(ReportAggregator::class)
-        ->needs(Report::class)
-        ->giveTagged('reports');
+    $this->app->bind(ReportAggregator::class, function (Application $app) {
+        return new ReportAggregator(...$app->tagged('reports'));
+    });
 
 <a name="tagging"></a>
 ### Tagging
