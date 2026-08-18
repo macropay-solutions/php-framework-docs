@@ -16,8 +16,11 @@ context: rate-limiting
 
 Framework includes a simple to use rate limiting abstraction which, in conjunction with your application's [cache](/cache), provides an easy way to limit any action during a specified window of time.
 
+> [!Important]
+> This rate limiter is designed for application-level rate limiting of specific actions within your application (e.g., limiting how many messages a user can send per minute). It does not replace server-level or infrastructure-level rate limiting. You should continue to implement rate limiting at the server level (via nginx, Apache, load balancers, or cloud providers) to protect your infrastructure from request floods and DDoS attacks. Use this framework rate limiter in conjunction with infrastructure-level protections.
+
 > [!NOTE]  
-> If you are interested in rate limiting incoming HTTP requests, please consult the [rate limiter middleware documentation](routing#rate-limiting).
+> If you are interested in rate limiting incoming HTTP requests, you must implement it at server level.
 
 <a name="cache-configuration"></a>
 ### Cache Configuration
