@@ -91,6 +91,9 @@ Typically, events should be registered via the `EventServiceProvider` `$listen` 
         );
     }
 
+> [!WARNING]
+> **Closure-Based Listeners Forbidden:** Event listeners must strictly be class-based FQNs or storable array callables (`queueableArray`). Registering `\Closure` instances as event listeners is forbidden and throws a PHP `TypeError` at runtime to eliminate dynamic reflection overhead.
+
 <a name="queueable-array-callables-recommended"></a>
 #### Queueable Array Callables (Recommended)
 
