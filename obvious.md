@@ -482,6 +482,8 @@ This implies you need to:
 
 See more in [Obvious Mutators](/obvious-mutators)
 
+> [!NOTE]
+> When observer routes are compiled via the `event:cache` command, any subsequent calls to `Model::observe()` in your service providers are automatically bypassed during application boot (`Container::eventsAsObserversAreCached()`). This eliminates redundant observer instantiation and runtime reflection penalties in production.
 
 <a name="retrieving-models"></a>
 ## Retrieving Models

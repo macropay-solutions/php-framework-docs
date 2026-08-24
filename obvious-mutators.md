@@ -33,6 +33,9 @@ Accessors, mutators, and attribute casting allow you to transform Obvious attrib
 
 Framework provides a high-performance architecture for accessors and mutators using Segregated Maps. These maps use O(1) static lookups to resolve closures, completely bypassing the overhead of dynamic method calls and reflection.
 
+> [!WARNING]
+> **Strict Return Type Enforcement:** Accessors and mutators are strictly restricted to scalar primitives (`int`, `string`, `null`) and `\BackedEnum` instances.
+
 <a name="defining-accessors"></a>
 ### Defining Accessors
 
@@ -53,7 +56,8 @@ An accessor transforms an Obvious attribute value when it is accessed. To define
         {
             return [
                 'first_name' => fn(?string $value): ?string => $value !== null ? \ucfirst($value) : null,
-                'full_name'  => fn(): string => $this->a->first_name . ' ' . $this->a->last_name,
+                'full_name' => fn(): string => $this->a->first_name . ' ' . $this->a->last_name,
+                'status' => fn(?string $value): ?ServerStatus => $value !== null ? ServerStatus::from($value) : null,
             ];
         }
     }
@@ -92,6 +96,7 @@ A mutator transforms an Obvious attribute value when it is set. To define mutato
                 'first_name' => function (?string $value): void {
                     $this->attributes['first_name'] = $value !== null ? \strtolower($value) : null;
                 },
+                'status' => fn(?string|ServerStatus $value): void => \is_string($value) ? ServerStatus::from($value) : null,
             ];
         }
     }
