@@ -712,7 +712,6 @@ These are the built-in commands depending on the composer flag `--no-dev`:
   'queue:table' => 'command.queue.table',
   'make:seeder' => 'command.seeder.make',
   'about' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\AboutCommand',
-  'make:cast' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\CastMakeCommand',
   'channel:list' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ChannelListCommand',
   'make:channel' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ChannelMakeCommand',
   'config:show' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ConfigShowCommand',

@@ -272,6 +272,21 @@ If you wish, you may choose to utilize "ULIDs" instead of UUIDs. ULIDs are simil
 <a name="timestamps"></a>
 ### Timestamps
 
+Obvious processes created, updated, and soft-delete timestamps strictly as raw native PHP strings (`DATETIME`), completely bypassing Carbon instantiation and runtime database connection lookups.
+
+Formats are defined as compile-time static constants directly on `MacropaySolutions\Kernel\Database\Obvious\Model`:
+
+    public const CREATED_AT_FORMAT = 'Y-m-d H:i:s';
+    public const UPDATED_AT_FORMAT = 'Y-m-d H:i:s';
+    public const DELETED_AT_FORMAT = 'Y-m-d H:i:s';
+
+#### Silent Save Bypass
+
+To restore an `updated_at` timestamp back to its original value and bypass an automatic update without executing `saveQuietly()`, assign an empty string (`''`) to `updated_at` before saving:
+
+    $flight->a->updated_at = '';
+    $flight->save();
+
 By default, Obvious expects `created_at` and `updated_at` columns to exist on your model's corresponding database table.  Obvious will automatically set these column's values when models are created or updated. If you do not want these columns to be automatically managed by Obvious, you should define a `$timestamps` property on your model with a value of `false`:
 
     <?php
@@ -931,13 +946,11 @@ if ($flight->unlockUpdates()) {
 If you want a model to be strictly locked by default (preventing any updates unless explicitly unlocked), you can declare the following property on your model class or base configuration model:
 
 ```php
-protected ?array $tmpDirtyIfAttributesAreSyncedFromCashedCasts = [];
+protected ?array $tmpDirty = [];
 ```
 
 When this property is initialized as an empty array, the model will not be updatable by default unless `unlockUpdates()` is explicitly invoked to allow mutations.
 
-> **NOTE**
-> If you wonder why the unrelated naming of `$tmpDirtyIfAttributesAreSyncedFromCashedCasts`, this locking feature was a side effect of improving the way the model update works.
 
 <a name="mass-assignment"></a>
 ### Mass Assignment
@@ -979,20 +992,6 @@ Once you have specified which attributes are mass assignable, you may use the `c
 If you already have a model instance, you may use the `fill` method to populate it with an array of attributes:
 
     $flight->fill(['name' => 'Amsterdam to Frankfurt']);
-
-<a name="mass-assignment-and-json-columns"></a>
-#### Mass Assignment and JSON Columns
-
-When assigning JSON columns, each column's mass assignable key must be specified in your model's `$fillable` array. For security, Kernel does not support updating nested JSON attributes when using the `guarded` property:
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'options->enabled',
-    ];
 
 <a name="allowing-mass-assignment"></a>
 #### Allowing Mass Assignment
@@ -1104,7 +1103,7 @@ In addition to actually removing records from your database, Obvious can also "s
     }
 
 > [!NOTE]  
-> The `SoftDeletes` trait will automatically cast the `deleted_at` attribute to a `DateTime` / `Carbon` instance for you.
+> The `SoftDeletes` trait generates raw native `DATETIME` strings instantly using `static::DELETED_AT_FORMAT`. Carbon objects are not instantiated unless explicitly defined in `$casts`.
 
 You should also add the `deleted_at` column to your database table. The Kernel [schema builder](/migrations) contains a helper method to create this column:
 

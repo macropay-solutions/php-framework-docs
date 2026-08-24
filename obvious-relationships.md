@@ -1579,6 +1579,9 @@ If you wish to access the result of the aggregate function using another name, y
         echo $post->a->total_comments;
     }
 
+> [!WARNING]
+> **Return Type Change:** The `withExists` method no longer automatically casts the resulting attribute to a strict PHP boolean to maximize query performance. It returns the raw value from your database driver (e.g., `1` or `0`). Standard truthy checks will continue to work, but strict type comparisons (`=== true`) may fail with some DBs.
+
 Like the `loadCount` method, deferred versions of these methods are also available. These additional aggregate operations may be performed on Obvious models that have already been retrieved:
 
     $post = Post::query()->first();
