@@ -22,9 +22,6 @@ context: events
 - [Dispatching Events](#dispatching-events)
     - [Payload Array Shapes: Class vs. String Events](#payload-array-shapes-class-vs-string-events)
     - [Dispatching Events After Database Transactions](#dispatching-events-after-database-transactions)
-- [Event Subscribers](#event-subscribers)
-    - [Writing Event Subscribers](#writing-event-subscribers)
-    - [Registering Event Subscribers](#registering-event-subscribers)
 - [Testing](#testing)
     - [Faking a Subset of Events](#faking-a-subset-of-events)
     - [Scoped Events Fakes](#scoped-event-fakes)
@@ -93,6 +90,9 @@ Typically, events should be registered via the `EventServiceProvider` `$listen` 
             SendPodcastNotification::class,
         );
     }
+
+> [!WARNING]
+> **Closure-Based Listeners Forbidden:** Event listeners must strictly be class-based FQNs or storable array callables (`queueableArray`). Registering `\Closure` instances as event listeners is forbidden and throws a PHP `TypeError` at runtime to eliminate dynamic reflection overhead.
 
 <a name="queueable-array-callables-recommended"></a>
 #### Queueable Array Callables (Recommended)
@@ -617,123 +617,6 @@ This interface instructs Framework to not dispatch the event until the current d
         public function __construct(
             public Order $order,
         ) {}
-    }
-
-<a name="event-subscribers"></a>
-## Event Subscribers
-
-> [!WARNING]
-> **Performance Penalty:** Avoid using Event Subscribers in this architecture because they natively bypass the framework's caching mechanisms and actively increase application boot time. They are initialized and registered dynamically on every single request. It is highly recommended to register standard class-based listeners instead, which are safely compiled into memory by the `event:cache` command.
-
-<a name="writing-event-subscribers"></a>
-### Writing Event Subscribers
-
-Event subscribers are classes that may subscribe to multiple events from within the subscriber class itself, allowing you to define several event handlers within a single class. Subscribers should define a `subscribe` method, which will be passed an event dispatcher instance. You may call the `listen` method on the given dispatcher to register event listeners:
-
-    <?php
-
-    namespace App\Listeners;
-
-    use MacropaySolutions\Kernel\Auth\Events\Login;
-    use MacropaySolutions\Kernel\Auth\Events\Logout;
-    use MacropaySolutions\Kernel\Events\Dispatcher;
-
-    class UserEventSubscriber
-    {
-        /**
-         * Handle user login events.
-         */
-        public function handleUserLogin(Login $event): void {}
-
-        /**
-         * Handle user logout events.
-         */
-        public function handleUserLogout(Logout $event): void {}
-
-        /**
-         * Register the listeners for the subscriber.
-         */
-        public function subscribe(Dispatcher $events): void
-        {
-            $events->listen(
-                Login::class,
-                [UserEventSubscriber::class, 'handleUserLogin']
-            );
-
-            $events->listen(
-                Logout::class,
-                [UserEventSubscriber::class, 'handleUserLogout']
-            );
-        }
-    }
-
-If your event listener methods are defined within the subscriber itself, you may find it more convenient to return an array of events and method names from the subscriber's `subscribe` method. Framework will automatically determine the subscriber's class name when registering the event listeners:
-
-    <?php
-
-    namespace App\Listeners;
-
-    use MacropaySolutions\Kernel\Auth\Events\Login;
-    use MacropaySolutions\Kernel\Auth\Events\Logout;
-    use MacropaySolutions\Kernel\Events\Dispatcher;
-
-    class UserEventSubscriber
-    {
-        /**
-         * Handle user login events.
-         */
-        public function handleUserLogin(Login $event): void {}
-
-        /**
-         * Handle user logout events.
-         */
-        public function handleUserLogout(Logout $event): void {}
-
-        /**
-         * Register the listeners for the subscriber.
-         *
-         * @return array<string, string>
-         */
-        public function subscribe(Dispatcher $events): array
-        {
-            return [
-                Login::class => 'handleUserLogin',
-                Logout::class => 'handleUserLogout',
-            ];
-        }
-    }
-
-<a name="registering-event-subscribers"></a>
-### Registering Event Subscribers
-
-After writing the subscriber, you are ready to register it with the event dispatcher. You may register subscribers using the `$subscribe` property on the `EventServiceProvider`. For example, let's add the `UserEventSubscriber` to the list:
-
-    <?php
-
-    namespace App\Providers;
-
-    use App\Listeners\UserEventSubscriber;
-    use MacropaySolutions\Framework\Providers\EventServiceProvider as ServiceProvider;
-
-    class EventServiceProvider extends ServiceProvider
-    {
-        /**
-         * The event listener mappings for the application.
-         *
-         * @var array
-         */
-        protected $listen = [
-            // ...
-        ];
-
-        /**
-         * The subscriber classes to register.
-         *
-         * @var array
-         */
-        protected $subscribe = [
-            UserEventSubscriber::class,
-        ];
     }
 
 <a name="testing"></a>

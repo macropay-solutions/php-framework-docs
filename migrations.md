@@ -737,7 +737,7 @@ The `softDeletesTz` method adds a nullable `deleted_at` `TIMESTAMP` (with timezo
 <a name="column-method-softDeletes"></a>
 #### `softDeletes()` {.collection-method}
 
-The `softDeletes` method adds a nullable `deleted_at` `TIMESTAMP` equivalent column with an optional precision (total digits). This column is intended to store the `deleted_at` timestamp needed for the model's "soft delete" functionality:
+The `softDeletes` method adds a nullable `deleted_at` `DATETIME` equivalent column with an optional precision (total digits). Storing as literal `DATETIME` prevents hidden database-level SQL timezone conversions:
 
     $table->softDeletes($column = 'deleted_at', $precision = 0);
 
@@ -793,7 +793,7 @@ The `timestampsTz` method creates `created_at` and `updated_at` `TIMESTAMP` (wit
 <a name="column-method-timestamps"></a>
 #### `timestamps()` {.collection-method}
 
-The `timestamps` method creates `created_at` and `updated_at` `TIMESTAMP` equivalent columns with an optional precision (total digits):
+The `timestamps` method creates `created_at` and `updated_at` `DATETIME` equivalent columns with an optional precision (total digits). Using `DATETIME` ensures literal raw PHP string storage without timezone conversions:
 
     $table->timestamps($precision = 0);
 
