@@ -79,10 +79,10 @@ To completely eliminate boot-time performance penalties, standard eager macros (
 Standard macros used to require allocating closures and loading referenced classes during the framework's boot phase, even if the macro was never called during the request lifecycle. To enforce zero-overhead, `Macroable` classes now only support `deferredMacro`:
 
 ```php
-use MacropaySolutions\Kernel\Http\Client\Factory;
+use MacropaySolutions\Kernel\Support\Collection;
 
-// The macro closure will only be resolved if 'customRequest' is actually called
-Factory::deferredMacro('customRequest', [\App\Macros\CustomRequestMacroFactory::class, 'getClosure']);
+// The macro closure will only be resolved if 'customFilter' is actually called
+Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::class, 'getClosure']);
 ```
 
 > **WARNING**

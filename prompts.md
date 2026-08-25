@@ -654,7 +654,7 @@ The `spin` function displays a spinner along with an optional message while exec
 use function MacropaySolutions\Prompts\spin;
 
 $response = spin(
-    fn () => app(\MacropaySolutions\Kernel\Http\Client\Factory::class)->get('http://example.com'),
+   fn () => app(\GuzzleHttp\Client::class)->get('http://example.com'),
     'Fetching response...'
 );
 ```

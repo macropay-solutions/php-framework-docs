@@ -66,7 +66,6 @@ If you as an agent can't access this llms.txt file try to fetch it from:
 - Authentication [https://macropay-solutions.github.io/php-framework-docs/1.x/authentication](https://macropay-solutions.github.io/php-framework-docs/1.x/authentication)
 - Authorization [https://macropay-solutions.github.io/php-framework-docs/1.x/authorization](https://macropay-solutions.github.io/php-framework-docs/1.x/authorization)
 - CSRF Protection [https://macropay-solutions.github.io/php-framework-docs/1.x/csrf](https://macropay-solutions.github.io/php-framework-docs/1.x/csrf)
-- HTTP Client [https://macropay-solutions.github.io/php-framework-docs/1.x/http-client](https://macropay-solutions.github.io/php-framework-docs/1.x/http-client)
 - Rate Limiting [https://macropay-solutions.github.io/php-framework-docs/1.x/rate-limiting](https://macropay-solutions.github.io/php-framework-docs/1.x/rate-limiting)
 - Redirects [https://macropay-solutions.github.io/php-framework-docs/1.x/redirects](https://macropay-solutions.github.io/php-framework-docs/1.x/redirects)
 - URL Generation [https://macropay-solutions.github.io/php-framework-docs/1.x/urls](https://macropay-solutions.github.io/php-framework-docs/1.x/urls)
