@@ -19,7 +19,6 @@ context: obvious-factories
     - [Has Many Relationships](#has-many-relationships)
     - [Belongs To Relationships](#belongs-to-relationships)
     - [Many to Many Relationships](#many-to-many-relationships)
-    - [Polymorphic Relationships](#polymorphic-relationships)
     - [Defining Relationships Within Factories](#defining-relationships-within-factories)
     - [Recycling an Existing Model for Relationships](#recycling-an-existing-model-for-relationships)
 
@@ -446,49 +445,10 @@ For convenience, you may use Framework's magic factory relationship methods to d
                 ])
                 ->create();
 
-<a name="polymorphic-relationships"></a>
-### Polymorphic Relationships
-
-[Polymorphic relationships](/obvious-relationships#polymorphic-relationships) may also be created using factories. Polymorphic "morph many" relationships are created in the same way as typical "has many" relationships. For example, if an `App\Models\Post` model has a `morphMany` relationship with an `App\Models\Comment` model:
-
-    use App\Models\Post;
-
-    $post = Post::factory()->hasComments(3)->create();
-
-<a name="morph-to-relationships"></a>
-#### Morph To Relationships
-
-Magic methods may not be used to create `morphTo` relationships. Instead, the `for` method must be used directly and the name of the relationship must be explicitly provided. For example, imagine that the `Comment` model has a `commentable` method that defines a `morphTo` relationship. In this situation, we may create three comments that belong to a single post by using the `for` method directly:
-
-    $comments = Comment::factory()->count(3)->for(
-        Post::factory(), 'commentable'
-    )->create();
-
-<a name="polymorphic-many-to-many-relationships"></a>
-#### Polymorphic Many to Many Relationships
-
-Polymorphic "many to many" (`morphToMany` / `morphedByMany`) relationships may be created just like non-polymorphic "many to many" relationships:
-
-    use App\Models\Tag;
-    use App\Models\Video;
-
-    $videos = Video::factory()
-                ->hasAttached(
-                    Tag::factory()->count(3),
-                    ['public' => true]
-                )
-                ->create();
-
-Of course, the magic `has` method may also be used to create polymorphic "many to many" relationships:
-
-    $videos = Video::factory()
-                ->hasTags(3, ['public' => true])
-                ->create();
-
 <a name="defining-relationships-within-factories"></a>
 ### Defining Relationships Within Factories
 
-To define a relationship within your model factory, you will typically assign a new factory instance to the foreign key of the relationship. This is normally done for the "inverse" relationships such as `belongsTo` and `morphTo` relationships. For example, if you would like to create a new user when creating a post, you may do the following:
+To define a relationship within your model factory, you will typically assign a new factory instance to the foreign key of the relationship. This is normally done for the "inverse" relationships such as `belongsTo` relationships. For example, if you would like to create a new user when creating a post, you may do the following:
 
     use App\Models\User;
 

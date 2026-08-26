@@ -19,21 +19,13 @@ context: obvious-relationships
   - [Filtering Queries via Intermediate Table Columns](#filtering-queries-via-intermediate-table-columns)
   - [Ordering Queries via Intermediate Table Columns](#ordering-queries-via-intermediate-table-columns)
   - [Defining Custom Intermediate Table Models](#defining-custom-intermediate-table-models)
-- [Polymorphic Relationships](#polymorphic-relationships)
-  - [One to One](#one-to-one-polymorphic-relations)
-  - [One to Many](#one-to-many-polymorphic-relations)
-  - [One of Many](#one-of-many-polymorphic-relations)
-  - [Many to Many](#many-to-many-polymorphic-relations)
-  - [Custom Polymorphic Types](#custom-polymorphic-types)
 - [Querying Relations](#querying-relations)
   - [Relationship Methods vs. Dynamic Properties](#relationship-methods-vs-dynamic-properties)
   - [Querying Relationship Existence](#querying-relationship-existence)
   - [Querying Relationship Absence](#querying-relationship-absence)
-  - [Querying Morph To Relationships](#querying-morph-to-relationships)
 - [Aggregating Related Models](#aggregating-related-models)
   - [Counting Related Models](#counting-related-models)
   - [Other Aggregate Functions](#other-aggregate-functions)
-  - [Counting Related Models on Morph To Relationships](#counting-related-models-on-morph-to-relationships)
 - [Eager Loading](#eager-loading)
   - [Constraining Eager Loads](#constraining-eager-loads)
   - [Lazy Eager Loading](#lazy-eager-loading)
@@ -57,9 +49,6 @@ Database tables are often related to one another. For example, a blog post may h
 - [Many To Many](#many-to-many)
 - [Has One Through](#has-one-through)
 - [Has Many Through](#has-many-through)
-- [One To One (Polymorphic)](#one-to-one-polymorphic-relations)
-- [One To Many (Polymorphic)](#one-to-many-polymorphic-relations)
-- [Many To Many (Polymorphic)](#many-to-many-polymorphic-relations)
 
 </div>
 
@@ -268,7 +257,7 @@ Always provide the required foreign key and owner key parameters when defining a
 <a name="default-models"></a>
 #### Default Models
 
-The `belongsTo`, `hasOne`, `hasOneThrough`, and `morphOne` relationships allow you to define a default model that will be returned if the given relationship is `null`. This pattern is often referred to as the [Null Object pattern](https://en.wikipedia.org/wiki/Null_Object_pattern) and can help remove conditional checks in your code. In the following example, the `user` relation will return an empty `App\Models\User` model if no user is attached to the `Post` model:
+The `belongsTo`, `hasOne`, and `hasOneThrough` relationships allow you to define a default model that will be returned if the given relationship is `null`. This pattern is often referred to as the [Null Object pattern](https://en.wikipedia.org/wiki/Null_Object_pattern) and can help remove conditional checks in your code. In the following example, the `user` relation will return an empty `App\Models\User` model if no user is attached to the `Post` model:
 
     /**
      * Get the author of the post.
@@ -664,7 +653,7 @@ You can order the results returned by `belongsToMany` relationship queries using
 
 If you would like to define a custom model to represent the intermediate table of your many-to-many relationship, you may call the `using` method when defining the relationship. Custom pivot models give you the opportunity to define additional behavior on the pivot model, such as methods and casts.
 
-Custom many-to-many pivot models should extend the `MacropaySolutions\Kernel\Database\Obvious\Relations\Pivot` class while custom polymorphic many-to-many pivot models should extend the `MacropaySolutions\Kernel\Database\Obvious\Relations\MorphPivot` class. For example, we may define a `Role` model which uses a custom `RoleUser` pivot model:
+Custom many-to-many pivot models should extend the `MacropaySolutions\Kernel\Database\Obvious\Relations\Pivot` class. For example, we may define a `Role` model which uses a custom `RoleUser` pivot model:
 
     <?php
 
@@ -711,402 +700,6 @@ If you have defined a many-to-many relationship that uses a custom pivot model, 
      * @var bool
      */
     public $incrementing = true;
-
-<a name="polymorphic-relationships"></a>
-## Polymorphic Relationships
-
-A polymorphic relationship allows the child model to belong to more than one type of model using a single association. For example, imagine you are building an application that allows users to share blog posts and videos. In such an application, a `Comment` model might belong to both the `Post` and `Video` models.
-
-<a name="one-to-one-polymorphic-relations"></a>
-### One to One (Polymorphic)
-
-<a name="one-to-one-polymorphic-table-structure"></a>
-#### Table Structure
-
-A one-to-one polymorphic relation is similar to a typical one-to-one relation; however, the child model can belong to more than one type of model using a single association. For example, a blog `Post` and a `User` may share a polymorphic relation to an `Image` model. Using a one-to-one polymorphic relation allows you to have a single table of unique images that may be associated with posts and users. First, let's examine the table structure:
-
-    posts
-        id - integer
-        name - string
-
-    users
-        id - integer
-        name - string
-
-    images
-        id - integer
-        url - string
-        imageable_id - integer
-        imageable_type - string
-
-Note the `imageable_id` and `imageable_type` columns on the `images` table. The `imageable_id` column will contain the ID value of the post or user, while the `imageable_type` column will contain the class name of the parent model. The `imageable_type` column is used by Obvious to determine which "type" of parent model to return when accessing the `imageable` relation. In this case, the column would contain either `App\Models\Post` or `App\Models\User`.
-
-<a name="one-to-one-polymorphic-model-structure"></a>
-#### Model Structure
-
-Next, let's examine the model definitions needed to build this relationship:
-
-    <?php
-
-    namespace App\Models;
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
-
-    class Image extends Model
-    {
-        /**
-         * Get the parent imageable model (user or post).
-         */
-        public function imageable(): MorphTo
-        {
-            return $this->morphTo();
-        }
-    }
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphOne;
-
-    class Post extends Model
-    {
-        /**
-         * Get the post's image.
-         */
-        public function image(): MorphOne
-        {
-            return $this->morphOne(Image::class, 'imageable');
-        }
-    }
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphOne;
-
-    class User extends Model
-    {
-        /**
-         * Get the user's image.
-         */
-        public function image(): MorphOne
-        {
-            return $this->morphOne(Image::class, 'imageable');
-        }
-    }
-
-<a name="one-to-one-polymorphic-retrieving-the-relationship"></a>
-#### Retrieving the Relationship
-
-Once your database table and models are defined, you may access the relationships via your models. For example, to retrieve the image for a post, we can access the `image` dynamic relationship property:
-
-    use App\Models\Post;
-
-    $post = Post::query()->find(1);
-
-    $image = $post->r->image;
-
-You may retrieve the parent of the polymorphic model by accessing the name of the method that performs the call to `morphTo`. In this case, that is the `imageable` method on the `Image` model. So, we will access that method as a dynamic relationship property:
-
-    use App\Models\Image;
-
-    $image = Image::query()->find(1);
-
-    $imageable = $image->r->imageable;
-
-The `imageable` relation on the `Image` model will return either a `Post` or `User` instance, depending on which type of model owns the image.
-
-<a name="morph-one-to-one-key-conventions"></a>
-#### Key Conventions
-
-If necessary, you may specify the name of the "id" and "type" columns utilized by your polymorphic child model. If you do so, ensure that you always pass the name of the relationship as the first argument to the `morphTo` method. Typically, this value should match the method name, so you may use PHP's `__FUNCTION__` constant:
-
-    /**
-     * Get the model that the image belongs to.
-     */
-    public function imageable(): MorphTo
-    {
-        return $this->morphTo(__FUNCTION__, 'imageable_type', 'imageable_id');
-    }
-
-<a name="one-to-many-polymorphic-relations"></a>
-### One to Many (Polymorphic)
-
-<a name="one-to-many-polymorphic-table-structure"></a>
-#### Table Structure
-
-A one-to-many polymorphic relation is similar to a typical one-to-many relation; however, the child model can belong to more than one type of model using a single association. For example, imagine users of your application can "comment" on posts and videos. Using polymorphic relationships, you may use a single `comments` table to contain comments for both posts and videos. First, let's examine the table structure required to build this relationship:
-
-    posts
-        id - integer
-        title - string
-        body - text
-
-    videos
-        id - integer
-        title - string
-        url - string
-
-    comments
-        id - integer
-        body - text
-        commentable_id - integer
-        commentable_type - string
-
-<a name="one-to-many-polymorphic-model-structure"></a>
-#### Model Structure
-
-Next, let's examine the model definitions needed to build this relationship:
-
-    <?php
-
-    namespace App\Models;
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
-
-    class Comment extends Model
-    {
-        /**
-         * Get the parent commentable model (post or video).
-         */
-        public function commentable(): MorphTo
-        {
-            return $this->morphTo();
-        }
-    }
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphMany;
-
-    class Post extends Model
-    {
-        /**
-         * Get all the post's comments.
-         */
-        public function comments(): MorphMany
-        {
-            return $this->morphMany(Comment::class, 'commentable');
-        }
-    }
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphMany;
-
-    class Video extends Model
-    {
-        /**
-         * Get all the video's comments.
-         */
-        public function comments(): MorphMany
-        {
-            return $this->morphMany(Comment::class, 'commentable');
-        }
-    }
-
-<a name="one-to-many-polymorphic-retrieving-the-relationship"></a>
-#### Retrieving the Relationship
-
-Once your database table and models are defined, you may access the relationships via your model's dynamic relationship properties. For example, to access all the comments for a post, we can use the `comments` dynamic property:
-
-    use App\Models\Post;
-
-    $post = Post::query()->find(1);
-
-    foreach ($post->r->comments as $comment) {
-        // ...
-    }
-
-You may also retrieve the parent of a polymorphic child model by accessing the name of the method that performs the call to `morphTo`. In this case, that is the `commentable` method on the `Comment` model. So, we will access that method as a dynamic relationship property in order to access the comment's parent model:
-
-    use App\Models\Comment;
-
-    $comment = Comment::query()->find(1);
-
-    $commentable = $comment->r->commentable;
-
-The `commentable` relation on the `Comment` model will return either a `Post` or `Video` instance, depending on which type of model is the comment's parent.
-
-<a name="one-of-many-polymorphic-relations"></a>
-### One of Many (Polymorphic)
-
-Sometimes a model may have many related models, yet you want to easily retrieve the "latest" or "oldest" related model of the relationship. For example, a `User` model may be related to many `Image` models, but you want to define a convenient way to interact with the most recent image the user has uploaded. You may accomplish this using the `morphOne` relationship type combined with the `ofMany` methods:
-
-```php
-/**
- * Get the user's most recent image.
- */
-public function latestImage(): MorphOne
-{
-    return $this->morphOne(Image::class, 'imageable')->latestOfMany();
-}
-```
-
-Likewise, you may define a method to retrieve the "oldest", or first, related model of a relationship:
-
-```php
-/**
- * Get the user's oldest image.
- */
-public function oldestImage(): MorphOne
-{
-    return $this->morphOne(Image::class, 'imageable')->oldestOfMany();
-}
-```
-
-By default, the `latestOfMany` and `oldestOfMany` methods will retrieve the latest or oldest related model based on the model's primary key, which must be sortable. However, sometimes you may wish to retrieve a single model from a larger relationship using a different sorting criteria.
-
-For example, using the `ofMany` method, you may retrieve the user's most "liked" image. The `ofMany` method accepts the sortable column as its first argument and which aggregate function (`min` or `max`) to apply when querying for the related model:
-
-```php
-/**
- * Get the user's most popular image.
- */
-public function bestImage(): MorphOne
-{
-    return $this->morphOne(Image::class, 'imageable')->ofMany('likes', 'max');
-}
-```
-
-> [!NOTE]  
-> It is possible to construct more advanced "one of many" relationships. For more information, please consult the [has one of many documentation](#advanced-has-one-of-many-relationships).
-
-<a name="many-to-many-polymorphic-relations"></a>
-### Many to Many (Polymorphic)
-
-<a name="many-to-many-polymorphic-table-structure"></a>
-#### Table Structure
-
-Many-to-many polymorphic relations are slightly more complicated than "morph one" and "morph many" relationships. For example, a `Post` model and `Video` model could share a polymorphic relation to a `Tag` model. Using a many-to-many polymorphic relation in this situation would allow your application to have a single table of unique tags that may be associated with posts or videos. First, let's examine the table structure required to build this relationship:
-
-    posts
-        id - integer
-        name - string
-
-    videos
-        id - integer
-        name - string
-
-    tags
-        id - integer
-        name - string
-
-    taggables
-        tag_id - integer
-        taggable_id - integer
-        taggable_type - string
-
-> [!NOTE]  
-> Before diving into polymorphic many-to-many relationships, you may benefit from reading the documentation on typical [many-to-many relationships](#many-to-many).
-
-<a name="many-to-many-polymorphic-model-structure"></a>
-#### Model Structure
-
-Next, we're ready to define the relationships on the models. The `Post` and `Video` models will both contain a `tags` method that calls the `morphToMany` method provided by the base Obvious model class.
-
-The `morphToMany` method accepts the name of the related model as well as the "relationship name". Based on the name we assigned to our intermediate table name and the keys it contains, we will refer to the relationship as "taggable":
-
-    <?php
-
-    namespace App\Models;
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphToMany;
-
-    class Post extends Model
-    {
-        /**
-         * Get all the tags for the post.
-         */
-        public function tags(): MorphToMany
-        {
-            return $this->morphToMany(Tag::class, 'taggable');
-        }
-    }
-
-<a name="many-to-many-polymorphic-defining-the-inverse-of-the-relationship"></a>
-#### Defining the Inverse of the Relationship
-
-Next, on the `Tag` model, you should define a method for each of its possible parent models. So, in this example, we will define a `posts` method and a `videos` method. Both of these methods should return the result of the `morphedByMany` method.
-
-The `morphedByMany` method accepts the name of the related model as well as the "relationship name". Based on the name we assigned to our intermediate table name and the keys it contains, we will refer to the relationship as "taggable":
-
-    <?php
-
-    namespace App\Models;
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphToMany;
-
-    class Tag extends Model
-    {
-        /**
-         * Get all the posts that are assigned this tag.
-         */
-        public function posts(): MorphToMany
-        {
-            return $this->morphedByMany(Post::class, 'taggable');
-        }
-
-        /**
-         * Get all the videos that are assigned this tag.
-         */
-        public function videos(): MorphToMany
-        {
-            return $this->morphedByMany(Video::class, 'taggable');
-        }
-    }
-
-<a name="many-to-many-polymorphic-retrieving-the-relationship"></a>
-#### Retrieving the Relationship
-
-Once your database table and models are defined, you may access the relationships via your models. For example, to access all the tags for a post, you may use the `tags` dynamic relationship property:
-
-    use App\Models\Post;
-
-    $post = Post::query()->find(1);
-
-    foreach ($post->r->tags as $tag) {
-        // ...
-    }
-
-You may retrieve the parent of a polymorphic relation from the polymorphic child model by accessing the name of the method that performs the call to `morphedByMany`. In this case, that is the `posts` or `videos` methods on the `Tag` model:
-
-    use App\Models\Tag;
-
-    $tag = Tag::query()->find(1);
-
-    foreach ($tag->r->posts as $post) {
-        // ...
-    }
-
-    foreach ($tag->r->videos as $video) {
-        // ...
-    }
-
-<a name="custom-polymorphic-types"></a>
-### Custom Polymorphic Types
-
-By default, Framework will use the fully qualified class name to store the "type" of the related model. For instance, given the one-to-many relationship example above where a `Comment` model may belong to a `Post` or a `Video` model, the default `commentable_type` would be either `App\Models\Post` or `App\Models\Video`, respectively. However, you may wish to decouple these values from your application's internal structure.
-
-For example, instead of using the model names as the "type", we may use simple strings such as `post` and `video`. By doing so, the polymorphic "type" column values in our database will remain valid even if the models are renamed:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\Relation;
-
-    Relation::enforceMorphMap([
-        'post' => 'App\Models\Post',
-        'video' => 'App\Models\Video',
-    ]);
-
-You may call the `enforceMorphMap` method in the `boot` method of your `App\Providers\AppServiceProvider` class or create a separate service provider if you wish.
-
-You may determine the morph alias of a given model at runtime using the model's `getMorphClass` method. Conversely, you may determine the fully-qualified class name associated with a morph alias using the `Relation::getMorphedModel` method:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\Relation;
-
-    $alias = $post->getMorphClass();
-
-    $class = Relation::getMorphedModel($alias);
-
-> [!WARNING]  
-> When adding a "morph map" to your existing application, every morphable `*_type` column value in your database that still contains a fully-qualified class will need to be converted to its "map" name.
 
 <a name="querying-relations"></a>
 ## Querying Relations
@@ -1235,7 +828,7 @@ If you need even more power, you may use the `whereHas` and `orWhereHas` methods
 <a name="inline-relationship-existence-queries"></a>
 #### Inline Relationship Existence Queries
 
-If you would like to query for a relationship's existence with a single, simple where condition attached to the relationship query, you may find it more convenient to use the `whereRelation`, `orWhereRelation`, `whereMorphRelation`, and `orWhereMorphRelation` methods. For example, we may query for all posts that have unapproved comments:
+If you would like to query for a relationship's existence with a single, simple where condition attached to the relationship query, you may find it more convenient to use the `whereRelation` and `orWhereRelation` methods. For example, we may query for all posts that have unapproved comments:
 
     use App\Models\Post;
 
@@ -1270,59 +863,6 @@ You may use "dot" notation to execute a query against a nested relationship. For
 
     $posts = Post::query()->whereDoesntHave('comments.author', function (Builder $query) {
         $query->where('banned', 0);
-    })->get();
-
-<a name="querying-morph-to-relationships"></a>
-### Querying Morph To Relationships
-
-To query the existence of "morph to" relationships, you may use the `whereHasMorph` and `whereDoesntHaveMorph` methods. These methods accept the name of the relationship as their first argument. Next, the methods accept the names of the related models that you wish to include in the query. Finally, you may provide a closure which customizes the relationship query:
-
-    use App\Models\Comment;
-    use App\Models\Post;
-    use App\Models\Video;
-    use MacropaySolutions\Kernel\Database\Obvious\Builder;
-
-    // Retrieve comments associated to posts or videos with a title like code%...
-    $comments = Comment::query()->whereHasMorph(
-        'commentable',
-        [Post::class, Video::class],
-        function (Builder $query) {
-            $query->where('title', 'like', 'code%');
-        }
-    )->get();
-
-    // Retrieve comments associated to posts with a title not like code%...
-    $comments = Comment::query()->whereDoesntHaveMorph(
-        'commentable',
-        Post::class,
-        function (Builder $query) {
-            $query->where('title', 'like', 'code%');
-        }
-    )->get();
-
-You may occasionally need to add query constraints based on the "type" of the related polymorphic model. The closure passed to the `whereHasMorph` method may receive a `$type` value as its second argument. This argument allows you to inspect the "type" of the query that is being built:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Builder;
-
-    $comments = Comment::query()->whereHasMorph(
-        'commentable',
-        [Post::class, Video::class],
-        function (Builder $query, string $type) {
-            $column = $type === Post::class ? 'content' : 'title';
-
-            $query->where($column, 'like', 'code%');
-        }
-    )->get();
-
-<a name="querying-all-morph-to-related-models"></a>
-#### Querying All Related Models
-
-Instead of passing an array of possible polymorphic models, you may provide `*` as a wildcard value. This will instruct Framework to retrieve all the possible polymorphic types from the database. Framework will execute an additional query in order to perform this operation:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Builder;
-
-    $comments = Comment::query()->whereHasMorph('commentable', '*', function (Builder $query) {
-        $query->where('title', 'like', 'foo%');
     })->get();
 
 <a name="aggregating-related-models"></a>
@@ -1426,37 +966,6 @@ If you're combining these aggregate methods with a `select` statement, ensure th
                     ->withExists('comments')
                     ->get();
 
-<a name="counting-related-models-on-morph-to-relationships"></a>
-### Counting Related Models on Morph To Relationships
-
-If you would like to eager load a "morph to" relationship, as well as related model counts for the various entities that may be returned by that relationship, you may utilize the `with` method in combination with the `morphTo` relationship's `morphWithCount` method.
-
-In this example, let's assume that `Photo` and `Post` models may create `ActivityFeed` models. We will assume the `ActivityFeed` model defines a "morph to" relationship named `parentable` that allows us to retrieve the parent `Photo` or `Post` model for a given `ActivityFeed` instance. Additionally, let's assume that `Photo` models "have many" `Tag` models and `Post` models "have many" `Comment` models.
-
-Now, let's imagine we want to retrieve `ActivityFeed` instances and eager load the `parentable` parent models for each `ActivityFeed` instance. In addition, we want to retrieve the number of tags that are associated with each parent photo and the number of comments that are associated with each parent post:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
-
-    $activities = ActivityFeed::query()->with([
-        'parentable' => function (MorphTo $morphTo) {
-            $morphTo->morphWithCount([
-                Photo::class => ['tags'],
-                Post::class => ['comments'],
-            ]);
-        }])->get();
-
-<a name="morph-to-deferred-count-loading"></a>
-#### Deferred Count Loading
-
-Let's assume we have already retrieved a set of `ActivityFeed` models and now we would like to load the nested relationship counts for the various `parentable` models associated with the activity feeds. You may use the `loadMorphCount` method to accomplish this:
-
-    $activities = ActivityFeed::query()->with('parentable')->get();
-
-    $activities->loadMorphCount('parentable', [
-        Photo::class => ['tags'],
-        Post::class => ['comments'],
-    ]);
-
 <a name="eager-loading"></a>
 ## Eager Loading
 
@@ -1530,42 +1039,6 @@ Alternatively, you may specify nested eager loaded relationships by providing a 
             'publisher',
         ],
     ])->get();
-
-<a name="nested-eager-loading-morphto-relationships"></a>
-#### Nested Eager Loading `morphTo` Relationships
-
-If you would like to eager load a `morphTo` relationship, as well as nested relationships on the various entities that may be returned by that relationship, you may use the `with` method in combination with the `morphTo` relationship's `morphWith` method. To help illustrate this method, let's consider the following model:
-
-    <?php
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
-
-    class ActivityFeed extends Model
-    {
-        /**
-         * Get the parent of the activity feed record.
-         */
-        public function parentable(): MorphTo
-        {
-            return $this->morphTo();
-        }
-    }
-
-In this example, let's assume `Event`, `Photo`, and `Post` models may create `ActivityFeed` models. Additionally, let's assume that `Event` models belong to a `Calendar` model, `Photo` models are associated with `Tag` models, and `Post` models belong to an `Author` model.
-
-Using these model definitions and relationships, we may retrieve `ActivityFeed` model instances and eager load all `parentable` models and their respective nested relationships:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
-
-    $activities = ActivityFeed::query()
-        ->with(['parentable' => function (MorphTo $morphTo) {
-            $morphTo->morphWith([
-                Event::class => ['calendar'],
-                Photo::class => ['tags'],
-                Post::class => ['author'],
-            ]);
-        }])->get();
 
 <a name="eager-loading-specific-columns"></a>
 #### Eager Loading Specific Columns
@@ -1644,26 +1117,6 @@ In this example, Obvious will only eager load posts where the post's `title` col
 > [!WARNING]  
 > The `limit` and `take` query builder methods may not be used when constraining eager loads.
 
-<a name="constraining-eager-loading-of-morph-to-relationships"></a>
-#### Constraining Eager Loading of `morphTo` Relationships
-
-If you are eager loading a `morphTo` relationship, Obvious will run multiple queries to fetch each type of related model. You may add additional constraints to each of these queries using the `MorphTo` relation's `constrain` method:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
-
-    $comments = Comment::query()->with(['commentable' => function (MorphTo $morphTo) {
-        $morphTo->constrain([
-            Post::class => function ($query) {
-                $query->whereNull('hidden_at');
-            },
-            Video::class => function ($query) {
-                $query->where('type', 'educational');
-            },
-        ]);
-    }])->get();
-
-In this example, Obvious will only eager load posts that have not been hidden and videos that have a `type` value of "educational".
-
 <a name="constraining-eager-loads-with-relationship-existence"></a>
 #### Constraining Eager Loads With Relationship Existence
 
@@ -1697,41 +1150,6 @@ If you need to set additional query constraints on the eager loading query, you 
 To load a relationship only when it has not already been loaded, use the `loadMissing` method:
 
     $book->loadMissing('author');
-
-<a name="nested-lazy-eager-loading-morphto"></a>
-#### Nested Lazy Eager Loading and `morphTo`
-
-If you would like to eager load a `morphTo` relationship, as well as nested relationships on the various entities that may be returned by that relationship, you may use the `loadMorph` method.
-
-This method accepts the name of the `morphTo` relationship as its first argument, and an array of model / relationship pairs as its second argument. To help illustrate this method, let's consider the following model:
-
-    <?php
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-    use MacropaySolutions\Kernel\Database\Obvious\Relations\MorphTo;
-
-    class ActivityFeed extends Model
-    {
-        /**
-         * Get the parent of the activity feed record.
-         */
-        public function parentable(): MorphTo
-        {
-            return $this->morphTo();
-        }
-    }
-
-In this example, let's assume `Event`, `Photo`, and `Post` models may create `ActivityFeed` models. Additionally, let's assume that `Event` models belong to a `Calendar` model, `Photo` models are associated with `Tag` models, and `Post` models belong to an `Author` model.
-
-Using these model definitions and relationships, we may retrieve `ActivityFeed` model instances and eager load all `parentable` models and their respective nested relationships:
-
-    $activities = ActivityFeed::query()->with('parentable')
-        ->get()
-        ->loadMorph('parentable', [
-            Event::class => ['calendar'],
-            Photo::class => ['tags'],
-            Post::class => ['author'],
-        ]);
 
 <a name="preventing-lazy-loading"></a>
 ### Preventing Lazy Loading

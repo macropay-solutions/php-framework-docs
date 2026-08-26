@@ -627,15 +627,6 @@ The `mediumText` method creates a `MEDIUMTEXT` equivalent column:
 
     $table->mediumText('description');
 
-<a name="column-method-morphs"></a>
-#### `morphs()` {.collection-method}
-
-The `morphs` method is a convenience method that adds a `{column}_id` equivalent column and a `{column}_type` `VARCHAR` equivalent column. The column type for the `{column}_id` will be `UNSIGNED BIGINT`, `CHAR(36)`, or `CHAR(26)` depending on the model key type.
-
-This method is intended to be used when defining the columns necessary for a polymorphic model relationship accessed via `->r`. In the following example, `taggable_id` and `taggable_type` columns would be created:
-
-    $table->morphs('taggable');
-
 <a name="column-method-multiLineString"></a>
 #### `multiLineString()` {.collection-method}
 
@@ -663,27 +654,6 @@ The `multiPolygon` method creates a `MULTIPOLYGON` equivalent column:
 The `nullableTimestamps` method is an alias of the [timestamps](#column-method-timestamps) method:
 
     $table->nullableTimestamps(0);
-
-<a name="column-method-nullableMorphs"></a>
-#### `nullableMorphs()` {.collection-method}
-
-The method is similar to the [morphs](#column-method-morphs) method; however, the columns that are created will be "nullable":
-
-    $table->nullableMorphs('taggable');
-
-<a name="column-method-nullableUlidMorphs"></a>
-#### `nullableUlidMorphs()` {.collection-method}
-
-The method is similar to the [ulidMorphs](#column-method-ulidMorphs) method; however, the columns that are created will be "nullable":
-
-    $table->nullableUlidMorphs('taggable');
-
-<a name="column-method-nullableUuidMorphs"></a>
-#### `nullableUuidMorphs()` {.collection-method}
-
-The method is similar to the [uuidMorphs](#column-method-uuidMorphs) method; however, the columns that are created will be "nullable":
-
-    $table->nullableUuidMorphs('taggable');
 
 <a name="column-method-point"></a>
 #### `point()` {.collection-method}
@@ -859,24 +829,6 @@ The `unsignedSmallInteger` method creates an `UNSIGNED SMALLINT` equivalent colu
 The `unsignedTinyInteger` method creates an `UNSIGNED TINYINT` equivalent column:
 
     $table->unsignedTinyInteger('votes');
-
-<a name="column-method-ulidMorphs"></a>
-#### `ulidMorphs()` {.collection-method}
-
-The `ulidMorphs` method is a convenience method that adds a `{column}_id` `CHAR(26)` equivalent column and a `{column}_type` `VARCHAR` equivalent column.
-
-This method is intended to be used when defining the columns necessary for a polymorphic model relationship utilizing ULID identifiers. In the following example, `taggable_id` and `taggable_type` columns would be created:
-
-    $table->ulidMorphs('taggable');
-
-<a name="column-method-uuidMorphs"></a>
-#### `uuidMorphs()` {.collection-method}
-
-The `uuidMorphs` method is a convenience method that adds a `{column}_id` `CHAR(36)` equivalent column and a `{column}_type` `VARCHAR` equivalent column.
-
-This method is intended to be used when defining the columns necessary for a polymorphic model relationship utilizing UUID identifiers. In the following example, `taggable_id` and `taggable_type` columns would be created:
-
-    $table->uuidMorphs('taggable');
 
 <a name="column-method-ulid"></a>
 #### `ulid()` {.collection-method}
@@ -1058,7 +1010,6 @@ The kernel provides several convenient methods related to dropping common types 
 
 Command  |  Description
 -------  |  -----------
-`$table->dropMorphs('morphable');`  |  Drop the `morphable_id` and `morphable_type` columns.
 `$table->dropRememberToken();`  |  Drop the `remember_token` column.
 `$table->dropSoftDeletes();`  |  Drop the `deleted_at` column.
 `$table->dropSoftDeletesTz();`  |  Alias of `dropSoftDeletes()` method.
