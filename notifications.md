@@ -24,8 +24,6 @@
   - [Generating the Message](#generating-the-message)
   - [Writing the Message](#writing-the-message)
   - [Customizing the Components](#customizing-the-components)
-- [Database Notifications](#database-notifications)
-  - [Prerequisites](#database-prerequisites)
   - [Formatting Database Notifications](#formatting-database-notifications)
   - [Accessing the Notifications](#accessing-the-notifications)
   - [Marking Notifications as Read](#marking-notifications-as-read)
@@ -52,7 +50,7 @@ In Framework, each notification is represented by a single class that is typical
 php run make:notification InvoicePaid
 ```
 
-This command will place a fresh notification class in your `app/Notifications` directory. Each notification class contains a `via` method and a variable number of message building methods, such as `toMail` or `toDatabase`, that convert the notification to a message tailored for that particular channel.
+This command will place a fresh notification class in your `app/Notifications` directory. Each notification class contains a `via` method and a variable number of message building methods, such as `toMail` or `toBroadcast`, that convert the notification to a message tailored for that particular channel.
 
 <a name="sending-notifications"></a>
 ## Sending Notifications
@@ -99,7 +97,7 @@ You can also send notifications immediately using the `sendNow` method. This met
 <a name="specifying-delivery-channels"></a>
 ### Specifying Delivery Channels
 
-Every notification class has a `via` method that determines on which channels the notification will be delivered. Notifications may be sent on the `mail`, `database`, `broadcast`, `vonage`, and `slack` channels.
+Every notification class has a `via` method that determines on which channels the notification will be delivered. Notifications may be sent on the `mail`, `broadcast`, `vonage`, and `slack` channels.
 
 
 The `via` method receives a `$notifiable` instance, which will be an instance of the class to which the notification is being sent. You may use `$notifiable` to determine which channels the notification should be delivered on:
@@ -111,7 +109,7 @@ The `via` method receives a `$notifiable` instance, which will be an instance of
      */
     public function via(object $notifiable): array
     {
-        return $notifiable->prefers_sms ? ['vonage'] : ['mail', 'database'];
+        return $notifiable->prefers_sms ? ['vonage'] : ['mail'];
     }
 
 <a name="queueing-notifications"></a>
@@ -170,7 +168,7 @@ When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCo
 > **The Recommended Fix:** To pass data securely, assign it strictly to `public` properties, or bypass object dispatch entirely by pushing a Storable Array Callable directly to the queue.
 
 > [!WARNING]  
-> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a `QueueableCollection` or `QueueableEntity`) as a public property to your Notification will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your Notification methods expect an actual instance, the worker will crash. You **must** pass primitive data (like an `$invoiceId`) and fetch the records inside your message building methods (`toMail`, `toDatabase`, etc.). Composite primary columns are not supported out of the box, For them, you must manually pass primitives and query the model in the job.
+> **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a `QueueableCollection` or `QueueableEntity`) as a public property to your Notification will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your Notification methods expect an actual instance, the worker will crash. You **must** pass primitive data (like an `$invoiceId`) and fetch the records inside your message building methods (`toMail`, `toBroadcast`, etc.). Composite primary columns are not supported out of the box, For them, you must manually pass primitives and query the model in the job.
 >
 > **The Constructor Rule:** Because the worker rebuilds your Notification via the Dependency Injection container (`\app($class)`) before hydrating its public properties, **the constructor must be resolvable by the container**. Any stateful arguments (like `$invoiceId` or `$user`) must be optional (`= null`), or you will trigger an `ArgumentCountError` on the worker. To avoid reflection you can add these classes in your `app.autowiring` config.
 >
@@ -250,7 +248,7 @@ Or, if you would like to specify a specific queue connection that should be used
     {
         return [
             'mail' => 'redis',
-            'database' => 'sync',
+            'slack' => 'sync',
         ];
     }
 
@@ -817,107 +815,6 @@ To customize the theme for an individual notification, you may call the `theme` 
                     ->subject('Invoice Paid')
                     ->markdown('mail.invoice.paid', ['url' => $url]);
     }
-
-<a name="database-notifications"></a>
-## Database Notifications
-
-<a name="database-prerequisites"></a>
-### Prerequisites
-
-The `database` notification channel stores the notification information in a database table. This table will contain information such as the notification type as well as a JSON data structure that describes the notification.
-
-You can query the table to display the notifications in your application's user interface. But, before you can do that, you will need to create a database table to hold your notifications. You may use the `notifications:table` command to generate a [migration](/migrations) with the proper table schema:
-
-```shell
-php run notifications:table
-
-php run migrate
-```
-
-> [!NOTE]  
-> If your notifiable models are using [UUID or ULID primary keys](/obvious#uuid-and-ulid-keys), you should replace the `morphs` method with [`uuidMorphs`](/migrations#column-method-uuidMorphs) or [`ulidMorphs`](/migrations#column-method-ulidMorphs) in the notification table migration.
-
-<a name="formatting-database-notifications"></a>
-### Formatting Database Notifications
-
-If a notification supports being stored in a database table, you should define a `toDatabase` or `toArray` method on the notification class. This method will receive a `$notifiable` entity and should return a plain PHP array. The returned array will be encoded as JSON and stored in the `data` column of your `notifications` table. Let's take a look at an example `toArray` method:
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'invoice_id' => $this->invoice->id,
-            'amount' => $this->invoice->amount,
-        ];
-    }
-
-When the notification is stored in your application's database, the `type` column will be populated with the notification's class name. However, you may customize this behavior by defining a `databaseType` method on your notification class:
-
-    /**
-     * Get the notification's database type.
-     *
-     * @return string
-     */
-    public function databaseType(object $notifiable): string
-    {
-        return 'invoice-paid';
-    }
-
-<a name="todatabase-vs-toarray"></a>
-#### `toDatabase` vs. `toArray`
-
-The `toArray` method is also used by the `broadcast` channel to determine which data to broadcast to your JavaScript powered frontend. If you would like to have two different array representations for the `database` and `broadcast` channels, you should define a `toDatabase` method instead of a `toArray` method.
-
-<a name="accessing-the-notifications"></a>
-### Accessing the Notifications
-
-Once notifications are stored in the database, you need a convenient way to access them from your notifiable entities. The `MacropaySolutions\Kernel\Notifications\Notifiable` trait, which is included on Framework's default `App\Models\User` model, includes a `notifications` [Obvious relationship](/obvious-relationships) that returns the notifications for the entity. To fetch notifications, you may access this method like any other Obvious relationship. By default, notifications will be sorted by the `created_at` timestamp with the most recent notifications at the beginning of the collection:
-
-    $user = App\Models\User::query()->find(1);
-
-    foreach ($user->notifications as $notification) {
-        echo $notification->type;
-    }
-
-If you want to retrieve only the "unread" notifications, you may use the `unreadNotifications` relationship. Again, these notifications will be sorted by the `created_at` timestamp with the most recent notifications at the beginning of the collection:
-
-    $user = App\Models\User::query()->find(1);
-
-    foreach ($user->unreadNotifications as $notification) {
-        echo $notification->type;
-    }
-
-> [!NOTE]  
-> To access your notifications from your JavaScript client, you should define a notification controller for your application which returns the notifications for a notifiable entity, such as the current user. You may then make an HTTP request to that controller's URL from your JavaScript client.
-
-<a name="marking-notifications-as-read"></a>
-### Marking Notifications as Read
-
-Typically, you will want to mark a notification as "read" when a user views it. The `MacropaySolutions\Kernel\Notifications\Notifiable` trait provides a `markAsRead` method, which updates the `read_at` column on the notification's database record:
-
-    $user = App\Models\User::query()->find(1);
-
-    foreach ($user->unreadNotifications as $notification) {
-        $notification->markAsRead();
-    }
-
-However, instead of looping through each notification, you may use the `markAsRead` method directly on a collection of notifications:
-
-    $user->unreadNotifications->markAsRead();
-
-You may also use a mass-update query to mark all the notifications as read without retrieving them from the database:
-
-    $user = App\Models\User::query()->find(1);
-
-    $user->unreadNotifications()->update(['read_at' => now()]);
-
-You may `delete` the notifications to remove them from the table entirely:
-
-    $user->notifications()->delete();
 
 <a name="broadcast-notifications"></a>
 ## Broadcast Notifications

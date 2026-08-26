@@ -1571,7 +1571,7 @@ Sometimes you may need to determine if two models are the "same" or not. The `is
         // ...
     }
 
-The `is` and `isNot` methods are also available when using the `belongsTo`, `hasOne`, `morphTo`, and `morphOne` [relationships](/obvious-relationships). This method is particularly helpful when you would like to compare a related model without issuing a query to retrieve that model:
+The `is` and `isNot` methods are also available when using the `belongsTo` and `hasOne` [relationships](/obvious-relationships). This method is particularly helpful when you would like to compare a related model without issuing a query to retrieve that model:
 
     if ($post->r->author()->is($user)) {
         // ...
