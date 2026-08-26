@@ -25,7 +25,6 @@ context: obvious-relationships
   - [One of Many](#one-of-many-polymorphic-relations)
   - [Many to Many](#many-to-many-polymorphic-relations)
   - [Custom Polymorphic Types](#custom-polymorphic-types)
-- [Dynamic Relationships](#dynamic-relationships)
 - [Querying Relations](#querying-relations)
   - [Relationship Methods vs. Dynamic Properties](#relationship-methods-vs-dynamic-properties)
   - [Querying Relationship Existence](#querying-relationship-existence)
@@ -104,7 +103,7 @@ If you have a method that has the same name with a column from DB or with a meth
 > [!NOTE]
 > DO NOT store `a` or `r` objects in variables because they contain only `\WeakReference` of the model.
 
-The `Model::isRelation` and `Model::callSegregatedRelation` both handle also the [Dynamic Relationships](#dynamic-relationships).
+The `Model::isRelation` and `Model::callSegregatedRelation` methods route relationship calls strictly through the segregated relations map.
 
 External libs like php-rest-wizard will still rely on the methods like behaviour so it is a good idea to keep the relation names different from the methods of the Model because, even if the relation is not defined as a method, it will behave like it through the Model::__call magic method.
 
@@ -153,7 +152,7 @@ A one-to-one relationship is a very basic type of database relationship. For exa
          */
         public function phone(): HasOne
         {
-            return $this->hasOne(Phone::class);
+            return $this->hasOne(Phone::class, 'user_id', 'id');
         }
     }
 
@@ -161,13 +160,7 @@ The first argument passed to the `hasOne` method is the name of the related mode
 
     $phone = User::query()->find(1)->r->phone;
 
-Obvious determines the foreign key of the relationship based on the parent model name. In this case, the `Phone` model is automatically assumed to have a `user_id` foreign key. If you wish to override this convention, you may pass a second argument to the `hasOne` method:
-
-    return $this->hasOne(Phone::class, 'foreign_key');
-
-Additionally, Obvious assumes that the foreign key should have a value matching the primary key column of the parent. In other words, Obvious will look for the value of the user's `id` column in the `user_id` column of the `Phone` record. If you would like the relationship to use a primary key value other than `id` or your model's `$primaryKey` property, you may pass a third argument to the `hasOne` method:
-
-    return $this->hasOne(Phone::class, 'foreign_key', 'local_key');
+All key parameters (`$foreignKey` and `$localKey`) are required to maintain strict execution speed and prevent runtime guessing overhead.
 
 <a name="one-to-one-defining-the-inverse-of-the-relationship"></a>
 #### Defining the Inverse of the Relationship
@@ -188,30 +181,8 @@ So, we can access the `Phone` model from our `User` model. Next, let's define a 
          */
         public function user(): BelongsTo
         {
-            return $this->belongsTo(User::class);
+            return $this->belongsTo(User::class, 'user_id', 'id', 'user');
         }
-    }
-
-When invoking the `user` method, Obvious will attempt to find a `User` model that has an `id` which matches the `user_id` column on the `Phone` model.
-
-Obvious determines the foreign key name by examining the name of the relationship method and suffixing the method name with `_id`. So, in this case, Obvious assumes that the `Phone` model has a `user_id` column. However, if the foreign key on the `Phone` model is not `user_id`, you may pass a custom key name as the second argument to the `belongsTo` method:
-
-    /**
-     * Get the user that owns the phone.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'foreign_key');
-    }
-
-If the parent model does not use `id` as its primary key, or you wish to find the associated model using a different column, you may pass a third argument to the `belongsTo` method specifying the parent table's custom key:
-
-    /**
-     * Get the user that owns the phone.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'foreign_key', 'owner_key');
     }
 
 <a name="one-to-many"></a>
@@ -233,11 +204,9 @@ A one-to-many relationship is used to define relationships where a single model 
          */
         public function comments(): HasMany
         {
-            return $this->hasMany(Comment::class);
+            return $this->hasMany(Comment::class, 'post_id', 'id');
         }
     }
-
-Remember, Obvious will automatically determine the proper foreign key column for the `Comment` model. By convention, Obvious will take the "snake case" name of the parent model and suffix it with `_id`. So, in this example, Obvious will assume the foreign key column on the `Comment` model is `post_id`.
 
 Once the relationship method has been defined, we can access the [collection](/obvious-collections) of related comments by accessing the `comments` property. Remember, since Obvious provides "dynamic relationship properties", we can access relationship methods as if they were defined as properties on the model:
 
@@ -254,12 +223,6 @@ Since all relationships also serve as query builders, you may add further constr
     $comment = Post::query()->find(1)->r->comments()
                         ->where('title', 'foo')
                         ->first();
-
-Like the `hasOne` method, you may also override the foreign and local keys by passing additional arguments to the `hasMany` method:
-
-    return $this->hasMany(Comment::class, 'foreign_key');
-
-    return $this->hasMany(Comment::class, 'foreign_key', 'local_key');
 
 <a name="one-to-many-inverse"></a>
 ### One to Many (Inverse) / Belongs To
@@ -280,7 +243,7 @@ Now that we can access all of a post's comments, let's define a relationship to 
          */
         public function post(): BelongsTo
         {
-            return $this->belongsTo(Post::class);
+            return $this->belongsTo(Post::class, 'post_id', 'id', 'post');
         }
     }
 
@@ -292,28 +255,14 @@ Once the relationship has been defined, we can retrieve a comment's parent post 
 
     return $comment->r->post->a->title;
 
-In the example above, Obvious will attempt to find a `Post` model that has an `id` which matches the `post_id` column on the `Comment` model.
-
-Obvious determines the default foreign key name by examining the name of the relationship method and suffixing the method name with a `_` followed by the name of the parent model's primary key column. So, in this example, Obvious will assume the `Post` model's foreign key on the `comments` table is `post_id`.
-
-However, if the foreign key for your relationship does not follow these conventions, you may pass a custom foreign key name as the second argument to the `belongsTo` method:
+Always provide the required foreign key and owner key parameters when defining a `belongsTo` relationship:
 
     /**
      * Get the post that owns the comment.
      */
     public function post(): BelongsTo
     {
-        return $this->belongsTo(Post::class, 'foreign_key');
-    }
-
-If your parent model does not use `id` as its primary key, or you wish to find the associated model using a different column, you may pass a third argument to the `belongsTo` method specifying your parent table's custom key:
-
-    /**
-     * Get the post that owns the comment.
-     */
-    public function post(): BelongsTo
-    {
-        return $this->belongsTo(Post::class, 'foreign_key', 'owner_key');
+        return $this->belongsTo(Post::class, 'post_id', 'id');
     }
 
 <a name="default-models"></a>
@@ -326,7 +275,7 @@ The `belongsTo`, `hasOne`, `hasOneThrough`, and `morphOne` relationships allow y
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class)->withDefault();
+        return $this->belongsTo(User::class, 'user_id', 'id')->withDefault();
     }
 
 To populate the default model with attributes, you may pass an array or closure to the `withDefault` method:
@@ -336,7 +285,7 @@ To populate the default model with attributes, you may pass an array or closure 
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class)->withDefault([
+        return $this->belongsTo(User::class, 'user_id', 'id')->withDefault([
             'name' => 'Guest Author',
         ]);
     }
@@ -346,7 +295,7 @@ To populate the default model with attributes, you may pass an array or closure 
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class)->withDefault(function (User $user, Post $post) {
+        return $this->belongsTo(User::class, 'user_id', 'id')->withDefault(function (User $user, Post $post) {
             $user->name = 'Guest Author';
         });
     }
@@ -385,7 +334,7 @@ Sometimes a model may have many related models, yet you want to easily retrieve 
  */
 public function latestOrder(): HasOne
 {
-    return $this->hasOne(Order::class)->latestOfMany();
+    return $this->hasOne(Order::class, 'user_id', 'id')->latestOfMany();
 }
 ```
 
@@ -397,7 +346,7 @@ Likewise, you may define a method to retrieve the "oldest", or first, related mo
  */
 public function oldestOrder(): HasOne
 {
-    return $this->hasOne(Order::class)->oldestOfMany();
+    return $this->hasOne(Order::class, 'user_id', 'id')->oldestOfMany();
 }
 ```
 
@@ -411,7 +360,7 @@ For example, using the `ofMany` method, you may retrieve the user's most expensi
  */
 public function largestOrder(): HasOne
 {
-    return $this->hasOne(Order::class)->ofMany('price', 'max');
+    return $this->hasOne(Order::class, 'user_id', 'id')->ofMany('price', 'max');
 }
 ```
 
@@ -429,7 +378,7 @@ Often, when retrieving a single model using the `latestOfMany`, `oldestOfMany`, 
  */
 public function orders(): HasMany
 {
-    return $this->hasMany(Order::class);
+    return $this->hasMany(Order::class, 'user_id', 'id');
 }
 
 /**
@@ -454,7 +403,7 @@ So, in summary, we need to retrieve the latest published pricing where the publi
  */
 public function currentPricing(): HasOne
 {
-    return $this->hasOne(Price::class)->ofMany([
+    return $this->hasOne(Price::class, 'product_id', 'id')->ofMany([
         'published_at' => 'max',
         'id' => 'max',
     ], function (Builder $query) {
@@ -500,54 +449,9 @@ Now that we have examined the table structure for the relationship, let's define
          */
         public function carOwner(): HasOneThrough
         {
-            return $this->hasOneThrough(Owner::class, Car::class);
+            return $this->hasOneThrough(Owner::class, Car::class, 'mechanic_id', 'car_id', 'id', 'id');
         }
     }
-
-The first argument passed to the `hasOneThrough` method is the name of the final model we wish to access, while the second argument is the name of the intermediate model.
-
-Or, if the relevant relationships have already been defined on all the models involved in the relationship, you may fluently define a "has-one-through" relationship by invoking the `through` method and supplying the names of those relationships. For example, if the `Mechanic` model has a `cars` relationship and the `Car` model has an `owner` relationship, you may define a "has-one-through" relationship connecting the mechanic and the owner like so:
-
-```php
-// String based syntax...
-return $this->through('cars')->has('owner');
-
-// Dynamic syntax...
-return $this->throughCars()->hasOwner();
-```
-
-<a name="has-one-through-key-conventions"></a>
-#### Key Conventions
-
-Typical Obvious foreign key conventions will be used when performing the relationship's queries. If you would like to customize the keys of the relationship, you may pass them as the third and fourth arguments to the `hasOneThrough` method. The third argument is the name of the foreign key on the intermediate model. The fourth argument is the name of the foreign key on the final model. The fifth argument is the local key, while the sixth argument is the local key of the intermediate model:
-
-    class Mechanic extends Model
-    {
-        /**
-         * Get the car's owner.
-         */
-        public function carOwner(): HasOneThrough
-        {
-            return $this->hasOneThrough(
-                Owner::class,
-                Car::class,
-                'mechanic_id', // Foreign key on the cars table...
-                'car_id', // Foreign key on the owners table...
-                'id', // Local key on the mechanics table...
-                'id' // Local key on the cars table...
-            );
-        }
-    }
-
-Or, as discussed earlier, if the relevant relationships have already been defined on all the models involved in the relationship, you may fluently define a "has-one-through" relationship by invoking the `through` method and supplying the names of those relationships. This approach offers the advantage of reusing the key conventions already defined on the existing relationships:
-
-```php
-// String based syntax...
-return $this->through('cars')->has('owner');
-
-// Dynamic syntax...
-return $this->throughCars()->hasOwner();
-```
 
 <a name="has-many-through"></a>
 ### Has Many Through
@@ -579,58 +483,11 @@ Now that we have examined the table structure for the relationship, let's define
 
     class Project extends Model
     {
-        /**
-         * Get all the deployments for the project.
-         */
         public function deployments(): HasManyThrough
         {
-            return $this->hasManyThrough(Deployment::class, Environment::class);
+            return $this->hasManyThrough(Deployment::class, Environment::class, 'project_id', 'environment_id', 'id', 'id');
         }
     }
-
-The first argument passed to the `hasManyThrough` method is the name of the final model we wish to access, while the second argument is the name of the intermediate model.
-
-Or, if the relevant relationships have already been defined on all the models involved in the relationship, you may fluently define a "has-many-through" relationship by invoking the `through` method and supplying the names of those relationships. For example, if the `Project` model has a `environments` relationship and the `Environment` model has a `deployments` relationship, you may define a "has-many-through" relationship connecting the project and the deployments like so:
-
-```php
-// String based syntax...
-return $this->through('environments')->has('deployments');
-
-// Dynamic syntax...
-return $this->throughEnvironments()->hasDeployments();
-```
-
-Though the `Deployment` model's table does not contain a `project_id` column, the `hasManyThrough` relation provides access to a project's deployments via `$project->deployments`. To retrieve these models, Obvious inspects the `project_id` column on the intermediate `Environment` model's table. After finding the relevant environment IDs, they are used to query the `Deployment` model's table.
-
-<a name="has-many-through-key-conventions"></a>
-#### Key Conventions
-
-Typical Obvious foreign key conventions will be used when performing the relationship's queries. If you would like to customize the keys of the relationship, you may pass them as the third and fourth arguments to the `hasManyThrough` method. The third argument is the name of the foreign key on the intermediate model. The fourth argument is the name of the foreign key on the final model. The fifth argument is the local key, while the sixth argument is the local key of the intermediate model:
-
-    class Project extends Model
-    {
-        public function deployments(): HasManyThrough
-        {
-            return $this->hasManyThrough(
-                Deployment::class,
-                Environment::class,
-                'project_id', // Foreign key on the environments table...
-                'environment_id', // Foreign key on the deployments table...
-                'id', // Local key on the projects table...
-                'id' // Local key on the environments table...
-            );
-        }
-    }
-
-Or, as discussed earlier, if the relevant relationships have already been defined on all the models involved in the relationship, you may fluently define a "has-many-through" relationship by invoking the `through` method and supplying the names of those relationships. This approach offers the advantage of reusing the key conventions already defined on the existing relationships:
-
-```php
-// String based syntax...
-return $this->through('environments')->has('deployments');
-
-// Dynamic syntax...
-return $this->throughEnvironments()->hasDeployments();
-```
 
 <a name="many-to-many"></a>
 ## Many to Many Relationships
@@ -675,7 +532,7 @@ Many-to-many relationships are defined by writing a method that returns the resu
          */
         public function roles(): BelongsToMany
         {
-            return $this->belongsToMany(Role::class);
+             return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id', 'id', 'id');
         }
     }
 
@@ -692,14 +549,6 @@ Once the relationship is defined, you may access the user's roles using the `rol
 Since all relationships also serve as query builders, you may add further constraints to the relationship query by calling the `roles` method and continuing to chain conditions onto the query:
 
     $roles = User::query()->find(1)->r->roles()->orderBy('name')->get();
-
-To determine the table name of the relationship's intermediate table, Obvious will join the two related model names in alphabetical order. However, you are free to override this convention. You may do so by passing a second argument to the `belongsToMany` method:
-
-    return $this->belongsToMany(Role::class, 'role_user');
-
-In addition to customizing the name of the intermediate table, you may also customize the column names of the keys on the table by passing additional arguments to the `belongsToMany` method. The third argument is the foreign key name of the model on which you are defining the relationship, while the fourth argument is the foreign key name of the model that you are joining to:
-
-    return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
 
 <a name="many-to-many-defining-the-inverse-of-the-relationship"></a>
 #### Defining the Inverse of the Relationship
@@ -720,7 +569,7 @@ To define the "inverse" of a many-to-many relationship, you should define a meth
          */
         public function users(): BelongsToMany
         {
-            return $this->belongsToMany(User::class);
+            return $this->belongsToMany(User::class, 'role_user', 'role_id', 'user_id', 'id', 'id');
         }
     }
 
@@ -743,11 +592,11 @@ Notice that each `Role` model we retrieve is automatically assigned a `pivot` at
 
 By default, only the model keys will be present on the `pivot` model. If your intermediate table contains extra attributes, you must specify them when defining the relationship:
 
-    return $this->belongsToMany(Role::class)->withPivot('active', 'created_by');
+    return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id', 'id', 'id')->withPivot('active', 'created_by');
 
 If you would like your intermediate table to have `created_at` and `updated_at` timestamps that are automatically maintained by Obvious, call the `withTimestamps` method when defining the relationship:
 
-    return $this->belongsToMany(Role::class)->withTimestamps();
+    return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id', 'id', 'id')->withTimestamps();
 
 > [!WARNING]  
 > Intermediate tables that utilize Obvious's automatically maintained timestamps are required to have both `created_at` and `updated_at` timestamp columns.
@@ -759,7 +608,7 @@ As noted previously, attributes from the intermediate table may be accessed on m
 
 For example, if your application contains users that may subscribe to podcasts, you likely have a many-to-many relationship between users and podcasts. If this is the case, you may wish to rename your intermediate table attribute to `subscription` instead of `pivot`. This can be done using the `as` method when defining the relationship:
 
-    return $this->belongsToMany(Podcast::class)
+    return $this->belongsToMany(Podcast::class, 'podcast_user', 'user_id', 'podcast_id', 'id', 'id')
                     ->as('subscription')
                     ->withTimestamps();
 
@@ -776,28 +625,28 @@ Once the custom intermediate table attribute has been specified, you may access 
 
 You can also filter the results returned by `belongsToMany` relationship queries using the `wherePivot`, `wherePivotIn`, `wherePivotNotIn`, `wherePivotBetween`, `wherePivotNotBetween`, `wherePivotNull`, and `wherePivotNotNull` methods when defining the relationship:
 
-    return $this->belongsToMany(Role::class)
+    return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id', 'id', 'id')
                     ->wherePivot('approved', 1);
 
-    return $this->belongsToMany(Role::class)
+    return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id', 'id', 'id')
                     ->wherePivotIn('priority', [1, 2]);
 
-    return $this->belongsToMany(Role::class)
+    return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id', 'id', 'id')
                     ->wherePivotNotIn('priority', [1, 2]);
 
-    return $this->belongsToMany(Podcast::class)
+    return $this->belongsToMany(Podcast::class, 'podcast_user', 'user_id', 'podcast_id', 'id', 'id')
                     ->as('subscriptions')
                     ->wherePivotBetween('created_at', ['2020-01-01 00:00:00', '2020-12-31 00:00:00']);
 
-    return $this->belongsToMany(Podcast::class)
+    return $this->belongsToMany(Podcast::class, 'podcast_user', 'user_id', 'podcast_id', 'id', 'id')
                     ->as('subscriptions')
                     ->wherePivotNotBetween('created_at', ['2020-01-01 00:00:00', '2020-12-31 00:00:00']);
 
-    return $this->belongsToMany(Podcast::class)
+    return $this->belongsToMany(Podcast::class, 'podcast_user', 'user_id', 'podcast_id', 'id', 'id')
                     ->as('subscriptions')
                     ->wherePivotNull('expired_at');
 
-    return $this->belongsToMany(Podcast::class)
+    return $this->belongsToMany(Podcast::class, 'podcast_user', 'user_id', 'podcast_id', 'id', 'id')
                     ->as('subscriptions')
                     ->wherePivotNotNull('expired_at');
 
@@ -806,7 +655,7 @@ You can also filter the results returned by `belongsToMany` relationship queries
 
 You can order the results returned by `belongsToMany` relationship queries using the `orderByPivot` method. In the following example, we will retrieve all the latest badges for the user:
 
-    return $this->belongsToMany(Badge::class)
+    return $this->belongsToMany(Badge::class, 'badge_user', 'user_id', 'badge_id', 'id', 'id')
                     ->where('rank', 'gold')
                     ->orderByPivot('created_at', 'desc');
 
@@ -831,7 +680,7 @@ Custom many-to-many pivot models should extend the `MacropaySolutions\Kernel\Dat
          */
         public function users(): BelongsToMany
         {
-            return $this->belongsToMany(User::class)->using(RoleUser::class);
+            return $this->belongsToMany(User::class, RoleUser::class, 'role_id', 'user_id', 'id', 'id');
         }
     }
 
@@ -1258,23 +1107,6 @@ You may determine the morph alias of a given model at runtime using the model's 
 
 > [!WARNING]  
 > When adding a "morph map" to your existing application, every morphable `*_type` column value in your database that still contains a fully-qualified class will need to be converted to its "map" name.
-
-<a name="dynamic-relationships"></a>
-### Dynamic Relationships
-
-You may use the `resolveRelationUsing` method to define relations between Obvious models at runtime. While not typically recommended for normal application development, this may occasionally be useful when developing Framework packages.
-
-The `resolveRelationUsing` method accepts the desired relationship name as its first argument. The second argument passed to the method should be a closure that accepts the model instance and returns a valid Obvious relationship definition. Typically, you should configure dynamic relationships within the boot method of a [service provider](/providers):
-
-    use App\Models\Order;
-    use App\Models\Customer;
-
-    Order::resolveRelationUsing('customer', function (Order $orderModel) {
-        return $orderModel->belongsTo(Customer::class, 'customer_id');
-    });
-
-> [!WARNING]  
-> When defining dynamic relationships, always provide explicit key name arguments to the Obvious relationship methods.
 
 <a name="querying-relations"></a>
 ## Querying Relations
@@ -2159,3 +1991,4 @@ For example, when a `Comment` model is updated, you may want to automatically "t
 
 > [!WARNING]  
 > Parent model timestamps will only be updated if the child model is updated using Obvious's `save` method.
+> Using $touches will be slower.

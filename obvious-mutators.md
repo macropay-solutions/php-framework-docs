@@ -86,7 +86,9 @@ A mutator transforms an Obvious attribute value when it is set. To define mutato
                 'first_name' => function (?string $value): void {
                     $this->attributes['first_name'] = $value !== null ? \strtolower($value) : null;
                 },
-                'status' => fn(?string|ServerStatus $value): void => \is_string($value) ? ServerStatus::from($value) : null,
+                'status' => function (?string|ServerStatus $value): void {
+                    $this->attributes['status'] = $value instanceof ServerStatus ? $value->value : $value;
+                },
             ];
         }
     }
