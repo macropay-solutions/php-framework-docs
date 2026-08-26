@@ -13,6 +13,7 @@ context: obvious
     - [Primary Keys](#primary-keys)
     - [UUID and ULID Keys](#uuid-and-ulid-keys)
     - [Timestamps](#timestamps)
+    - [Strict Casting & Type Restrictions](#strict-casting-and-type-restrictions)
     - [Database Connections](#database-connections)
     - [Default Attribute Values](#default-attribute-values)
     - [Configuring Obvious Strictness](#configuring-obvious-strictness)
@@ -272,7 +273,7 @@ If you wish, you may choose to utilize "ULIDs" instead of UUIDs. ULIDs are simil
 <a name="timestamps"></a>
 ### Timestamps
 
-Obvious processes created, updated, and soft-delete timestamps strictly as raw native PHP strings (`DATETIME`), completely bypassing Carbon instantiation and runtime database connection lookups.
+Obvious processes created, updated, and soft-delete timestamps strictly as raw native PHP strings (`DATETIME`). Carbon instances are never instantiated by Obvious, nor can they be returned from accessors. Timestamps are always hydrated, serialized, and accessed as raw strings.
 
 Formats are defined as compile-time static constants directly on `MacropaySolutions\Kernel\Database\Obvious\Model`:
 
@@ -337,6 +338,17 @@ If you would like to perform model operations without the model having its `upda
 
     Model::withoutTimestamps(fn() => $post->increment('reads'));
 
+<a name="strict-casting-and-type-restrictions"></a>
+### Strict Casting & Type Restrictions
+
+To maximize hydration performance, eliminate type churn, and prevent state-synchronization bugs, Obvious enforces strict storage restrictions across model attributes:
+
+* **Supported Cast Types:** The `$casts` array exclusively supports `int`, `string`, and `\BackedEnum` class-strings.
+* **Removed Cast Types:** All legacy complex casting types (`datetime`, `date`, `array`, `json`, `object`, `collection`) have been completely removed.
+* **Forbidden Mutable Objects:** Accessors, mutators, and attribute casts are strictly prohibited from storing or returning mutable objects (e.g., `Carbon` / `DateTime` instances, arrays, or custom objects) in `$attributes`.
+
+For details on defining high-performance transformations, see the [Obvious Mutators & Casting documentation](/obvious-mutators).
+
 <a name="database-connections"></a>
 ### Database Connections
 
@@ -397,7 +409,7 @@ use MacropaySolutions\Kernel\Database\Obvious\Model;
  */
 public function boot(): void
 {
-    Model::preventLazyLoading(! $this->app->isProduction());
+    Model::preventLazyLoading(!$this->app->isProduction());
 }
 ```
 
@@ -409,7 +421,7 @@ Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
 <a name="improving-obvious-speed"></a>
 ### Improving Obvious Speed
 
-Kernel offers several methods that allow you to speed up Obvious's behavior.
+Kernel offers several static properties and structural patterns to maximize Obvious performance:
 
 
 ```php
@@ -466,7 +478,7 @@ This implies you need to:
 ```
 
 > [!NOTE]
-> To maximize execution speed, you should define your accessors and mutators using the high-performance segregated maps instead of the legacy `get{Column}Attribute` or `set{Column}Attribute` methods.
+> **Segregated Maps & Relationships:** To maximize execution speed and avoid method-clashing, accessors, mutators, and relationships should be defined using segregated maps (`segregatedAccessorsMap()`, `segregatedMutatorsMap()`, and `segregatedRelationsDefinitionMap()`).
 >
 > This leverages an O(1) static lookup, completely bypassing dynamic string manipulation overhead. Obvious accessors for columns used in relations are called with `null` when a relation is instantiated, so they must be defined with nullable parameters (e.g., `?string`) and nullable return types, even if the column is not nullable in the database.
     /**
@@ -495,7 +507,7 @@ This implies you need to:
         ];
     }
 
-See more in [Obvious Mutators](/obvious-mutators)
+See [Obvious Mutators](/obvious-mutators) and [Obvious Relationships](/obvious-relationships) for full details.
 
 > [!NOTE]
 > When observer routes are compiled via the `event:cache` command, any subsequent calls to `Model::observe()` in your service providers are automatically bypassed during application boot (`Container::eventsAsObserversAreCached()`). This eliminates redundant observer instantiation and runtime reflection penalties in production.

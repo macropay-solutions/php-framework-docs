@@ -24,7 +24,7 @@ Accessors, mutators, and attribute casting allow you to transform Obvious attrib
 Framework provides a high-performance architecture for accessors and mutators using Segregated Maps. These maps use O(1) static lookups to resolve closures, completely bypassing the overhead of dynamic method calls and reflection.
 
 > [!WARNING]
-> **Strict Return Type Enforcement:** Accessors and mutators are strictly restricted to scalar primitives (`int`, `string`, `null`) and `\BackedEnum` instances.
+> **Strict Return Type & Primitive Storage Enforcement:** Accessors and mutators are strictly restricted to scalar primitives (`int`, `string`, `null`) and `\BackedEnum` instances. Storing or returning mutable objects (such as `DateTime`, `Carbon` instances, arrays, or custom objects) is forbidden to prevent state-synchronization flaws, memory leaks, and PDO binding errors. Violating this rule will cause Obvious to throw a `\RuntimeException`.
 
 <a name="defining-accessors"></a>
 ### Defining Accessors
@@ -64,6 +64,8 @@ As you can see, the original value of the column is passed to the accessor closu
 > [!NOTE]  
 > Closures in segregated maps are automatically bound to the model instance (`$this`). Do not use static closures!
 
+> **Note on Mutable Objects:** Never return mutable objects (like `Carbon` or `DateTime`) from an accessor. Accessors must return scalar primitives or `\BackedEnum` instances. Attempting to return a mutable object will trigger a `\RuntimeException`.
+
 <a name="defining-mutators"></a>
 ### Defining Mutators
 
@@ -101,6 +103,8 @@ To use our mutator, we only need to set the `first_name` attribute via the `a` a
 
     $user->a->first_name = 'Sally';
 
+> **Note on Storage Restrictions:** Mutators must strictly write primitives (`int`, `string`, `null`) or `\BackedEnum` values into `$this->attributes`. Writing an object into `$this->attributes` will trigger a `\RuntimeException` upon mutation.
+
 <a name="attribute-casting"></a>
 ## Attribute Casting
 
@@ -108,7 +112,7 @@ To use our mutator, we only need to set the `first_name` attribute via the `a` a
 Attribute casting provides functionality similar to accessors and mutators without requiring you to define any additional methods on your model. Instead, your model's `$casts` property provides a convenient method of converting attributes to common data types.
 
 > [!WARNING]
-> **Strict Primitive Casts Only:** To eliminate dynamic type churn, state-synchronization flaws, and array diffing overhead on `save()`, `$casts` strictly permits only primitive types (`int`, `string`) and `\BackedEnum` class-strings. Complex objects, Carbon instances, arrays, JSON objects, and custom class casting are forbidden in storage arrays.
+> **Strict Primitive Casts Only:** To eliminate dynamic type churn, state-synchronization flaws, and array diffing overhead on `save()`, `$casts` strictly permits only primitive types (`int`, `string`) and `\BackedEnum` class-strings. Complex objects, `datetime`/`date` casts, arrays, JSON objects, and custom class casting have been completely removed and are forbidden in storage arrays.
 
 The `$casts` property should be an array where the key is the attribute name and the value is the primitive type or `\BackedEnum` FQN:
 
