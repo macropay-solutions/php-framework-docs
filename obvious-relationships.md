@@ -59,7 +59,7 @@ Obvious relationships are defined as methods on your Obvious model classes **OR 
 
     $user->r->posts()->where('active', 1)->get();
 
-The relations can be defined as closures in the model, **avoiding clashing with other methods, properties or attributes**:
+Relationships can be defined using the `segregatedRelationsDefinitionMap()` method on your model. This decouples relation definitions from model methods and avoids clashing with column names, properties, or native methods:
 
     protected function segregatedRelationsDefinitionMap(): array
     {
@@ -78,6 +78,8 @@ The relations can be defined as closures in the model, **avoiding clashing with 
             'relNameAsMethodBad4' => fn(): HasOne => $this->relNameAsMethod(...)(), // executes the relation inside the map.
         ];
     }
+
+Inside the closures, you may invoke relation helpers directly on `$this` (e.g., `$this->hasMany()`, `$this->belongsTo()`).
 
 If you have a method that has the same name with a column from DB or with a method from the Model, you can work with it like this:
 
