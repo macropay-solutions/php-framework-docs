@@ -70,12 +70,12 @@ Relationships can be defined using the `segregatedRelationsDefinitionMap()` meth
             'relNameScoped2' => fn(): HasOne => $this->callSegregatedRelation('relName')->where('col', '=', 'text'),
             // Reuse the method relation:
             'relNameAsMethod' => fn(...$args): mixed => $this->relNameAsMethod(...$args),
-            // AVOID THESE:
+            // DO NOT USE IT LIKE THIS!:
             'relNameAsMethodBad1' => $this->relNameAsMethod(...), // CRASHES: Hard-binds closure scope to the first booted model
             'relNameAsMethodBad2' => [$this, 'relNameAsMethod'], // is not a Closure
             'relNameAsMethodBad3' => fn(): HasOne => [$this, 'relNameAsMethod'](),
-            // DO NOT USE IT LIKE THIS!:
-            'relNameAsMethodBad4' => fn(): HasOne => $this->relNameAsMethod(...)(), // executes the relation inside the map.
+            'relNameAsMethodBad4' => fn(): HasOne => $this->relNameAsMethod()(), // executes the relation inside the map.
+            'relNameAsMethodBad5' => fn(): HasOne => $this->r->relNameAsMethod(), // generates infinite loop.
         ];
     }
 
