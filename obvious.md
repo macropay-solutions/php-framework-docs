@@ -18,6 +18,7 @@ context: obvious
     - [Default Attribute Values](#default-attribute-values)
     - [Configuring Obvious Strictness](#configuring-obvious-strictness)
     - [Improving Obvious Speed](#improving-obvious-speed)
+    - [Model Serialization & State Freezing](#model-serialization-and-state-freezing)
 - [Retrieving Models](#retrieving-models)
     - [Collections](#collections)
     - [Chunking Results](#chunking-results)
@@ -511,6 +512,44 @@ See [Obvious Mutators](/obvious-mutators) and [Obvious Relationships](/obvious-r
 
 > [!NOTE]
 > When observer routes are compiled via the `event:cache` command, any subsequent calls to `Model::observe()` in your service providers are automatically bypassed during application boot (`Container::eventsAsObserversAreCached()`). This eliminates redundant observer instantiation and runtime reflection penalties in production.
+
+<a name="model-serialization-and-state-freezing"></a>
+### Model Serialization and State Freezing
+
+Obvious models implement native PHP `__serialize()` and `__unserialize()` hooks to freeze models into lightweight, pure primitive arrays when cached (e.g., via Redis, Memcached, or Queue jobs). 
+
+This mechanism strips all runtime framework bloat, reflection instances, and dynamic proxy objects (`A` and `R`), preventing memory leaks and eliminating `__PHP_Incomplete_Class` errors during deployments.
+
+#### Key Serialization Rules
+
+* **Recursive Graph Preservation:** Loaded relationships (`Model` and `Collection` instances) are serialized recursively. Empty or missing relations are preserved as `null` or empty `Collection` objects to prevent accidental N+1 queries upon hydration.
+* **Object Injection Guard:** Obvious automatically scans model properties via `static::containsObject()` and excludes any dynamic objects, closures, or non-primitive arrays from entering the serialized payload.
+* **Transient State Blacklist:** In-flight execution flags (`tmpDirty`, `tmpOriginalBeforeAfterEvents`, `nowEagerLoadingRelationNameWithNoConstraints`) and runtime proxies are blacklisted from serialization via `IGNORE_ON_SERIALIZE`:
+
+```php
+protected const IGNORE_ON_SERIALIZE = [
+    'relations',
+    'A',
+    'R',
+    'a',
+    'r',
+    'tmpDirty',
+    'tmpOriginalBeforeAfterEvents',
+    'nowEagerLoadingRelationNameWithNoConstraints',
+];
+```
+
+To custom-serialize or exclude additional runtime properties in your base models, append property names to `IGNORE_ON_SERIALIZE`:
+
+```php
+abstract class BaseModel extends Model
+{
+    protected const IGNORE_ON_SERIALIZE = [
+        ...parent::IGNORE_ON_SERIALIZE,
+        'customRuntimeCache',
+    ];
+}
+```
 
 <a name="retrieving-models"></a>
 ## Retrieving Models
