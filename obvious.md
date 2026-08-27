@@ -59,6 +59,13 @@ Kernel includes Obvious, an object-relational mapper (ORM) that makes it enjoyab
 > [!NOTE]  
 > Before getting started, be sure to configure a database connection in your application's `config/database.php` configuration file. For more information on configuring your database, check out [the database configuration documentation](/database#configuration).
 
+> [!WARNING]  
+> **DO NOT ADD PROPERTY HOOKS IN MODEL CLASSES!**  
+> PHP 8.4 property hooks bypass `__get()` and `__set()` at the engine level, preventing attribute storage in `$attributes`, corrupting dirty state tracking, and breaking object reconstruction during deserialization (`__unserialize()`).
+>
+> **Allowed Exception:** Property hooks *may* be used inside php-crufd-wizard `BaseModelAttributes` proxy classes (`$model->a` / `$model->r` wrappers). Because these proxy objects utilize `WeakReference` and are strictly excluded from state serialization via `IGNORE_ON_SERIALIZE`, defining hooks on them does not corrupt model state or deserialization.
+
+
 
 <a name="generating-model-classes"></a>
 ## Generating Model Classes
@@ -525,6 +532,9 @@ This mechanism strips all runtime framework bloat, reflection instances, and dyn
 * **Recursive Graph Preservation:** Loaded relationships (`Model` and `Collection` instances) are serialized recursively. Empty or missing relations are preserved as `null` or empty `Collection` objects to prevent accidental N+1 queries upon hydration.
 * **Object Injection Guard:** Obvious automatically scans model properties via `static::containsObject()` and excludes any dynamic objects, closures, or non-primitive arrays from entering the serialized payload.
 * **Transient State Blacklist:** In-flight execution flags (`tmpDirty`, `tmpOriginalBeforeAfterEvents`, `nowEagerLoadingRelationNameWithNoConstraints`) and runtime proxies are blacklisted from serialization via `IGNORE_ON_SERIALIZE`:
+
+> [!WARNING]  
+> Property hooks on `Model` classes omit backing fields during serialization and intercept property writes during rehydration. Keep all model properties free of hooks to guarantee 100% state reconstruction. Hooks are only safe on transient php-crufd-wizard `BaseModelAttributes` proxies.
 
 ```php
 protected const IGNORE_ON_SERIALIZE = [
