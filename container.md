@@ -159,7 +159,7 @@ You may use the `bindIf` method to register a container binding only if a bindin
 >
 > [!NOTE]  
 > *Do not use `static` closures for Obvious Model accessors/mutators or dynamic Macros, as those features rely on `Closure::bindTo()` to bind `$this` at runtime.*
-> There is no need to bind classes into the container if they do not depend on any interfaces. The container does not need to be instructed on how to build these objects, since it can automatically resolve these objects using reflection.
+> There is no need to bind classes into the container if they do not depend on any interfaces. The container does not need to be instructed on how to build these objects, since it can automatically resolve these objects using reflection during `autowiring:cache`. Just make sure to include those FQNs into the `app.autowiring` config.
 
 <a name="binding-a-singleton"></a>
 #### Binding A Singleton
