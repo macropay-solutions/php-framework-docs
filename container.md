@@ -155,7 +155,7 @@ You may use the `bindIf` method to register a container binding only if a bindin
 > **Closure Scoping & Performance Guidelines (`static`)**
 > Container factory closures receive the container instance explicitly as an argument (`$app` or `$container`). Therefore, they do not require `$this` scope binding.
 >
-> **Always declare container closures as `static`** (`static fn(...)` or `static function(...)`). This prevents implicit `$this` context capturing, reduces zval allocations, and prevents cyclic memory references in long-running processes (e.g., Swoole, RoadRunner, queue workers).
+> **Always declare container closures as `static`** (`static fn(...)` or `static function(...)`). This prevents implicit `$this` context capturing, reduces zval allocations, and prevents cyclic memory references.
 >
 > [!NOTE]  
 > *Do not use `static` closures for Obvious Model accessors/mutators or dynamic Macros, as those features rely on `Closure::bindTo()` to bind `$this` at runtime.*
