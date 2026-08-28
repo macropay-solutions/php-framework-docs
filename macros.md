@@ -85,6 +85,13 @@ use MacropaySolutions\Kernel\Support\Collection;
 Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::class, 'getClosure']);
 ```
 
+> [!WARNING]
+> **Do Not Use Static Closures For Macros**
+> Macro closures are dynamically bound to target instances at runtime via `Closure::call()` and `Closure::bindTo()`.
+>
+> Because PHP forbids binding an object instance (`$this`) to a `static` closure (`Warning: Cannot bind an instance to a static closure`), macro closures must **not** be declared static.
+
+
 > **WARNING**
 > The second argument of `deferredMacro` **must** be an array callable that resolves to a static method and returns the macro closure. The closure will be bound to the target class on execution.
 > 
