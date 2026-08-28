@@ -79,6 +79,12 @@ Relationships can be defined using the `segregatedRelationsDefinitionMap()` meth
         ];
     }
 
+> [!WARNING]
+> **Do Not Use Static Closures or First-Class Callables In Segregated Maps**
+> 
+> 1. **No `static` Closures:** Relation closures execute builder helpers directly on `$this` (e.g., `$this->hasOne()`). Declaring them `static` prevents access to `$this` and breaks dynamic runtime binding.
+> 2. **No First-Class Callables (`$this->method(...)`):** Passing `$this->method(...)` directly into the map hard-binds the closure scope to the single initial booted model instance. Always wrap method calls in an unevaluated arrow function (`fn() => $this->method()`).
+
 Inside the closures, you may invoke relation helpers directly on `$this` (e.g., `$this->hasMany()`, `$this->belongsTo()`).
 
 If you have a method that has the same name with a column from DB or with a method from the Model, you can work with it like this:
