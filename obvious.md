@@ -462,7 +462,7 @@ This implies you need to:
      *   static::bootSoftDeletes();
      *
      *   // see also the explicit solution below
-     *   static::$traitInitializers[static::class][] = 'initializeSoftDeletes';
+     *   static::$traitInitializers[static::class][] = 'initializeTraitName';
      *   static::$traitInitializers[static::class] = \array_unique(static::$traitInitializers[static::class]);
      *
      *   parent::boot();
@@ -472,7 +472,7 @@ This implies you need to:
      *
      * protected function initializeTraits()
      * {
-     *     $this->initializeSoftDeletes(); // skip this particular call if you want deleted_at column TO NOT be casted
+     *     $this->initializeTraitName();
      *     parent::initializeTraits()
      * }
      *
