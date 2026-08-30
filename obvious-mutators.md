@@ -103,6 +103,9 @@ To use our mutator, we only need to set the `first_name` attribute via the `a` a
 
     $user->a->first_name = 'Sally';
 
+> [!WARNING]  
+> **Do Not Use Static Closures in Segregated Mutator Maps:** Mutators strictly require `$this->attributes` access to mutate model state. Never declare mutator closures as `static`.
+
 > **Note on Storage Restrictions:** Mutators must strictly write primitives (`int`, `string`, `null`) or `\BackedEnum` values into `$this->attributes`. Writing an object into `$this->attributes` will trigger a `\RuntimeException` upon mutation.
 
 <a name="attribute-casting"></a>

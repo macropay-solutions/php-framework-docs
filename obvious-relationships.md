@@ -306,19 +306,13 @@ When querying for the children of a "belongs to" relationship, you may manually 
 
     $posts = Post::query()->where('user_id', $user->a->id)->get();
 
-However, you may find it more convenient to use the `whereBelongsTo` method, which will automatically determine the proper relationship and foreign key for the given model:
+To maximize performance and avoid hidden runtime reflection overhead, Obvious intentionally does not support dynamic relationship inference methods (like `whereBelongsTo`). Always query relations directly using explicit keys.
 
-    $posts = Post::query()->whereBelongsTo($user)->get();
-
-You may also provide a [collection](/obvious-collections) instance to the `whereBelongsTo` method. When doing so, Framework will retrieve models that belong to any of the parent models within the collection:
+If you need to query children for a [collection](/obvious-collections) of parent models, extract the keys using the `pluck` method and pass them to `whereIn`:
 
     $users = User::query()->where('vip', true)->get();
 
-    $posts = Post::query()->whereBelongsTo($users)->get();
-
-By default, Framework will determine the relationship associated with the given model based on the class name of the model; however, you may specify the relationship name manually by providing it as the second argument to the `whereBelongsTo` method:
-
-    $posts = Post::query()->whereBelongsTo($user, 'author')->get();
+    $posts = Post::query()->whereIn('user_id', $users->pluck('id')->all())->get();
 
 <a name="has-one-of-many"></a>
 ### Has One of Many
