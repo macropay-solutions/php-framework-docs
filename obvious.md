@@ -1586,8 +1586,8 @@ When defining a local macro, the closure **does not** use `$this` binding. Inste
     $query = Flight::query();
 
     // Registering a local macro...
-    $query->macro('active', function (Builder $query) {
-        return $query->where('active', 1);
+    $query->addLocalMacro('active', function (Builder $obvious) {
+        return $obvious->where('active', 1);
     });
 
     // Executing the local macro...
