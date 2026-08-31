@@ -42,8 +42,8 @@ context: obvious
 - [Query Scopes](#query-scopes)
     - [Global Scopes](#global-scopes)
     - [Local Scopes](#local-scopes)
-- [Query Macros](#query-macros)
-    - [Local Macros](#local-macros)
+- [Query Macros & Extensions](#query-macros-extensions)
+    - [Local Extensions](#local-extensions)
     - [Global Macros](#global-macros)
 - [Comparing Models](#comparing-models)
 - [Events](#events)
@@ -1568,29 +1568,35 @@ Once the expected arguments have been added to your scope closure's signature, y
 
     $users = User::query()->scope('ofType', 'admin')->get();
 
-<a name="query-macros"></a>
-## Query Macros
+<a name="query-macros-extensions"></a>
+## Query Macros & Extensions
 
-While [Query Scopes](#query-scopes) provide a way to reuse query constraints within a specific model, Query Macros allow you to directly extend the `MacropaySolutions\Kernel\Database\Obvious\Builder` itself.
+While [Query Scopes](#query-scopes) provide a way to reuse query constraints within a specific model, Query Macros and Extensions allow you to directly extend the `MacropaySolutions\Kernel\Database\Obvious\Builder` itself.
 
-<a name="local-macros"></a>
-### Local Macros
+<a name="local-extensions"></a>
+### Local Extensions
 
-You may define a "local" macro on a specific query builder instance dynamically at runtime. This is useful when you want to attach a reusable query helper to a specific query chain without polluting the global scope.
+You may define a "local" extension on a specific query builder instance dynamically at runtime. This is useful when you want to attach a reusable query helper to a specific query chain without polluting the global scope.
 
-When defining a local macro, the closure **does not** use `$this` binding. Instead, the current query builder instance is explicitly injected as the first parameter:
+When defining a local extension, you may pass any valid PHP `callable`. If using a closure, it **does not** use `$this` binding. Instead, the current query builder instance is explicitly injected as the first parameter:
 
     use App\Models\Flight;
     use MacropaySolutions\Kernel\Database\Obvious\Builder;
 
+    class FlightFilters
+    {
+        public static function active(Builder $obvious): Builder
+        {
+            return $obvious->where('active', 1);
+        }
+    }
+
     $query = Flight::query();
 
-    // Registering a local macro...
-    $query->addLocalMacro('active', function (Builder $obvious) {
-        return $obvious->where('active', 1);
-    });
+    // Registering a local extension using a static array callable...
+    $query->addExtension('active', [FlightFilters::class, 'active']);
 
-    // Executing the local macro...
+    // Executing the local extension...
     $flights = $query->active()->get();
 
 <a name="global-macros"></a>
@@ -1598,7 +1604,7 @@ When defining a local macro, the closure **does not** use `$this` binding. Inste
 
 If you want a macro to be available on every single Obvious query builder across your application, you may define a global macro. Global macros are typically registered in the `boot` method of a service provider.
 
-Unlike local macros, global macros **do** bind `$this` to the underlying query builder instance. However, to prevent boot-time memory overhead, eager global macros are strictly disabled. You **must** use [**Deferred Macros**](/macros#deferred-macros), which strictly require an array callable:
+Unlike local extensions, global macros **do** bind `$this` to the underlying query builder instance. However, to prevent boot-time memory overhead, eager global macros are strictly disabled. You **must** use [**Deferred Macros**](/macros#deferred-macros), which strictly require an array callable:
 
     Builder::deferredMacro('active', [\App\Macros\QueryMacros::class, 'active']);
 
