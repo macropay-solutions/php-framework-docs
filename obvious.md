@@ -1491,9 +1491,9 @@ If you would like to remove several or even all the query's global scopes, you m
 <a name="local-scopes"></a>
 ### Local Scopes
 
-Local scopes allow you to define common sets of query constraints that you may easily re-use throughout your application. For example, you may need to frequently retrieve all users that are considered "popular". To define a scope, prefix an Obvious model method with `scope`.
+Local scopes allow you to define common sets of query constraints that you may easily re-use throughout your application. For example, you may need to frequently retrieve all users that are considered "popular". To define a scope, override the `segregatedScopesMap` method on your Obvious model.
 
-Scopes should always return the same query builder instance or `void`:
+This map should return an array where the keys are the scope names and the values are **static** closures. The closure will receive the Obvious builder instance as its first argument:
 
     <?php
 
@@ -1505,45 +1505,44 @@ Scopes should always return the same query builder instance or `void`:
     class User extends Model
     {
         /**
-         * Scope a query to only include popular users.
+         * Define the segregated scopes for the model.
          */
-        public function scopePopular(Builder $query): void
+        public static function segregatedScopesMap(): array
         {
-            $query->where('votes', '>', 100);
-        }
-
-        /**
-         * Scope a query to only include active users.
-         */
-        public function scopeActive(Builder $query): void
-        {
-            $query->where('active', 1);
+            return [
+                'popular' => static fn(Builder $obvious) => $obvious->where('votes', '>', 100),
+                'active' => static fn(Builder $obvious) => $obvious->where('active', 1),
+            ];
         }
     }
 
 <a name="utilizing-a-local-scope"></a>
 #### Utilizing a Local Scope
 
-Once the scope has been defined, you may call the scope methods when querying the model. However, you should not include the `scope` prefix when calling the method. You can even chain calls to various scopes:
+Once the scope has been defined, you may call the `scope` method when querying the model, passing the name of the scope as the first argument. You can even chain calls to various scopes:
 
     use App\Models\User;
 
-    $users = User::query()->popular()->active()->orderBy('created_at')->get();
+    $users = User::query()->scope('popular')->scope('active')->orderBy('created_at')->get();
+
+Alternatively, you may apply multiple scopes at once using the `scopes` method:
+
+    $users = User::query()->scopes(['popular', 'active'])->orderBy('created_at')->get();
 
 Combining multiple Obvious model scopes via an `or` query operator may require the use of closures to achieve the correct [logical grouping](/queries#logical-grouping):
 
-    $users = User::query()->popular()->orWhere(function (Builder $query) {
-        $query->active();
+    $users = User::query()->scope('popular')->orWhere(function (Builder $query) {
+        $query->scope('active');
     })->get();
 
 However, since this can be cumbersome, Kernel provides a "higher order" `orWhere` method that allows you to fluently chain scopes together without the use of closures:
 
-    $users = User::query()->popular()->orWhere->active()->get();
+    $users = User::query()->scope('popular')->orWhere->scope('active')->get();
 
 <a name="dynamic-scopes"></a>
 #### Dynamic Scopes
 
-Sometimes you may wish to define a scope that accepts parameters. To get started, just add your additional parameters to your scope method's signature. Scope parameters should be defined after the `$query` parameter:
+Sometimes you may wish to define a scope that accepts parameters. To get started, just add your additional parameters to your scope closure's signature. Scope parameters should be defined after the `$query` parameter:
 
     <?php
 
@@ -1555,17 +1554,19 @@ Sometimes you may wish to define a scope that accepts parameters. To get started
     class User extends Model
     {
         /**
-         * Scope a query to only include users of a given type.
+         * Define the segregated scopes for the model.
          */
-        public function scopeOfType(Builder $query, string $type): void
+        public static function segregatedScopesMap(): array
         {
-            $query->where('type', $type);
+            return [
+                'ofType' => static fn(Builder $obvious, string $type) => $obvious->where('type', $type),
+            ];
         }
     }
 
-Once the expected arguments have been added to your scope method's signature, you may pass the arguments when calling the scope:
+Once the expected arguments have been added to your scope closure's signature, you may pass the arguments when calling the scope:
 
-    $users = User::query()->ofType('admin')->get();
+    $users = User::query()->scope('ofType', 'admin')->get();
 
 <a name="query-macros"></a>
 ## Query Macros
@@ -1585,8 +1586,8 @@ When defining a local macro, the closure **does not** use `$this` binding. Inste
     $query = Flight::query();
 
     // Registering a local macro...
-    $query->macro('active', function (Builder $query) {
-        return $query->where('active', 1);
+    $query->addLocalMacro('active', function (Builder $obvious) {
+        return $obvious->where('active', 1);
     });
 
     // Executing the local macro...
