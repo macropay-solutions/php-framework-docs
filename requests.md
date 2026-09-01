@@ -173,14 +173,14 @@ Safely sanitize parameters with `getFiltered`, which implements native `filter_v
 
     $sanitized = $request->getFiltered('queryParam');
 
+This will return a valid string or false (it uses `filter_var` in the background). See `Request::getFiltered` for more details.
+Also when the field is missing it will return empty string not null!
+
 Restrict data retrieval explicitly to query string values using the `query` method:
 
     $search = $request->query('search');
     $search = $request->query('search', 'default_term');
     $allQuery = $request->query(); // Returns entire query array
-
-This will return a valid string or false (it uses `filter_var` in the background). See `\App\Request::getFiltered` for more details.
-Also when the field is missing it will return empty string not null!
 
 #### Native JSON Ingestion (Zero-Overhead)
 
