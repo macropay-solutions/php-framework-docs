@@ -34,8 +34,12 @@ Always look at the code for accurate logic:
 - [PHP Framework https://github.com/macropay-solutions/php-framework](https://github.com/macropay-solutions/php-framework)
 - [PHP Kernel https://github.com/macropay-solutions/php-kernel](https://github.com/macropay-solutions/php-kernel)
 - [PHP Kernel Dev https://github.com/macropay-solutions/php-kernel-dev](https://github.com/macropay-solutions/php-kernel-dev)
+- [PHP Crufd Wizard https://github.com/macropay-solutions/php-crufd-wizard](https://github.com/macropay-solutions/php-crufd-wizard)
+- [PHP Crufd Wizard Decorator https://github.com/macropay-solutions/php-crufd-wizard-decorator](https://github.com/macropay-solutions/php-crufd-wizard-decorator)
+- [PHP Crufd Wizard Generator https://github.com/macropay-solutions/php-crufd-wizard-generator](https://github.com/macropay-solutions/php-crufd-wizard-generator)
+- [PHP Crufd Wizard Client https://github.com/macropay-solutions/php-crufd-wizard-client](https://github.com/macropay-solutions/php-crufd-wizard-client)
 
-
+> Whoever sees this disclaimer as a green flag is thinking alike with us. We strive to keep the docs in sync with the code but documenting everything the code does is not achievable.
 
 ## Contribution Guidelines
 
