@@ -13,18 +13,16 @@ Please consult the wiki pages also:
 - [PHP Framework Wiki](https://github.com/macropay-solutions/php-framework/wiki)
 - [PHP Kernel Wiki](https://github.com/macropay-solutions/php-kernel/wiki)
 
-## Interactive demos
+## RetrieveQL Interactive demos
 
 Try the working examples:
 
-- Standard resource demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/black)
-- Decorated resource demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black)
+- Standard resource API demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/black)
+- Decorated resource API demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black)
 
-> [NOTE]
-> Both demos use the Premium UI Builder with the Freemium backend.
-> The decorated demo demonstrates presentation and resource mapping through decorators.
-> The User Interface does not ship with any of the projects.
-> See each backend documentation at the bottom of each demo.
+> Both demos use a RetrieveQL UI Builder with the CRUFD backend (which has fewer features that can be seen in each backend documentation at the bottom of each demo). This means it can be used to interactively understand RetrieveQL but note that the backend will not understand all of it.
+ 
+> The user interface is JUST for demo purposes and does not ship with any of the projects.
 
 
 ## Disclaimer
@@ -36,8 +34,12 @@ Always look at the code for accurate logic:
 - [PHP Framework https://github.com/macropay-solutions/php-framework](https://github.com/macropay-solutions/php-framework)
 - [PHP Kernel https://github.com/macropay-solutions/php-kernel](https://github.com/macropay-solutions/php-kernel)
 - [PHP Kernel Dev https://github.com/macropay-solutions/php-kernel-dev](https://github.com/macropay-solutions/php-kernel-dev)
+- [PHP Crufd Wizard https://github.com/macropay-solutions/php-crufd-wizard](https://github.com/macropay-solutions/php-crufd-wizard)
+- [PHP Crufd Wizard Decorator https://github.com/macropay-solutions/php-crufd-wizard-decorator](https://github.com/macropay-solutions/php-crufd-wizard-decorator)
+- [PHP Crufd Wizard Generator https://github.com/macropay-solutions/php-crufd-wizard-generator](https://github.com/macropay-solutions/php-crufd-wizard-generator)
+- [PHP Crufd Wizard Client https://github.com/macropay-solutions/php-crufd-wizard-client](https://github.com/macropay-solutions/php-crufd-wizard-client)
 
-
+> Whoever sees this disclaimer as a green flag is thinking alike with us. We strive to keep the docs in sync with the code but documenting everything the code does is not achievable.
 
 ## Contribution Guidelines
 
