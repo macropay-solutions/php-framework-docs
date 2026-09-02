@@ -13,6 +13,19 @@ Please consult the wiki pages also:
 - [PHP Framework Wiki](https://github.com/macropay-solutions/php-framework/wiki)
 - [PHP Kernel Wiki](https://github.com/macropay-solutions/php-kernel/wiki)
 
+## Interactive demos
+
+Try the working examples:
+
+- Standard resource demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/black)
+- Decorated resource demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black)
+
+> [NOTE]
+> Both demos use the Premium UI Builder with the Freemium backend.
+> The decorated demo demonstrates presentation and resource mapping through decorators.
+> The User Interface does not ship with any of the projects.
+> See each backend documentation at the bottom of each demo.
+
 
 ## Disclaimer
 
