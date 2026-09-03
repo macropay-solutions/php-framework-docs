@@ -8,6 +8,7 @@ context: obvious-relationships
 
 - [Introduction](#introduction)
 - [Defining Relationships](#defining-relationships)
+  - [Optimizing Relation Execution](#optimizing-relation-execution)
   - [One to One](#one-to-one)
   - [One to Many](#one-to-many)
   - [One to Many (Inverse) / Belongs To](#one-to-many-inverse)
@@ -128,7 +129,46 @@ This will also auto-promote the method to this segregated logic. PHP attributes 
 
 **The reflection usage is OPT IN!** If the developer does not call the above methods, no reflection is involved.
 
-But, before diving too deep into using relationships, let's learn how to define each type of relationship supported by Obvious.
+<a name="optimizing-relation-execution"></a>
+### Optimizing Relation Execution
+
+To avoid `__call`, `__get` and `__set` magic method overhead when calling, accessing or mutating relationship you can define proxy methods and use PHP 8.4 property hooks within your `BaseModelRelations` classes:
+
+    <?php
+
+    namespace App\Models\Attributes;
+
+    use MacropaySolutions\CrufdWizard\Models\Attributes\BaseModelRelations;
+    use MacropaySolutions\Kernel\Database\Obvious\Collection;
+    use MacropaySolutions\Kernel\Database\Obvious\Relations\HasMany;
+
+    /**
+     //* @property Collection<int, Comment>|null $comments // not needed anymore
+     //* @method HasMany comments() // not needed anymore
+     */
+    class UserRelations extends BaseModelRelations 
+    {
+        /**
+         * @var Collection<int, Comment>|null
+         */
+        public ?Collection $comments {
+            get => $this->ownerRef->get()?->getRelationValue( __PROPERTY__);
+            set($value) {
+                $this->ownerRef->get()?->setRelation(__PROPERTY__, $value);
+            }
+        }
+
+        public function comments(): HasMany 
+        {
+            // Null-safe operator cleanly fails-fast with a PHP TypeError if the model was garbage-collected.
+
+            return $this->ownerRef->get()?->callSegregatedRelation(__FUNCTION__);
+        }
+    }
+
+This ensures both query builder method calls (`$model->r->comments()`) and hydrated property accesses (`$model->r->comments`) execute instantly without ever hitting the framework's magic interceptors. Also you get autocomplete in your IDE.
+
+Now let's learn how to define each type of relationship supported by Obvious.
 
 <a name="one-to-one"></a>
 ### One to One

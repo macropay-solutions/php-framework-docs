@@ -61,11 +61,33 @@ Kernel includes Obvious, an object-relational mapper (ORM) that makes it enjoyab
 
 > [!WARNING]  
 > **DO NOT ADD PROPERTY HOOKS IN MODEL CLASSES!**  
-> PHP 8.4 property hooks bypass `__get()` and `__set()` at the engine level, preventing attribute storage in `$attributes`, corrupting dirty state tracking, and breaking object reconstruction during deserialization (`__unserialize()`).
+> PHP 8.4 property hooks bypass `__get()` and `__set()` at the engine level, preventing attribute storage in `$attributes`, corrupting dirty state tracking, and breaking object reconstruction during deserialization (`__unserialize()`). Also note that property hooks don’t work well with arrays! Read more here: https://www.php.net/manual/en/language.oop5.property-hooks.php.
 >
 > **Allowed Exception:** Property hooks *may* be used inside php-crufd-wizard `BaseModelAttributes` proxy classes (`$model->a` / `$model->r` wrappers). Because these proxy objects utilize `WeakReference` and are strictly excluded from state serialization via `IGNORE_ON_SERIALIZE`, defining hooks on them does not corrupt model state or deserialization.
+ 
+    <?php
+ 
+    namespace App\Models\Attributes;
+ 
+    use MacropaySolutions\CrufdWizard\Models\Attributes\BaseModelAttributes;
+ 
+    /**
+     //* @property string $first_name // not needed anymore
+     */
+    class UserAttributes extends BaseModelAttributes
+    {
+        public ?string $first_name {
+            get => $this->ownerRef->get()?->getAttributeValue(__PROPERTY__);
+            set($value) {
+                $this->ownerRef->get()?->setAttribute(__PROPERTY__, $value);
+            }
+        }
+    }
+
+Always define the properties as nullable!
 
 
+See also [optimizing-relation-execution](/obvious-relationships.md#optimizing-relation-execution) for BaseModelRelations example.
 
 <a name="generating-model-classes"></a>
 ## Generating Model Classes
