@@ -47,7 +47,7 @@ If you are submitting documentation for the **current stable release**, submit i
 
 ## PHP Framework should be run ONLY on a share-nothing server!
 
-PHP Framework is heavily optimized for traditional, stateless PHP-FPM environments. Do not use stateful, long-running application servers like Swoole, or RoadRunner. See the [Routing Documentation](routing.md) for critical security and architectural details.
+PHP Framework is heavily optimized for traditional, stateless PHP-FPM environments. Do not use stateful, long-running application servers like Swoole, or RoadRunner. See the [Routing Documentation](/routing) for critical security and architectural details.
 
 ## AI Agents Guides And Docs Index
 [https://macropay-solutions.github.io/php-framework-docs/1.x/llms.txt](https://macropay-solutions.github.io/php-framework-docs/1.x/llms.txt)
