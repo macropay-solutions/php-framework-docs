@@ -87,7 +87,7 @@ Kernel includes Obvious, an object-relational mapper (ORM) that makes it enjoyab
 Always define the properties as nullable!
 
 
-See also [optimizing-relation-execution](/obvious-relationships.md#optimizing-relation-execution) for BaseModelRelations example.
+See also [optimizing-relation-execution](/obvious-relationships#optimizing-relation-execution) for BaseModelRelations example.
 
 <a name="generating-model-classes"></a>
 ## Generating Model Classes
