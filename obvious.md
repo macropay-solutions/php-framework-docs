@@ -72,7 +72,7 @@ Kernel includes Obvious, an object-relational mapper (ORM) that makes it enjoyab
     use MacropaySolutions\CrufdWizard\Models\Attributes\BaseModelAttributes;
  
     /**
-     //* @property string $first_name // not needed anymore
+     * @property string $first_name
      */
     class UserAttributes extends BaseModelAttributes
     {
@@ -84,7 +84,7 @@ Kernel includes Obvious, an object-relational mapper (ORM) that makes it enjoyab
         }
     }
 
-Always define the properties as nullable!
+Always define the properties as nullable! Docblock IS still needed if the DB value is not nullable!
 
 
 See also [optimizing-relation-execution](/obvious-relationships#optimizing-relation-execution) for BaseModelRelations example.
