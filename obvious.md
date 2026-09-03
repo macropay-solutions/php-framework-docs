@@ -63,7 +63,10 @@ Kernel includes Obvious, an object-relational mapper (ORM) that makes it enjoyab
 > **DO NOT ADD PROPERTY HOOKS IN MODEL CLASSES!**  
 > PHP 8.4 property hooks bypass `__get()` and `__set()` at the engine level, preventing attribute storage in `$attributes`, corrupting dirty state tracking, and breaking object reconstruction during deserialization (`__unserialize()`). Also note that property hooks don’t work well with arrays! Read more here: https://www.php.net/manual/en/language.oop5.property-hooks.php.
 >
-> **Allowed Exception:** Property hooks *may* be used inside php-crufd-wizard `BaseModelAttributes` proxy classes (`$model->a` / `$model->r` wrappers). Because these proxy objects utilize `WeakReference` and are strictly excluded from state serialization via `IGNORE_ON_SERIALIZE`, defining hooks on them does not corrupt model state or deserialization.
+> **Allowed Exception:**
+`a` and `r` properties are ignored on serialization and can be defined with get hook only to avoid the __get magic method.
+ 
+Property hooks *may* be used inside php-crufd-wizard `BaseModelAttributes` proxy classes (`$model->a` / `$model->r` wrappers). Because these proxy objects utilize `WeakReference` and are strictly excluded from state serialization via `IGNORE_ON_SERIALIZE`, defining hooks on them does not corrupt model state or deserialization.
  
     <?php
  
