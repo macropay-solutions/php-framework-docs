@@ -133,6 +133,79 @@ When `ChildClass` imports its own unique FQN trait:
 >
 > This ensures child macros remain strictly isolated in development, while parent macros resolve dynamically via inheritance tree traversal without duplicating static state.
 
+Example:
+```php
+<?php
+
+namespace App\Providers;
+
+use MacropaySolutions\Kernel\Database\Obvious\Collection;
+use MacropaySolutions\Kernel\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        Collection::deferredMacro('testMacro', [$this::class, 'getTestMacro']);
+        Collection::deferredMacro('testMacroStatic', [$this::class, 'testMacroStatic']);
+    }
+
+    public static function getTestMacro()
+    {
+        return fn() => 'not static';
+    }
+
+    public static function testMacroStatic()
+    {
+        return static fn() => 'static';
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        if (\str_starts_with(\config('app.url'), 'https://')) {
+            \app('url')->forceScheme('https');
+        }
+    }
+}
+```
+```bash
+php run macro:cache
+```
+Generates:
+```php
+<?php
+
+namespace MacropaySolutions\Framework\Traitables;
+
+trait MacropaySolutionsKernelDatabaseObviousCollection
+{
+    use \MacropaySolutions\Kernel\Support\Traits\CompiledMacroable;
+
+    public function testMacro(...$parameters)
+    {
+        return (array(
+            0 => 'App\\Providers\\AppServiceProvider',
+            1 => 'getTestMacro',
+        ))()->call($this, ...$parameters);
+    }
+
+    public static function testMacroStatic(...$parameters)
+    {
+        return (array(
+            0 => 'App\\Providers\\AppServiceProvider',
+            1 => 'testMacroStatic',
+        ))()(...$parameters);
+    }
+}
+
+```
+
 <a name="package-commands--traitables-architecture"></a>
 ## Package Commands & Traitables Architecture
 
@@ -175,14 +248,10 @@ Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::c
 > All macros must be registered strictly during the application boot phase (inside Service Provider register). Registering macros after the application has booted is strictly forbidden. Dynamic runtime macro registration during HTTP request handling or console command execution breaks AOT compilation guarantees and is not supported.
 
 > [!WARNING]
-> **Do Not Use Static Closures For Macros**
-> Macro closures are dynamically bound to target instances at runtime via `Closure::call()` and `Closure::bindTo()`.
->
-> Because PHP forbids binding an object instance (`$this`) to a `static` closure (`Warning: Cannot bind an instance to a static closure`), macro closures must **not** be declared static.
-
+> Instance macro closures must not be declared static, because they are bound to the target object using Closure::call(). Static macro closures may be declared static, because they are invoked without object binding.
 
 > **WARNING**
-> The second argument of `deferredMacro` **must** be an array callable that resolves to a static method and returns the macro closure. The closure will be bound to the target class on execution.
+> The second argument of `deferredMacro` **must** be an array callable that resolves to a static method and returns the macro callable. The closure will be bound to the target class on execution.
 > 
 > Passing an inline closure directly is strictly prevented (it will throw a `\RuntimeException`), as it would allocate memory immediately and defeat the purpose of deferring the macro resolution.
 > 
