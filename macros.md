@@ -251,7 +251,7 @@ Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::c
 > Instance macro closures must not be declared static, because they are bound to the target object using Closure::call(). Static macro closures may be declared static, because they are invoked without object binding.
 
 > **WARNING**
-> The second argument of `deferredMacro` **must** be an array callable that resolves to a static method and returns the macro callable. The closure will be bound to the target class on execution.
+> The second argument of `deferredMacro` **must** be an array callable (using a class FQN string, not an instantiated object) that resolves to a static method and returns the macro callable. The closure will be bound to the target class on execution.
 > 
 > Passing an inline closure directly is strictly prevented (it will throw a `\RuntimeException`), as it would allocate memory immediately and defeat the purpose of deferring the macro resolution.
 > 
