@@ -7,6 +7,8 @@ context: macros
 # Macros & Extending Core Classes
 
 - [Introduction](#introduction)
+- [Dedicated Trait Architecture & AOT Compilation](#dedicated-trait-architecture--aot-compilation)
+- [Package Commands & Traitables Architecture](#package-commands--traitables-architecture)
 - [Deferred Macros](#deferred-macros)
 - [Extending the Request Object](#extending-the-request-object)
 - [Avoiding Macros via Dependency Injection](#avoiding-macros-via-dependency-injection)
@@ -16,7 +18,7 @@ context: macros
 
 PHP-Framework is a DI-oriented, high-performance PHP framework. It is built to enforce strict architectural boundaries by actively preventing implicit magic, serialized closures, and dynamic static proxies.
 
-The `Macroable` trait dynamically injects methods into core classes at runtime. This approach introduces overhead, breaks IDE autocompletion and static analysis.
+The `Macroable` trait is `@internal` to the framework engine. Direct usage of `use MacropaySolutions\Kernel\Support\Traits\Macroable;` in application or third-party code is strictly prohibited.
 
 Instead, PHP-Framework advocates for strict, native class extension and Dependency Injection (DI) to maintain absolute type safety and zero-overhead execution.
 
@@ -70,6 +72,90 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 > Using a macro method on a class is 1:1 with creating a child class but if that class needs multiple macros, then the macro path becomes slower! 
 
 > Macros are still around to solve the situation where 2 packages want to add functionalities into the same macroable class.
+
+<a name="dedicated-trait-architecture--aot-compilation"></a>
+## Dedicated Trait Architecture & AOT Compilation
+
+To support Ahead-of-Time (AOT) compilation in production while preserving dynamic runtime macros in local development, macroable classes do not import the `@internal` `Macroable` trait directly. Instead, every macroable class and subclass implements `\MacropaySolutions\Kernel\Macroable\Contracts\Macroable` and imports its own unique, flattened Fully Qualified Name (FQN) trait:
+
+```php
+namespace MacropaySolutions\Kernel\Database;
+
+use MacropaySolutions\Kernel\Macroable\Contracts\Macroable;
+
+class Connection implements ConnectionInterface, Macroable
+{
+    use \MacropaySolutions\Framework\Traitables\MacropaySolutionsKernelDatabaseConnection; // this
+}
+```
+
+### Local Development vs. Production Execution
+
+* **Local Development (`src/Traitables/` from php-kernel):** Composer resolves the trait import to a fallback trait in `src/Traitables/`. This fallback internally imports the `@internal` `Macroable` trait, maintaining dynamic `__call` magic method dispatch for seamless local development.
+* **Production (`bootstrap/cache/traitables/`):** Running `php run macro:cache` inspects all registered deferred macros and compiles concrete, native PHP methods directly into class-specific trait files saved in `bootstrap/cache/traitables/`. These compiled traits utilize `CompiledMacroable`, completely bypassing `__call` at runtime for maximum execution speed.
+
+### Class Inheritance & Scope Scenarios
+
+> **NOTE:** This applies for php-kernel not for external packages!
+ 
+Understanding why **every single class requires its own trait import** comes down to maintaining strict class isolation in both development and production:
+
+#### Scenario 1: Only the Parent Has the Trait ❌ (Forbidden)
+If `ChildClass` extends `ParentClass` but forgets to import its own dedicated trait:
+* **In Development:** `ChildClass` shares the exact same static memory array as `ParentClass`.
+  * Adding a macro to `ChildClass` registers it directly on `ParentClass`, leaking it to the parent and all sibling subclasses.
+  * Calling a parent macro on `ChildClass` works, but only because both classes share the same underlying memory array.
+* **In Production (`macro:cache`):** **Hierarchy Leakage.** `macro:cache` sees the macro inside `ParentClass::$macros` and compiles it into `ParentClass`'s trait. The macro leaks to `ParentClass` and all siblings in production as well.
+
+#### Scenario 2: Both Parent & Child Have Dedicated Traits ✅ (Mandatory)
+When `ChildClass` imports its own unique FQN trait:
+* **In Development:** PHP gives `ChildClass` its own private memory array.
+  * Macros added to `ChildClass` stay strictly inside `ChildClass`.
+  * Macros added to `ParentClass` are resolved on `ChildClass` via inheritance tree walking (`resolveMacro`), keeping memory usage minimal without copying static state.
+* **In Production (`macro:cache`):** **Clean OOP Inheritance.** `macro:cache` compiles macros into their respective class traits. `ChildClass` inherits parent methods cleanly via standard PHP class inheritance (`ChildClass extends ParentClass`) at full engine speed.
+
+| Scenario / Action | Single Trait (Parent Only) ❌ | Dedicated Traits (Parent & Child) ✅ |
+| :--- | :--- | :--- |
+| **Adding macro to `ChildClass` (Dev)** | Leaks to Parent & all sibling classes | Stays isolated strictly to `ChildClass` |
+| **Calling Parent macro on Child (Dev)** | Works by accident (shared memory) | Resolves dynamically via inheritance tree traversal (`resolveMacro`) |
+| **Adding macro to `ChildClass` (Prod)** | Compiles into Parent (leaks to siblings) | Compiles strictly into `ChildClass` trait |
+
+> [!CRITICAL]
+> **Mandatory Subclass Trait Injection**
+>
+> Because PHP static properties (`static::$macros`) are shared across class inheritance trees, **every subclass extending a `Macroable` parent MUST import its own dedicated FQN trait.**
+>
+> If a newly created subclass inherits its parent's trait instead of declaring its own:
+> 1. Macros registered on the subclass will leak upwards into the parent class's static state during development.
+> 2. The `macro:cache` compiler will not bind native methods to the subclass body, but instead it will bind to the parent's body.
+>
+> Whenever you create a new child class extending a macroable framework class or implementing the Macroable contract, you must manually add a corresponding trait for it.
+>
+> This ensures child macros remain strictly isolated in development, while parent macros resolve dynamically via inheritance tree traversal without duplicating static state.
+
+<a name="package-commands--traitables-architecture"></a>
+## Package Commands & Traitables Architecture
+
+Third-party packages extending framework components (such as `MacropaySolutions\Kernel\Console\Command`) **do not write Traitables, do not configure PSR-4 fallback paths, and must not reference the `@internal` `Macroable` trait.**
+
+### Extending Framework Base Classes in Packages
+Package commands simply extend the core framework base class directly:
+
+```php
+namespace MyVendor\MyPackage\Console;
+
+use MacropaySolutions\Kernel\Console\Command;
+use Symfony\Component\Console\Attribute\AsCommand;
+
+#[AsCommand(name: 'package:custom')]
+class CustomPackageCommand extends Command
+{
+    protected $name = 'package:custom';
+}
+```
+
+* **In Development:** Calling a macro on `CustomPackageCommand` traverses the inheritance chain up to `Command` via `resolveMacro()`, locating macros registered on `Command` without needing a package-level trait.
+* **In Production (`macro:cache`):** `macro:cache` compiles native methods into `Command`'s trait (`MacropaySolutionsKernelConsoleCommand`). `CustomPackageCommand` inherits all compiled macro methods directly through standard PHP class extension (`extends Command`).
 
 <a name="deferred-macros"></a>
 ## Deferred Macros
