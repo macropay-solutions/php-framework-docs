@@ -170,6 +170,9 @@ use MacropaySolutions\Kernel\Support\Collection;
 // The macro closure will only be resolved if 'customFilter' is actually called
 Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::class, 'getClosure']);
 ```
+> [!CRITICAL]
+> Boot-Time Only Registration
+> All macros must be registered strictly during the application boot phase (inside Service Provider register). Registering macros after the application has booted is strictly forbidden. Dynamic runtime macro registration during HTTP request handling or console command execution breaks AOT compilation guarantees and is not supported.
 
 > [!WARNING]
 > **Do Not Use Static Closures For Macros**
