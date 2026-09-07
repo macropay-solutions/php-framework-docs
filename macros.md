@@ -155,12 +155,12 @@ class AppServiceProvider extends ServiceProvider
 
     public static function getTestMacro()
     {
-        return fn() => 'not static';
+        return fn(string $param): string => 'not static ' . $param;
     }
 
     public static function testMacroStatic()
     {
-        return static fn() => 'static';
+        return static fn(string $param): string => 'static ' . $param;
     }
 
     /**
@@ -187,20 +187,20 @@ trait MacropaySolutionsKernelDatabaseObviousCollection
 {
     use \MacropaySolutions\Kernel\Support\Traits\CompiledMacroable;
 
-    public function testMacro(...$parameters)
+    public function testMacro(string $param): string
     {
         return (array(
             0 => 'App\\Providers\\AppServiceProvider',
             1 => 'getTestMacro',
-        ))()->call($this, ...$parameters);
+        ))()->call($this, $param);
     }
 
-    public static function testMacroStatic(...$parameters)
+    public static function testMacroStatic(string $param): string
     {
         return (array(
             0 => 'App\\Providers\\AppServiceProvider',
             1 => 'testMacroStatic',
-        ))()(...$parameters);
+        ))()($param);
     }
 }
 
