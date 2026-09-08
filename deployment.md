@@ -306,8 +306,20 @@ This command inspects all registered deferred macros and Ahead-of-Time (AOT) com
 
 OPcache will load these compiled trait files directly into Shared Memory (SHM), resulting in zero-allocation, native-speed method execution for all macros during the request lifecycle.
 
-> [!NOTE]
-> Remember to run `composer install -o` for this command to catch all macroable classes.
+> [!CRITICAL]
+> **Authoritative Classmap Race Condition**
+>
+> For this command to catch all macroable classes you need to use Composer's authoritative classmap (`-a` or `--classmap-authoritative`).
+> But you must regenerate it **also after** running `macro:cache`. If you generate it ONLY during the initial `composer install`, the autoloader will be blind to the newly generated trait files in `bootstrap/cache/traitables/`.
+>
+> **Correct Deployment Pipeline:**
+> ```shell
+> # 1. Install dependencies and trigger post-autoload-dump scripts (generates caches)
+> composer install --no-dev --optimize-autoloader 
+>
+> # 2. Now that macro:cache has written the new traits, generate the final authoritative map without re-running scripts
+> composer dump-autoload --classmap-authoritative --no-scripts
+> ```
 
 <a name="merging-cached-files"></a>
 ### Merging Cached Files
