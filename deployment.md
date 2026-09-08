@@ -27,6 +27,7 @@ context: deployment
     - [Caching Views](#caching-views)
     - [Caching Autowiring](#caching-autowiring)
     - [Caching Commands](#caching-commands)
+    - [Caching Macros](#caching-macros)
     - [Merging Cached Files](#merging-cached-files)
 - [Debug Mode](#debug-mode)
 
@@ -291,6 +292,22 @@ php run commands:cache
 ```
 
 This avoids runtime reflection and instantiation on all commands, improving the performance.
+
+<a name="caching-macros"></a>
+### Caching Macros
+
+If your application or third-party packages register deferred macros on macroable classes, you should make sure that you run the `macro:cache` Run command during your deployment process:
+
+```shell
+php run macro:cache
+```
+
+This command inspects all registered deferred macros and Ahead-of-Time (AOT) compiles them into native PHP methods within class-specific trait files. By executing this command, your production environment completely bypasses the slower `__call` magic method dispatch and dynamic closure binding. 
+
+OPcache will load these compiled trait files directly into Shared Memory (SHM), resulting in zero-allocation, native-speed method execution for all macros during the request lifecycle.
+
+> [!NOTE]
+> Remember to run `composer install -o` for this command to catch all macroable classes.
 
 <a name="merging-cached-files"></a>
 ### Merging Cached Files
