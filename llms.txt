@@ -29,6 +29,7 @@ When generating code, you MUST adhere strictly to these native components and na
   `php run view:cache`
   `php run config:cache`
   `php run merge-cached-files:cache`
+  `php run macro:cache`
 
 ## AI Instructions
 When generating or reviewing code for this project:
