@@ -203,6 +203,11 @@ If you need to retrieve an item from the cache and then delete the item, you may
 <a name="storing-items-in-the-cache"></a>
 ### Storing Items in the Cache
 
+> [!WARNING]  
+> **Strict Object Hydration Restriction:** For security purposes, cache stores strictly enforce `['allowed_classes' => false]` during deserialization. Stored PHP objects are returned as `__PHP_Incomplete_Class` instances.
+> 
+> **To cache complex data**, store primitive arrays or scalar values (e.g., `$object->toArray()` or record IDs) and query or reconstruct the class explicitly upon retrieval.
+
 You may use the `put` method to store items in the cache:
 
     \app('cache')->put('key', 'value', $seconds = 10);

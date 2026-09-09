@@ -205,6 +205,9 @@ To determine if an item is not present in the session, you may use the `missing`
 <a name="storing-data"></a>
 ### Storing Data
 
+> [!WARNING]  
+> **Session Object Serialization:** Session deserialization no longer hydrates application objects. Serialized objects are returned as `__PHP_Incomplete_Class` instances. Store scalar values, arrays, or entity identifiers instead.
+
 To store data in the session, you will typically use the request instance's `put` method or the global `session` helper:
 
     // Via a request instance...

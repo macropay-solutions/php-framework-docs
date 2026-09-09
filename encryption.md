@@ -25,6 +25,9 @@ This approach to graceful decryption allows users to keep using your application
 <a name="basic-usage"></a>
 ## Basic Usage
 
+> [!WARNING]  
+> **Decryption Type Safety:** The encrypter natively disables class hydration (`['allowed_classes' => false]`). Decrypted PHP objects yield `__PHP_Incomplete_Class`. Encrypt only scalars or arrays.
+
 #### Encrypting A Value
 
 All encrypted values are encrypted using OpenSSL and the `AES-256-CBC` cipher. Furthermore, all encrypted values are signed with a message authentication code (MAC) to detect any modifications to the encrypted string.
