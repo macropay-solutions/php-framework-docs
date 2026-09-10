@@ -97,6 +97,7 @@ server {
     location ~ \.php$ {
         fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param PHP_VALUE "zend.exception_ignore_args=1";
         include fastcgi_params;
     }
 
@@ -332,6 +333,14 @@ php run merge-cached-files:cache
 
 This improves boot speed.
 
+### PHP Production Directives
+> [!CRITICAL]
+
+> Ensure sensitive arguments (keys, tokens, passwords) are stripped from stack traces in production logs and exceptions by enabling `zend.exception_ignore_args` in your `php.ini` or PHP-FPM configuration:
+
+```ini
+zend.exception_ignore_args = On
+```
 
 <a name="debug-mode"></a>
 ## Debug Mode
