@@ -339,24 +339,6 @@ By default, Obvious expects `created_at` and `updated_at` columns to exist on yo
         public $timestamps = false;
     }
 
-If you need to customize the format of your model's timestamps, set the `$dateFormat` property on your model. This property determines how date attributes are stored in the database as well as their format when the model is serialized to an array or JSON:
-
-    <?php
-
-    namespace App\Models;
-
-    use MacropaySolutions\Kernel\Database\Obvious\Model;
-
-    class Flight extends Model
-    {
-        /**
-         * The storage format of the model's date columns.
-         *
-         * @var string
-         */
-        protected $dateFormat = 'U';
-    }
-
 If you need to customize the names of the columns used to store the timestamps, you may define `CREATED_AT` and `UPDATED_AT` constants on your model:
 
     <?php
@@ -446,11 +428,43 @@ public function boot(): void
 }
 ```
 
+> [!NOTE]
+> **Smart Collection-Scoped N+1 Enforcement:** To eliminate developer friction on single-model queries (where eager vs. lazy loading both cost exactly 2 queries and cannot cause an N+1 cascade), global lazy loading prevention is strictly enforced **only on hydrated result sets containing more than one model** (`count($items) > 1`).
+
+> Single models retrieved via `find()`, `first()`, or `firstWhere()` remain permitted to lazy load relations seamlessly even when `Model::preventLazyLoading()` is active. Explicit instance-level property overrides (`$preventsLazyLoading = true`) are always enforced, while unpersisted or recently created models (`!$exists || $wasRecentlyCreated`) are always permitted to bypass the violation check regardless of collection size.
+
 Also, you may instruct Kernel to throw an exception when attempting to fill an unfillable attribute by invoking the `preventSilentlyDiscardingAttributes` method. This can help prevent unexpected errors during local development when attempting to set an attribute that has not been added to the model's `fillable` array:
 
 ```php
-Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
+Model::preventSilentlyDiscardingAttributes(!$this->app->isProduction());
 ```
+
+That shifts CrufdWizard to **strict-by-default** out of the box, throwing exceptions on property typos and un-hydrated accesses unless explicitly opted out.
+
+Here is the updated documentation snippet reflecting `false` as the default setting:
+
+
+#### CrufdWizard Attribute & Relation Access Strictness
+
+When extending `MacropaySolutions\CrufdWizard\Models\BaseModel`, strict missing column and relation access checks are controlled via `$returnNullOnInvalidColumnAttributeAccess`:
+
+```php
+// Defined on CrufdWizard BaseModel (default is false):
+protected bool $returnNullOnInvalidColumnAttributeAccess = false;
+```
+
+* **`false` (Default):** Accessing an un-hydrated, undefined column attribute or non-existent relationship method immediately throws an `\Exception` (`Undefined attribute: {key}` / `Undefined relation: {key}`), catching typos and missing database selects during development and testing.
+* **`true`:** Accessing undefined model attributes or non-existent relationships returns `null` safely.
+
+##### Core Differences from Kernel
+
+1. **Schema Grounding via `getColumns()`:** Kernel only checks if a key exists in the runtime `$attributes` array or `$casts` definition. CrufdWizard compares requested keys against `getColumns()` (`$primaryKey` + `$fillable`). Reading a property typo (e.g., `$user->firt_name`) or an un-hydrated, undeclared column immediately throws an `\Exception`.
+2. **Instance Granularity vs. Global Toggle:** Kernel's missing attribute guard is a global static toggle (`Model::preventAccessingMissingAttributes()`). CrufdWizard's property is configured per model instance, allowing you to relax specific reporting models (`= true`) while keeping core domain models strict (`= false`).
+3. **Relation Protection:** Kernel's missing attribute exception only intercepts raw attribute lookups (`getAttribute`). CrufdWizard hooks directly into `getRelationValue()`. If code attempts to access a non-existent relationship or an undeclared relation key that returns `null` (`!$this->isRelation($key)`), CrufdWizard throws an `Undefined relation` `\Exception`.
+4. **Lifecycle Uniformity:** Kernel automatically suppresses missing attribute exceptions for newly instantiated or unpersisted models (`!$exists || $wasRecentlyCreated`). CrufdWizard enforces property and relation validation consistently across all model states, including in-memory objects prior to database persistence.
+
+
+
 <a name="improving-obvious-speed"></a>
 ### Improving Obvious Speed
 
