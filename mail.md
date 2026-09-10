@@ -1144,7 +1144,7 @@ Finally, you may specify a global "to" address by invoking the `alwaysTo` method
 ## Events
 
 > [!WARNING]  
-> **Mail Events Cannot Be Queued:** To prevent queue payload bloat and memory exhaustion from large MIME bodies and file attachments, `MessageSending` and `MessageSent` events, as well as the underlying `SentMessage` wrapper, are strictly synchronous. Attempting to attach a queued listener to these events or serialize them will throw a `LogicException`.
+> **Mail Events Cannot Be Queued:** To prevent queue payload bloat and memory exhaustion from large MIME bodies and file attachments, `MessageSending` and `MessageSent` events, as well as the underlying `SentMessage` wrapper, are strictly synchronous. Attempting to attach a queued listener to these events or serialize them will throw a `LogicException`. Instead, the mail dispatch job itself should be queued (via Storable Array Callables or implementing `ShouldQueue`).
 
 Framework fires two events during the process of sending mail messages. The `MessageSending` event is fired prior to a message being sent, while the `MessageSent` event is fired after a message has been sent. Remember, these events are fired when the mail is being *sent*, not when it is queued. You may register event listeners for this event in your `App\Providers\EventServiceProvider` service provider:
 
