@@ -904,7 +904,7 @@ If you wish to delay the delivery of a queued email message, you may use the `la
 <a name="queueing-by-default"></a>
 #### Queueing by Default
 
-If your application relies on mailables that must execute asynchronously every time, implement the `ShouldQueue` interface directly on your class. The runtime pipeline will intercept explicit `send()` calls and reroute them to the queue connection automatically:
+If your application relies on mailables that must execute asynchronously every time, implement the `ShouldQueue` interface directly on your class. The runtime pipeline will intercept explicit `send()` calls and reroute them to the queue connection automatically via an object-free JSON payload (`SendQueuedMailable`). Ensure all public properties adhere to the primitive property rules:
 
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
     use MacropaySolutions\Kernel\Mail\Mailable;
@@ -1144,12 +1144,7 @@ Finally, you may specify a global "to" address by invoking the `alwaysTo` method
 ## Events
 
 > [!WARNING]  
-> **Event Payload Hydration:** `MessageSent` events serialize sent mail into structured JSON payloads containing `raw`, `sender`, and `recipients`. Use the event's public API to access the underlying message:
-> ```php
-> $sent = $event->sent;
-> $rawMessage = $sent->getOriginalMessage();
-> $envelope = $sent->getEnvelope();
-> ```
+> **Mail Events Cannot Be Queued:** To prevent queue payload bloat and memory exhaustion from large MIME bodies and file attachments, `MessageSending` and `MessageSent` events, as well as the underlying `SentMessage` wrapper, are strictly synchronous. Attempting to attach a queued listener to these events or serialize them will throw a `LogicException`.
 
 Framework fires two events during the process of sending mail messages. The `MessageSending` event is fired prior to a message being sent, while the `MessageSent` event is fired after a message has been sent. Remember, these events are fired when the mail is being *sent*, not when it is queued. You may register event listeners for this event in your `App\Providers\EventServiceProvider` service provider:
 
