@@ -342,6 +342,8 @@ This improves boot speed.
 zend.exception_ignore_args = On
 ```
 
+If you are using php.ini-production template, this is already On: https://github.com/php/php-src/blob/PHP-8.2/php.ini-production#L379
+
 <a name="debug-mode"></a>
 ## Debug Mode
 
