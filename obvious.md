@@ -693,7 +693,9 @@ If you are filtering the results of the `chunk` method based on a column that yo
 ```php
 Flight::query()->where('departed', true)
     ->chunkById(200, function (Collection $flights) {
-        $flights->each->update(['departed' => false]);
+        $flights->each(function (Flight $flight) {
+            $flight->update(['departed' => false]);
+        });
     }, $column = 'id');
 ```
 
@@ -715,7 +717,9 @@ If you are filtering the results of the `lazy` method based on a column that you
 ```php
 Flight::query()->where('departed', true)
     ->lazyById(200, $column = 'id')
-    ->each->update(['departed' => false]);
+    ->each(function (Flight $flight) {
+        $flight->update(['departed' => false]);
+    });
 ```
 
 You may filter the results based on the descending order of the `id` using the `lazyByIdDesc` method.
@@ -1573,10 +1577,6 @@ Combining multiple Obvious model scopes via an `or` query operator may require t
     $users = User::query()->scope('popular')->orWhere(function (Builder $query) {
         $query->scope('active');
     })->get();
-
-However, since this can be cumbersome, Kernel provides a "higher order" `orWhere` method that allows you to fluently chain scopes together without the use of closures:
-
-    $users = User::query()->scope('popular')->orWhere->scope('active')->get();
 
 <a name="dynamic-scopes"></a>
 #### Dynamic Scopes

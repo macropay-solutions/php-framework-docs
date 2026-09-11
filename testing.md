@@ -107,7 +107,7 @@ The `actingAs` helper method provides a simple way to authenticate a given user 
     {
         public function testApplication()
         {
-            $user = factory('App\Models\User')->create();
+            $user = \App\Models\User::factory()->create();
 
             $this->actingAs($user)
                  ->get('/user');

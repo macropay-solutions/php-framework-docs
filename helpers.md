@@ -149,6 +149,7 @@ Framework includes a variety of global "helper" PHP functions. Many of these fun
 [abort_if](#method-abort-if)
 [abort_unless](#method-abort-unless)
 [app](#method-app)
+[di](#method-di)
 [auth](#method-auth)
 [back](#method-back)
 [bcrypt](#method-bcrypt)
@@ -1566,6 +1567,13 @@ The `app` function returns the [service container](/container) instance:
 You may pass a class or interface name to resolve it from the container:
 
     $api = app('HelpSpot\API');
+
+<a name="method-di"></a>
+#### `di()` {.collection-method}
+
+You must pass a class or interface name to resolve it from the container only if the countainer has booted:
+
+    $api = di('HelpSpot\API', ['param1', 'param2']);
 
 <a name="method-auth"></a>
 #### `auth()` {.collection-method}

@@ -67,8 +67,7 @@ Relationships can be defined using the `segregatedRelationsDefinitionMap()` meth
         return [
             'relName' => fn(): HasOne => $this->hasOne(Model::class, 'model_id', 'id'),
             // Reuse the segregated relation inside another segregated relation:
-            'relNameScoped' => fn(): HasOne => $this->relName()->where('col', '=', 'text'),
-            'relNameScoped2' => fn(): HasOne => $this->callSegregatedRelation('relName')->where('col', '=', 'text'),
+            'relNameScoped' => fn(): HasOne => $this->callSegregatedRelation('relName')->where('col', '=', 'text'),
             // Reuse the method relation:
             'relNameAsMethod' => fn(...$args): mixed => $this->relNameAsMethod(...$args),
             // DO NOT USE IT LIKE THIS!:
@@ -103,11 +102,11 @@ If you have a method that has the same name with a column from DB or with a meth
 
 The `Model::isRelation` and `Model::callSegregatedRelation` methods route relationship calls strictly through the segregated relations map.
 
-External libs like php-rest-wizard will still rely on the methods like behaviour so it is a good idea to keep the relation names different from the methods of the Model because, even if the relation is not defined as a method, it will behave like it through the Model::__call magic method.
+Because the `__call` magic method has been removed from Obvious models to strictly enforce static analysis, you **cannot** execute segregated relations dynamically via `$model->relationName()`. You must explicitly use `$model->r->relationName()` or `$model->callSegregatedRelation('relationName')`.
 
 > [!NOTE]
-> Defining the relations as methods will still work, and they will be auto-promoted into this segregated logic on "touch" (access as property without the `()` or isRelation call but, if the method is called, it will not be auto-promoted).
-> The promotion happens ONLY ONCE per Model class, and is bound to each Model instance when used.
+> Defining relations as explicit methods on the model class will polute it but, will still work natively. When accessed as a property (`$model->r->relationName`), explicit methods will be auto-promoted into the segregated logic.
+> This promotion happens ONLY ONCE per Model class and is bound to each Model instance when used.
 
 If all the method relations are used in a request cycle before calling:
 
