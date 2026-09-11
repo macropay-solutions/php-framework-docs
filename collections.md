@@ -9,7 +9,6 @@ context: collections
     - [Creating Collections](#creating-collections)
     - [Extending Collections](#extending-collections)
 - [Available Methods](#available-methods)
-- [Higher Order Messages](#higher-order-messages)
 - [Lazy Collections](#lazy-collections)
     - [Introduction](#lazy-collection-introduction)
     - [Creating Lazy Collections](#creating-lazy-collections)
@@ -3448,24 +3447,6 @@ The `zip` method merges together the values of the given array with the values o
 
     // [['Chair', 100], ['Desk', 200]]
 
-<a name="higher-order-messages"></a>
-## Higher Order Messages
-
-Collections also provide support for "higher order messages", which are short-cuts for performing common actions on collections. The collection methods that provide higher order messages are: [`average`](#method-average), [`avg`](#method-avg), [`contains`](#method-contains), [`each`](#method-each), [`every`](#method-every), [`filter`](#method-filter), [`first`](#method-first), [`flatMap`](#method-flatmap), [`groupBy`](#method-groupby), [`keyBy`](#method-keyby), [`map`](#method-map), [`max`](#method-max), [`min`](#method-min), [`partition`](#method-partition), [`reject`](#method-reject), [`skipUntil`](#method-skipuntil), [`skipWhile`](#method-skipwhile), [`some`](#method-some), [`sortBy`](#method-sortby), [`sortByDesc`](#method-sortbydesc), [`sum`](#method-sum), [`takeUntil`](#method-takeuntil), [`takeWhile`](#method-takewhile), and [`unique`](#method-unique).
-
-Each higher order message can be accessed as a dynamic property on a collection instance. For instance, let's use the `each` higher order message to call a method on each object within a collection:
-
-    use App\Models\User;
-
-    $users = User::where('votes', '>', 500)->get();
-
-    $users->each->markAsVip();
-
-Likewise, we can use the `sum` higher order message to gather the total number of "votes" for a collection of users:
-
-    $users = User::where('group', 'Development')->get();
-
-    return $users->sum->votes;
 
 <a name="lazy-collections"></a>
 ## Lazy Collections

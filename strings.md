@@ -112,7 +112,7 @@ Framework includes a variety of functions for manipulating string values. Many o
 [Str::wordWrap](#method-str-word-wrap)
 [Str::words](#method-str-words)
 [Str::wrap](#method-str-wrap)
-[str](#method-str)
+[Str:of](#method-str-of)
 [trans](#method-trans)
 [trans_choice](#method-trans-choice)
 
@@ -1366,20 +1366,14 @@ The `Str::wrap` method wraps the given string with an additional string or pair 
 
     // This is Framework!
 
-<a name="method-str"></a>
-#### `str()` {.collection-method}
+<a name="method-str-of"></a>
+#### `Str::of()` {.collection-method}
 
-The `str` function returns a new `MacropaySolutions\Kernel\Support\Stringable` instance of the given string. This function is equivalent to the `Str::of` method:
+The `Str::of()` method returns a new `MacropaySolutions\Kernel\Support\Stringable` instance of the given string:
 
-    $string = str('Surname')->append(' Name');
+    $string = Str::of('Surname')->append(' Name');
 
     // 'Surname Name'
-
-If no argument is provided to the `str` function, the function returns an instance of `MacropaySolutions\Kernel\Support\Str`:
-
-    $snake = str()->snake('FooBar');
-
-    // 'foo_bar'
 
 <a name="method-trans"></a>
 #### `trans()` {.collection-method}
