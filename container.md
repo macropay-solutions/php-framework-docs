@@ -126,24 +126,35 @@ Almost all of your service container bindings will be registered within [service
 
 Within a service provider, you always have access to the container via the `$this->app` property. We can register a binding using the `bind` method, passing the class or interface name that we wish to register along with a closure that returns an instance of the class:
 
+> [!CRITICAL]  
+> **Closures are Forbidden**
+> To enforce zero-overhead Ahead-of-Time (AOT) compilation and OPcache efficiency, PHP-Framework has strictly removed `\Closure` support from container binding methods. You must use static array callables (e.g., `[FactoryClass::class, 'method']`) or fully qualified class name strings.
+
     use App\Services\Transistor;
     use App\Services\PodcastParser;
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->bind(Transistor::class, static function (Application $app) {
-        return new Transistor($app->make(PodcastParser::class));
-    });
+    $this->app->bind(Transistor::class, [\App\Factories\PodcastFactory::class, 'createTransistor']);
 
-Note that we receive the container itself as an argument to the resolver. We can then use the container to resolve sub-dependencies of the object we are building.
+    public static function createTransistor(Application $app)
+    {
+        return new Transistor($app->make(PodcastParser::class));
+    }
+
+
+Note that factory array callables will receive the container instance explicitly as an argument (`$app` or `$container`) when invoked.
 
 As mentioned, you will typically be interacting with the container within service providers; however, if you would like to interact with the container outside of a service provider, you may do so via the `app()` helper:
 
     use App\Services\Transistor;
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    \app()->bind(Transistor::class, static function (Application $app) {
+    \app()->bind(Transistor::class, [\App\Factories\PodcastFactory::class, 'createTransistor']);
+
+    public static function createTransistor(Application $app)
+    {
         // ...
-    });
+    }
 
 You may use the `bindIf` method to register a container binding only if a binding has not already been registered for the given type:
 
@@ -170,15 +181,21 @@ The `singleton` method binds a class or interface into the container that should
     use App\Services\PodcastParser;
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->singleton(Transistor::class, function (Application $app) {
+    $this->app->singleton(Transistor::class, [\App\Factories\PodcastFactory::class, 'createTransistor']);
+
+    public static function createTransistor(Application $app): Transistor
+    {
         return new Transistor($app->make(PodcastParser::class));
-    });
+    }
 
 You may use the `singletonIf` method to register a singleton container binding only if a binding has not already been registered for the given type:
 
-    $this->app->singletonIf(Transistor::class, function (Application $app) {
+    $this->app->singletonIf(Transistor::class, [\App\Factories\PodcastFactory::class, 'createTransistor']);
+
+    public static function createTransistor(Application $app): Transistor
+    {
         return new Transistor($app->make(PodcastParser::class));
-    });
+    }
 
 <a name="binding-scoped"></a>
 #### Binding Scoped Singletons
@@ -189,9 +206,13 @@ The `scoped` method binds a class or interface into the container that should on
     use App\Services\PodcastParser;
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->scoped(Transistor::class, function (Application $app) {
+    $this->app->scoped(Transistor::class, [\App\Factories\PodcastFactory::class, 'createTransistor']);
+
+    public static function createTransistor(Application $app): Transistor
+    {
         return new Transistor($app->make(PodcastParser::class));
-    });
+    }
+
 
 <a name="binding-instances"></a>
 #### Binding Instances
@@ -235,37 +256,39 @@ Since PHP-Framework optimizes for absolute maximum execution speed, it does not 
 
 #### 1. The Explicit Bindings Map
 
-The fastest way to bypass contextual lookup is by overriding the `$bindings` array directly inside your `app/Application.php` file using the `registerExplicitBindingsMap` method. This method registers resolution closures directly into the core bindings registry during container bootstrapping, keeping the evaluation path optimized.
+The fastest way to bypass contextual lookup is by defining your array callables directly inside the `$bindings` property of your `app/Application.php` file. This places your resolution factories directly into the core bindings registry during container bootstrapping, keeping the evaluation path optimized and OPcache-friendly.
 
-    protected function registerExplicitBindingsMap(): void
+    protected array $bindings = [
+        // Explicitly wire PhotoController to use LocalFilesystem
+        \App\Http\Controllers\PhotoController::class => [
+            'concrete' => [\App\Factories\FilesystemContextFactory::class, 'createPhotoController'],
+            'shared' => false
+        ],
+
+        // Explicitly wire VideoController to use S3Filesystem
+        \App\Http\Controllers\VideoController::class => [
+            'concrete' => [\App\Factories\FilesystemContextFactory::class, 'createVideoController'],
+            'shared' => false
+        ],
+    ];
+
+    public static function createPhotoController(
+        \MacropaySolutions\Kernel\Contracts\Container\Container $container,
+        array $parameters = []
+    ): \App\Http\Controllers\PhotoController
     {
-        $this->bindings = [
-            // Explicitly wire PhotoController to use LocalFilesystem
-            \App\Http\Controllers\PhotoController::class => [
-                'concrete' => static function (
-                    \MacropaySolutions\Kernel\Contracts\Container\Container $container,
-                    array $parameters = []
-                ): \App\Http\Controllers\PhotoController {
-                    return new \App\Http\Controllers\PhotoController(
-                        $container->resolve(\App\Services\Filesystem\LocalFilesystem::class, $parameters, false)
-                    );
-                },
-                'shared' => false
-            ],
+        return new \App\Http\Controllers\PhotoController(
+            $container->resolve(\App\Services\Filesystem\LocalFilesystem::class, $parameters, false)
+        );
+    }
 
-            // Explicitly wire VideoController to use S3Filesystem
-            \App\Http\Controllers\VideoController::class => [
-                'concrete' => static function (
-                    \MacropaySolutions\Kernel\Contracts\Container\Container $container,
-                    array $parameters = []
-                ): \App\Http\Controllers\VideoController {
-                    return new \App\Http\Controllers\VideoController(
-                        $container->resolve(\App\Services\Filesystem\S3Filesystem::class, $parameters, false)
-                    );
-                },
-                'shared' => false
-            ],
-        ];
+    public static function createVideoController(
+        \MacropaySolutions\Kernel\Contracts\Container\Container $container,
+        array $parameters = []
+    ): \App\Http\Controllers\VideoController {
+        return new \App\Http\Controllers\VideoController(
+            $container->resolve(\App\Services\Filesystem\S3Filesystem::class, $parameters, false)
+        );
     }
 
 #### 2. Manual Factory Closures in Service Providers
@@ -302,20 +325,27 @@ By targeting specific concrete dependencies, the container can instantly resolve
 <a name="binding-primitives"></a>
 ### Binding Primitives
 
-Sometimes you may have a class that receives some injected classes, but also needs an injected primitive value such as an integer. You can easily inject any value your class may need using a manual factory closure:
+Sometimes you may have a class that receives some injected classes, but also needs an injected primitive value such as an integer. You can easily inject any value your class may need using a manual factory callable:
 
     use App\Http\Controllers\UserController;
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
     
-    $this->app->bind(UserController::class, static function (Application $app) {
+    $this->app->bind(UserController::class, [\App\Factories\UserFactory::class, 'createControllerWithDefault']);
+
+    public static function createControllerWithDefault(Application $app)
+    {
         return new UserController($app->make(SomeService::class), 'default_value');
-    });
+    }
 
-Sometimes a class may depend on an array of [tagged](#tagging) instances. Using the `tagged` method within a factory closure, you may easily inject all the container bindings with that tag:
+Sometimes a class may depend on an array of [tagged](#tagging) instances. Using the `tagged` method within your factory, you may easily inject all the container bindings with that tag:
 
-    $this->app->bind(ReportAggregator::class, static function (Application $app) {
+    $this->app->bind(ReportAggregator::class, [\App\Factories\ReportFactory::class, 'createAggregator']);
+
+    public static function createAggregator(Application $app)
+    {
         return new ReportAggregator($app->tagged('reports'));
-    });
+    }
+
 
 If you need to inject a value from one of your application's configuration files, you may manually resolve the `config` service:
 
@@ -353,48 +383,54 @@ Occasionally, you may have a class that receives an array of typed objects using
         }
     }
 
-You may resolve this dependency by providing the `bind` method with a closure that explicitly injects the resolved `Filter` instances:
+You may resolve this dependency by providing the `bind` method with a callable that explicitly injects the resolved `Filter` instances:
 
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->bind(Firewall::class, static function (Application $app) {
+    $this->app->bind(Firewall::class, [\App\Factories\SecurityFactory::class, 'createFirewall']);
+
+    public static function createFirewall(Application $app) {
         return new Firewall(
             $app->make(Logger::class),
             $app->make(NullFilter::class),
             $app->make(ProfanityFilter::class),
             $app->make(TooLongFilter::class),
         );
-    });
+    }
 
 <a name="variadic-tag-dependencies"></a>
 #### Variadic Tag Dependencies
 
-Sometimes a class may have a variadic dependency that is type-hinted as a given class (`Report ...$reports`). Using the spread operator `...` and the `tagged` method within a factory closure, you may easily inject all the container bindings with that [tag](#tagging) for the given dependency:
+Sometimes a class may have a variadic dependency that is type-hinted as a given class (`Report ...$reports`). Using the spread operator `...` and the `tagged` method within a factory callable, you may easily inject all the container bindings with that [tag](#tagging) for the given dependency:
 
-    $this->app->bind(ReportAggregator::class, static function (Application $app) {
+    $this->app->bind(ReportAggregator::class, [\App\Factories\ReportFactory::class, 'createVariadicAggregator']);
+
+    public static function createVariadicAggregator(Application $app)
+    {
         return new ReportAggregator(...$app->tagged('reports'));
-    });
+    }
+
 
 <a name="tagging"></a>
 ### Tagging
 
 Occasionally, you may need to resolve all of a certain "category" of binding. For example, perhaps you are building a report analyzer that receives an array of many different `Report` interface implementations. After registering the `Report` implementations, you can assign them a tag using the `tag` method:
 
-    $this->app->bind(CpuReport::class, static function () {
-        // ...
-    });
+    $this->app->bind(CpuReport::class, [\App\Factories\ReportFactory::class, 'createCpuReport']);
 
-    $this->app->bind(MemoryReport::class, static function () {
-        // ...
-    });
+    $this->app->bind(MemoryReport::class, [\App\Factories\ReportFactory::class, 'createMemoryReport']);
 
     $this->app->tag([CpuReport::class, MemoryReport::class], 'reports');
 
 Once the services have been tagged, you may easily resolve them all via the container's `tagged` method:
 
-    $this->app->bind(ReportAnalyzer::class, static function (Application $app) {
+    $this->app->bind(ReportAnalyzer::class, [\App\Factories\ReportFactory::class, 'createAnalyzer']);
+
+    public static function createAnalyzer(Application $app)
+    {
         return new ReportAnalyzer($app->tagged('reports'));
-    });
+    }
+
 
 <a name="extending-bindings"></a>
 ### Extending Bindings
@@ -565,37 +601,43 @@ The service container fires events at various stages of an object's resolution l
 The `beforeResolving` method fires right before the container begins looking up or instantiating a target class. It receives the abstract name and any parameters passed to the build sequence:
 
     use App\Services\Transistor;
-    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->beforeResolving(Transistor::class, static function (string $abstract, array $parameters, Application $app) {
+    $this->app->beforeResolving(Transistor::class, [\App\Listeners\ContainerEventListener::class, 'onBeforeTransistor']);
+
+    public static function onBeforeTransistor(string $abstract, array $parameters, \MacropaySolutions\Kernel\Contracts\Foundation\Application $app): void
+    {
         // Executed immediately before the container starts building "Transistor"...
-    });
-
+    }
 #### Resolving
 
 The `resolving` method fires immediately after the object has been successfully instantiated but before any extender decorators are applied. It passes the fully constructed instance and the container:
 
     use App\Services\Transistor;
-    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->resolving(Transistor::class, static function (Transistor $transistor, Application $app) {
+    $this->app->resolving(Transistor::class, [\App\Listeners\ContainerEventListener::class, 'onResolvingTransistor']);
+
+    public static function onResolvingTransistor(Transistor $transistor, \MacropaySolutions\Kernel\Contracts\Foundation\Application $app): void
+    {
         // Called when the container resolves objects of type "Transistor"...
-    });
+    }
 
-    $this->app->resolving(static function (mixed $object, Application $app) {
-        // Global listener: Called when any object type is resolved...
-    });
+    // Global listener: Called when any object type is resolved...
+    $this->app->resolving([\App\Listeners\GlobalContainerListener::class, 'onResolvingAny']);
+
 
 #### After Resolving
 
 The `afterResolving` method fires at the absolute tail end of the resolution pipeline, right after all class configuration, object instantiation, and factory extensions (`extend()`) have finished processing:
 
     use App\Services\Transistor;
-    use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->afterResolving(Transistor::class, static function (Transistor $transistor, Application $app) {
+    $this->app->afterResolving(Transistor::class, [\App\Listeners\ContainerEventListener::class, 'onAfterTransistor']);
+
+    public static function onAfterTransistor(Transistor $transistor, \MacropaySolutions\Kernel\Contracts\Foundation\Application $app): void
+    {
         // Called after the instance is completely built and decorated...
-    });
+    }
+
 
 <a name="psr-11"></a>
 ## PSR-11

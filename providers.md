@@ -21,7 +21,7 @@ In this Framework, **Service Providers are completely optional** and stripped of
 
 Because instantiating provider classes and executing `register()` methods on every request adds unnecessary filesystem and boot overhead, the framework natively defers container resolution by default at the application level.
 
-Instead of writing boilerplate `DeferrableProvider` classes, you can map container bindings directly within `App\Application::registerExplicitBindingsMap()` or `App\Application::$availableBindings`. Service providers are only required when explicit `boot()` lifecycle hooks are needed.
+Instead of writing boilerplate `DeferrableProvider` classes, you can map container bindings directly within the `App\Application::$bindings` property or `App\Application::$availableBindings`. Service providers are only required when explicit `boot()` lifecycle hooks are needed.
 
 <a name="zero-overhead-container-bindings"></a>
 ## Zero-Overhead Container Bindings (Recommended)
@@ -37,7 +37,7 @@ For core services and autoloaded singletons, define your available bindings and 
 
 ### 2. Explicit Binding Maps
 
-If you have custom service bindings that would traditionally sit inside a provider's `register()` method, move them to `App\Application::registerExplicitBindingsMap()`.
+If you have custom service bindings that would traditionally sit inside a provider's `register()` method, move them to the `App\Application::$bindings` property as an array callable.
 
 Because these callbacks are evaluated on-demand only when a service is explicitly requested from the container, **all bindings become implicitly deferred with zero class loading cost during boot**.
 
@@ -74,15 +74,13 @@ class RiakServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(Connection::class, function () {
-            return new Connection(\app('config')->get('riak'));
-        });
+        $this->app->singleton(Connection::class, [\App\Factories\RiakFactory::class, 'createConnection']);
     }
 }
 ```
 
 > [!TIP]  
-> If a Service Provider *only* contains container bindings inside `register()`, delete the Service Provider entirely and move its bindings into `App\Application::registerExplicitBindingsMap()` to eliminate class instantiation overhead during boot.
+> If a Service Provider *only* contains container bindings inside `register()`, delete the Service Provider entirely and move its bindings into the `App\Application::$bindings` property to eliminate class instantiation overhead during boot.
 
 <a name="the-boot-method"></a>
 ### The Boot Method
@@ -130,4 +128,4 @@ If your provider defines a `boot` method, register it directly on the `$app` ins
 $app->register(App\Providers\AppServiceProvider::class);
 ```
 
-If a Service Provider's `register()` logic has been refactored into `App\Application::registerExplicitBindingsMap()`, its `$app->register()` line in `bootstrap/app.php` should be commented out or removed entirely.
+If a Service Provider's `register()` logic has been refactored into the `App\Application::$bindings` array, its `$app->register()` line in `bootstrap/app.php` should be commented out or removed entirely.

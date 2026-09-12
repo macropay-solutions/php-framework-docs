@@ -231,10 +231,13 @@ When calling the `terminate` method on your middleware, Framework will resolve a
 
     protected function registerExplicitBindingsMap(): void
     {
-        $this->bindings = [
-            \App\Http\Middleware\StartSession::class => [
-                'concrete' => fn($app) => new \App\Http\Middleware\StartSession(),
-                'shared' => true // Enforces singleton status
-            ],
-        ];
+        // Register dynamic middlewares or other non-binding map configurations.
     }
+
+    // For bindings, use the $bindings property:
+    protected array $bindings = [
+        \App\Http\Middleware\StartSession::class => [
+            'concrete' => [\App\Factories\MiddlewareFactory::class, 'createStartSession'],
+            'shared' => true // Enforces singleton status
+        ],
+    ];

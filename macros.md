@@ -280,5 +280,5 @@ For all other services, business logic, and third-party integrations, you should
 
 ### 2. Zero-Overhead Container Bindings
 *   To achieve maximum performance during application boot, IoC bindings should be configured directly on the application instance rather than wrapped in Service Provider classes.
-*   Map container bindings directly within `App\Application::registerExplicitBindingsMap()` or `App\Application::$availableBindings`.
+*   Map container bindings directly within the `App\Application::$bindings` property or `App\Application::$availableBindings`.
 *   Because these callbacks are evaluated on-demand only when a service is explicitly requested from the container, all bindings become implicitly deferred with zero class loading cost during boot.
