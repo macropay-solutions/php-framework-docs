@@ -27,11 +27,15 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 > **Classes bound in the container with their FQN that use the Macroable trait CAN NOT be replaced with a child class!** They will trigger circular dependency exception.
 > Example 1: `\MacropaySolutions\Kernel\Bus\Dispatcher`
 
-        $this->app->singleton(Dispatcher::class, function ($app) {
-            return new Dispatcher($app, function ($connection = null) use ($app) {
-                return $app[QueueFactoryContract::class]->connection($connection);
-            });
+    $this->app->singleton(Dispatcher::class, [self::class, 'getBusDispatcher']);
+
+    public static function getBusDispatcher($app)
+    {
+        return new Dispatcher($app, function ($connection = null) use ($app) {
+            return $app[QueueFactoryContract::class]->connection($connection);
         });
+    }
+
 > In this case you should replace the BussServiceProvider by overriding in your `\App\Application`:
 
      /**

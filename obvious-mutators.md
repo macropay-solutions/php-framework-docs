@@ -42,7 +42,7 @@ An accessor transforms an Obvious attribute value when it is accessed. To define
         /**
          * Define the segregated accessors for the model.
          */
-        protected function segregatedAccessorsMap(): array
+        protected static function segregatedAccessorsMap(): array
         {
             return [
                 'first_name' => fn(?string $value): ?string => $value !== null ? \ucfirst($value) : null,
@@ -82,7 +82,7 @@ A mutator transforms an Obvious attribute value when it is set. To define mutato
         /**
          * Define the segregated mutators for the model.
          */
-        protected function segregatedMutatorsMap(): array
+        protected static function segregatedMutatorsMap(): array
         {
             return [
                 'first_name' => function (?string $value): void {

@@ -528,10 +528,11 @@ This implies you need to:
 > **Segregated Maps & Relationships:** To maximize execution speed and avoid method-clashing, accessors, mutators, and relationships should be defined using segregated maps (`segregatedAccessorsMap()`, `segregatedMutatorsMap()`, and `segregatedRelationsDefinitionMap()`).
 >
 > This leverages an O(1) static lookup, completely bypassing dynamic string manipulation overhead. Obvious accessors for columns used in relations are called with `null` when a relation is instantiated, so they must be defined with nullable parameters (e.g., `?string`) and nullable return types, even if the column is not nullable in the database.
+
     /**
      * Define high-performance segregated accessors.
      */
-    protected function segregatedAccessorsMap(): array
+    protected static function segregatedAccessorsMap(): array
     {
         return [
             'first_name' => fn(?string $value): ?string => $value !== null ? \ucfirst($value) : null,
@@ -542,7 +543,7 @@ This implies you need to:
     /**
      * Define high-performance segregated mutators.
      */
-    protected function segregatedMutatorsMap(): array
+    protected static function segregatedMutatorsMap(): array
     {
         return [
             'email' => function (string $value): void {

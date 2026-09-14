@@ -149,7 +149,7 @@ Occasionally, when converting models to arrays or JSON, you may wish to add attr
         /**
          * Define high-performance segregated accessors.
          */
-        protected function segregatedAccessorsMap(): array
+        protected static function segregatedAccessorsMap(): array
         {
             return [
                 'is_admin' => fn(mixed $value): string => 'yes',
