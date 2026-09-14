@@ -58,14 +58,17 @@ A service provider extends the `MacropaySolutions\Kernel\Support\ServiceProvider
 Because the framework is heavily optimized for zero-overhead boot times, dynamic asset registration methods have been removed.
 
 **What Works (Do This):**
-Only use the `register()` method with container bindings:
+Only use the `register()` method with OPcache-friendly array callables or strings:
 
 ```php
 public function register(): void
 {
-    $this->app->singleton(InvoiceService::class, function () {
-        return new InvoiceService(config('my-package'));
-    });
+    $this->app->singleton(InvoiceService::class, [\Vendor\Package\Factories\InvoiceFactory::class, 'create']);
+}
+
+public static function create()
+{
+    return new InvoiceService(config('my-package'));
 }
 ```
 
@@ -86,7 +89,7 @@ $app->register(\Vendor\Package\PackageServiceProvider::class);
 
 This ensures full control over package initialization and avoids automatic discovery that could introduce performance overhead or unwanted side effects.
 
-If your service provider's boot method is empty, it can be registered as a deferred provider analog to `\MacropaySolutions\Kernel\Mail\MailServiceProvider`. See `\App\Application::registerMailBindings`. Alternatively, the bindings can be manually registered into `\App\Application::registerExplicitBindingsMap`.
+If your service provider's boot method is empty, it can be registered as a deferred provider analog to `\MacropaySolutions\Kernel\Mail\MailServiceProvider`. See `\App\Application::registerMailBindings`. Alternatively, the bindings can be manually registered into the `\App\Application::$bindings` array.
 
 ## Autowiring Discovery
 

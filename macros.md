@@ -27,11 +27,15 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 > **Classes bound in the container with their FQN that use the Macroable trait CAN NOT be replaced with a child class!** They will trigger circular dependency exception.
 > Example 1: `\MacropaySolutions\Kernel\Bus\Dispatcher`
 
-        $this->app->singleton(Dispatcher::class, function ($app) {
-            return new Dispatcher($app, function ($connection = null) use ($app) {
-                return $app[QueueFactoryContract::class]->connection($connection);
-            });
+    $this->app->singleton(Dispatcher::class, [self::class, 'getBusDispatcher']);
+
+    public static function getBusDispatcher($app)
+    {
+        return new Dispatcher($app, function ($connection = null) use ($app) {
+            return $app[QueueFactoryContract::class]->connection($connection);
         });
+    }
+
 > In this case you should replace the BussServiceProvider by overriding in your `\App\Application`:
 
      /**
@@ -280,5 +284,5 @@ For all other services, business logic, and third-party integrations, you should
 
 ### 2. Zero-Overhead Container Bindings
 *   To achieve maximum performance during application boot, IoC bindings should be configured directly on the application instance rather than wrapped in Service Provider classes.
-*   Map container bindings directly within `App\Application::registerExplicitBindingsMap()` or `App\Application::$availableBindings`.
+*   Map container bindings directly within the `App\Application::$bindings` property or `App\Application::$availableBindings`.
 *   Because these callbacks are evaluated on-demand only when a service is explicitly requested from the container, all bindings become implicitly deferred with zero class loading cost during boot.
