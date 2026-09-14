@@ -131,10 +131,10 @@ By using the `--classmap-authoritative` flag, Composer:
 > [!NOTE]
 > Class aliases created with class_alias() are not included in the classmap automatically, so those classes may fail to autoload.
 
-When using `--no-scripts` flag, be sure to call:
+When finalizing your deployment pipeline, be sure to call:
 
 ```shell
-composer dump-autoload
+composer dump-autoload --classmap-authoritative --no-scripts
 ```
 or explicitly call all the cache commands from the composer.json->scripts->post-autoload-dump of the template you are using (PHP-Framework). This will improve the boot time of the application. See more below.
 
@@ -310,8 +310,8 @@ OPcache will load these compiled trait files directly into Shared Memory (SHM), 
 > [!CRITICAL]
 > **Authoritative Classmap Race Condition**
 >
-> For this command to catch all macroable classes you need to use Composer's authoritative classmap (`-a` or `--classmap-authoritative`).
-> But you must regenerate it **also after** running `macro:cache`. If you generate it ONLY during the initial `composer install`, the autoloader will be blind to the newly generated trait files in `bootstrap/cache/traitables/`.
+> For your production environment to run optimally, you need to use Composer's authoritative classmap (`-a` or `--classmap-authoritative`).
+> However, **this flag must ONLY be used on the second `composer dump-autoload --no-scripts` execution**. If you apply it during the initial `composer install`, the autoloader will freeze early and be blind to the newly generated trait files in `bootstrap/cache/traitables/`.
 >
 > **Correct Deployment Pipeline:**
 > ```shell
