@@ -131,10 +131,10 @@ By using the `--classmap-authoritative` flag, Composer:
 > [!NOTE]
 > Class aliases created with class_alias() are not included in the classmap automatically, so those classes may fail to autoload.
 
-When using `--no-scripts` flag, be sure to call:
+When finalizing your deployment pipeline, be sure to call:
 
 ```shell
-composer dump-autoload
+composer dump-autoload --classmap-authoritative --no-scripts
 ```
 or explicitly call all the cache commands from the composer.json->scripts->post-autoload-dump of the template you are using (PHP-Framework). This will improve the boot time of the application. See more below.
 
@@ -195,7 +195,7 @@ When deploying your application to production, you should make sure that you run
 php run autowiring:cache
 ```
 
-This avoids runtime reflection on method and construct autowire, improving the performance.
+This avoids runtime reflection on method and construct autowire by generating individual cache classes into bootstrap/cache/autowiring/. Each generated class defines a public const MAP for O(1) resolution via Composer's autoloader, eliminating monolithic array parsing and maximizing RPS.
 
 Packages can auto add to this config via their composer.json:
 
@@ -267,7 +267,11 @@ These are the defaults:
     ],
 
 ```
-Check `bootstrap/cache/autowiring.php`.
+Check `bootstrap/cache/autowiring.php` `bootstrap/cache/autowiring/`.
+
+> [!CRITICAL]
+> See macro:cache CRITICAL note bellow!
+
 > [!NOTE]
 > **Autowiring Default Parameter Precedence**
 > If you want to prioritize default parameter values (such as `= null`) over attempting to autowire and instantiate unbound classes, you can override the `DEFAULT_PARAMETER_TAKES_PRECEDENCE_WHEN_AUTOWIRING` constant to `true` in your `\App\Application` class. This provides an additional performance boost by safely bypassing dependency resolution attempts (and potential native PHP `\Error`s) for abstract classes or unbound interfaces that have default values. This applies if the parameter is not provided.
@@ -310,8 +314,8 @@ OPcache will load these compiled trait files directly into Shared Memory (SHM), 
 > [!CRITICAL]
 > **Authoritative Classmap Race Condition**
 >
-> For this command to catch all macroable classes you need to use Composer's authoritative classmap (`-a` or `--classmap-authoritative`).
-> But you must regenerate it **also after** running `macro:cache`. If you generate it ONLY during the initial `composer install`, the autoloader will be blind to the newly generated trait files in `bootstrap/cache/traitables/`.
+> For your production environment to run optimally, you need to use Composer's authoritative classmap (`-a` or `--classmap-authoritative`).
+> However, **this flag must ONLY be used on the second `composer dump-autoload --no-scripts` execution**. If you apply it during the initial `composer install`, the autoloader will freeze early and be blind to the newly generated trait files in `bootstrap/cache/traitables/` and generated autowiring cache classes in `bootstrap/cache/autowiring/`.
 >
 > **Correct Deployment Pipeline:**
 > ```shell
