@@ -12,7 +12,6 @@ context: obvious-serialization
   - [Serializing to JSON](#serializing-to-json)
 - [Hiding Attributes From JSON](#hiding-attributes-from-json)
 - [Appending Values to JSON](#appending-values-to-json)
-- [Date Serialization](#date-serialization)
 
 <a name="introduction"></a>
 ## Introduction
@@ -185,29 +184,3 @@ At runtime, you may instruct a model instance to append additional attributes us
     return $user->append('is_admin')->toArray();
 
     return $user->setAppends(['is_admin'])->toArray();
-
-<a name="date-serialization"></a>
-## Date Serialization
-
-<a name="customizing-the-default-date-format"></a>
-#### Customizing the Default Date Format
-
-You may customize the default serialization format by overriding the `serializeDate` method. This method does not affect how your dates are formatted for storage in the database:
-
-    /**
-     * Prepare a date for array / JSON serialization.
-     */
-    protected function serializeDate(DateTimeInterface $date): string
-    {
-        return $date->format('Y-m-d');
-    }
-
-<a name="customizing-the-date-format-per-attribute"></a>
-#### Customizing the Date Format per Attribute
-
-You may customize the serialization format of individual Obvious date attributes by specifying the date format in the model's [cast declarations](/obvious-mutators#attribute-casting):
-
-    protected $casts = [
-        'birthday' => 'date:Y-m-d',
-        'joined_at' => 'datetime:Y-m-d H:00',
-    ];
