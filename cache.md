@@ -205,7 +205,16 @@ If you need to retrieve an item from the cache and then delete the item, you may
 
 > [!WARNING]  
 > **Strict Object Hydration Restriction:** For security purposes, cache stores strictly enforce `['allowed_classes' => false]` during deserialization. Stored PHP objects are returned as `__PHP_Incomplete_Class` instances.
+>
+> **The PDO `stdClass` Trap:** If you are caching raw database query results (e.g., from `$connection->select()`), remember that PDO returns rows as `stdClass` objects by default. Because `stdClass` is still a class, these will also be blocked by the deserialization shield and become `__PHP_Incomplete_Class` upon retrieval. You **must** cast them to associative arrays before storing them in the cache:
+>
+> ```php
+> $results = \app('db')->connection()->select('SHOW INDEX FROM users');
 > 
+> // Map the stdClass objects to primitive associative arrays before caching
+> return \array_map(fn($row) => (array)$row, $results);
+> ```
+>
 > **To cache complex data**, store primitive arrays or scalar values (e.g., `$object->toArray()` or record IDs) and query or reconstruct the class explicitly upon retrieval.
 
 You may use the `put` method to store items in the cache:
