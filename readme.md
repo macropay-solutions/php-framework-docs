@@ -13,14 +13,14 @@ Please consult the wiki pages also:
 - [PHP Framework Wiki](https://github.com/macropay-solutions/php-framework/wiki)
 - [PHP Kernel Wiki](https://github.com/macropay-solutions/php-kernel/wiki)
 
-## RetrieveQL Interactive demos
+## WizardQL/CrufdQL Interactive demos
 
 Try the working examples:
 
 - Standard resource API demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/black)
 - Decorated resource API demo: [https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black](https://php-framework-demo.macropay-solutions.com/crufd-wizard/decorated/black)
 
-> Both demos use a RetrieveQL UI Builder with the CRUFD backend (which has fewer features that can be seen in each backend documentation at the bottom of each demo). This means it can be used to interactively understand RetrieveQL but note that the backend will not understand all of it.
+> Both demos use a WizardQL/CrufdQL UI Builder with the CRUFD backend (which has fewer features that can be seen in each backend documentation at the bottom of each demo). This means it can be used to interactively understand WizardQL but note that the backend will not understand all of it.
  
 > The user interface is JUST for demo purposes and does not ship with any of the projects.
 
