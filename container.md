@@ -554,13 +554,17 @@ For example, you may type-hint a service defined by your application in a contro
 <a name="array-access"></a>
 ### Array Access
 
-The service container implements PHP's `ArrayAccess` interface, allowing you to resolve services using standard array notation (e.g., `$request = $this->app['request'];`).
+While the service container implements PHP's `ArrayAccess` interface for legacy compatibility (e.g., `$request = $this->app['request'];`), its usage is strictly forbidden across the framework.
 
-> [!WARNING]  
-> **Usage Discouraged**  
-> Resolving services via array access is strongly discouraged. It completely bypasses IDE autocompletion, static analysis tools (like PHPStan), and `.phpstorm.meta.php` return type mappings. Your IDE will blindly treat `$app['service']` as `mixed`. 
+> [!CRITICAL]  
+> **Array Access Strictly Forbidden (OPcache & JIT Penalties)**  
+> Resolving services via `ArrayAccess` bracket notation (`$app['service']`) is strictly forbidden and might be removed in a minor version in the future. 
 > 
-> For full type safety, hover support, and reliable autocompletion, **always** prefer constructor injection, the `make` method, or the `app` / `di` helpers.
+> In addition to completely breaking IDE autocompletion, static analysis (PHPStan), and `.phpstorm.meta.php` return type mappings, `ArrayAccess` incurs VM execution overhead (`FETCH_DIM_R` dispatch). OPcache cannot inline dynamic `offsetGet()` interface calls, and PHP 8+ JIT cannot optimize C-level method lookup tables compared to direct method invocation.
+> 
+> For absolute type safety, maximum OPcache efficiency, and JIT optimizations, **always** use explicit container methods (`make()`, `get()`, `instance()`, `set()`, `forgetInstance()`), constructor injection, or `app()` / `di()` helpers.
+> 
+> This is valid for ANY class that implements ArrayAccess.
 
 <a name="method-invocation-and-injection"></a>
 ## Method Invocation and Injection
