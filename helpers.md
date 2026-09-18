@@ -81,6 +81,7 @@ Framework includes a variety of global "helper" PHP functions. Many of these fun
 [Arr::where](#method-array-where)
 [Arr::whereNotNull](#method-array-where-not-null)
 [Arr::wrap](#method-array-wrap)
+[arrayUniqueSortRegular](#method-array-unique-sort-regular)
 [data_fill](#method-data-fill)
 [data_get](#method-data-get)
 [data_set](#method-data-set)
@@ -149,6 +150,7 @@ Framework includes a variety of global "helper" PHP functions. Many of these fun
 [abort_if](#method-abort-if)
 [abort_unless](#method-abort-unless)
 [app](#method-app)
+[appDate](#method-app-date)
 [di](#method-di)
 [auth](#method-auth)
 [back](#method-back)
@@ -165,7 +167,7 @@ Framework includes a variety of global "helper" PHP functions. Many of these fun
 [decrypt](#method-decrypt)
 [dd](#method-dd)
 [dispatch](#method-dispatch)
-[dispatch_sync](#method-dispatch-sync)
+[dispatch_now](#method-dispatch-now)
 [dump](#method-dump)
 [encrypt](#method-encrypt)
 [env](#method-env)
@@ -185,7 +187,6 @@ Framework includes a variety of global "helper" PHP functions. Many of these fun
 [report_unless](#method-report-unless)
 [request](#method-request)
 [rescue](#method-rescue)
-[resolve](#method-resolve)
 [response](#method-response)
 [retry](#method-retry)
 [session](#method-session)
@@ -974,6 +975,13 @@ If the given value is `null`, an empty array will be returned:
 
     // []
 
+<a name="method-array-unique-sort-regular"></a>
+#### `arrayUniqueSortRegular()` {.collection-method}
+
+The `arrayUniqueSortRegular` function fixes `array_unique($items, SORT_REGULAR)` backward compatibility behavior across PHP versions:
+
+    $unique = arrayUniqueSortRegular($items);
+
 <a name="method-data-fill"></a>
 #### `data_fill()` {.collection-method}
 
@@ -1568,6 +1576,13 @@ You may pass a class or interface name to resolve it from the container:
 
     $api = app('HelpSpot\API');
 
+<a name="method-app-date"></a>
+#### `appDate()` {.collection-method}
+
+The `appDate` function returns an instance of `MacropaySolutions\Kernel\Support\DateFactory`:
+
+    $date = appDate();
+
 <a name="method-di"></a>
 #### `di()` {.collection-method}
 
@@ -1719,12 +1734,12 @@ The `dispatch` function pushes the given [job](/queues#creating-jobs) onto the F
 
     dispatch(new App\Jobs\SendEmails);
 
-<a name="method-dispatch-sync"></a>
-#### `dispatch_sync()` {.collection-method}
+<a name="method-dispatch-now"></a>
+#### `dispatch_now()` {.collection-method}
 
-The `dispatch_sync` function pushes the given job to the [sync](/queues#synchronous-dispatching) queue so that it is processed immediately:
+The `dispatch_now` function dispatches a command or job to its appropriate handler in the current process immediately:
 
-    dispatch_sync(new App\Jobs\SendEmails);
+    dispatch_now(new App\Jobs\SendEmails);
 
 <a name="method-dump"></a>
 #### `dump()` {.collection-method}
@@ -1963,13 +1978,6 @@ A `report` argument may be provided to the `rescue` function to determine if the
         return $throwable instanceof InvalidArgumentException;
     });
 
-<a name="method-resolve"></a>
-#### `resolve()` {.collection-method}
-
-The `resolve` function resolves a given class or interface name to an instance using the [service container](/container):
-
-    $api = resolve('HelpSpot\API');
-
 <a name="method-response"></a>
 #### `response()` {.collection-method}
 
@@ -2087,6 +2095,22 @@ The `throw_unless` function throws the given exception if a given boolean expres
 The `today` function creates a new `MacropaySolutions\Kernel\Support\Carbon` instance for the current date:
 
     $today = today();
+
+<a name="method-trans"></a>
+#### `trans()` / `__()` {.collection-method}
+
+The `trans` and `__` functions translate the given language line using your translation files:
+
+    $translated = trans('messages.welcome');
+
+    $translated = __('messages.welcome');
+
+<a name="method-trans-choice"></a>
+#### `trans_choice()` {.collection-method}
+
+The `trans_choice` function translates the given language line with inflection based on a count:
+
+    $translated = trans_choice('messages.apples', 10);
 
 <a name="method-trait-uses-recursive"></a>
 #### `trait_uses_recursive()` {.collection-method}
