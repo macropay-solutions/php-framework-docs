@@ -21,6 +21,7 @@ context: container
   - [The Make Method](#the-make-method)
   - [The MakeWithoutAlias Method](#the-makewithoutalias-method)
   - [Automatic Injection](#automatic-injection)
+  - [Array Access](#array-access)
 - [Method Invocation and Injection](#method-invocation-and-injection)
 - [Container Events](#container-events)
 - [PSR-11](#psr-11)
@@ -549,6 +550,17 @@ For example, you may type-hint a service defined by your application in a contro
             return $user;
         }
     }
+
+<a name="array-access"></a>
+### Array Access
+
+The service container implements PHP's `ArrayAccess` interface, allowing you to resolve services using standard array notation (e.g., `$request = $this->app['request'];`).
+
+> [!WARNING]  
+> **Usage Discouraged**  
+> Resolving services via array access is strongly discouraged. It completely bypasses IDE autocompletion, static analysis tools (like PHPStan), and `.phpstorm.meta.php` return type mappings. Your IDE will blindly treat `$app['service']` as `mixed`. 
+> 
+> For full type safety, hover support, and reliable autocompletion, **always** prefer constructor injection, the `make` method, or the `app` / `di` helpers.
 
 <a name="method-invocation-and-injection"></a>
 ## Method Invocation and Injection
