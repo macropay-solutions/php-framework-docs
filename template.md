@@ -21,6 +21,7 @@ context: template
     - [Raw PHP](#raw-php)
     - [Comments](#comments)
 - [Components](#components)
+    - [Component Autowiring Cache](#component-autowiring-cache)
     - [Rendering Components](#rendering-components)
     - [Passing Data to Components](#passing-data-to-components)
     - [Component Attributes](#component-attributes)
@@ -689,6 +690,23 @@ This will allow the usage of package components by their vendor namespace using 
 ```
 
 Template will automatically detect the class that's linked to this component by pascal-casing the component name. Subdirectories are also supported using "dot" notation.
+
+<a name="component-autowiring-cache"></a>
+### Component Autowiring Cache
+
+To maximize performance and completely eliminate runtime reflection overhead, the framework precompiles constructor parameters and public methods for all class-based components. For this to work properly, you must ensure your component directories are registered in your `config/app.php` file under the `autowiring` configuration array:
+
+    'autowiring' => [
+        // ...
+        [
+            'path' => \app()->path() . DIRECTORY_SEPARATOR . 'View' . DIRECTORY_SEPARATOR . 'Components',
+            'methods' => ['*'],
+        ],
+    ],
+
+Whenever you create a new component or change an existing component's constructor or public methods, you should regenerate the container's autowiring cache using the `autowiring:cache` command:
+
+    php run autowiring:cache
 
 <a name="rendering-components"></a>
 ### Rendering Components
