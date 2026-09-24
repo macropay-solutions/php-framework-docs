@@ -124,3 +124,7 @@ $app->register(App\Providers\AppServiceProvider::class);
 ```
 
 If a Service Provider's `register()` logic has been refactored into the `App\Application::$bindings` array, its `$app->register()` line in `bootstrap/app.php` should be commented out or removed entirely.
+
+> [!CRITICAL]
+> Providers that implement DeferrableProvider will not be booted (Their `boot` method will not be called even if it exists).
+> Providers that DO NOT implement DeferrableProvider will be booted WITHOUT autowiring.
