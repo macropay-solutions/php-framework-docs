@@ -229,11 +229,6 @@ The `terminate` method must accept both a `MacropaySolutions\Kernel\Http\Request
 
 When calling the `terminate` method on your middleware, Framework will resolve a fresh instance of the middleware from the [service container](/container). If you would like to use the same middleware instance when the `handle` and `terminate` methods are called, register the middleware with the container using the container's `singleton` method.
 
-    protected function registerExplicitBindingsMap(): void
-    {
-        // Register dynamic middlewares or other non-binding map configurations.
-    }
-
     // For bindings, use the $bindings property:
     protected array $bindings = [
         \App\Http\Middleware\StartSession::class => [

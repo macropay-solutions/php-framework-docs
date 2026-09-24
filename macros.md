@@ -280,7 +280,7 @@ For all other services, business logic, and third-party integrations, you should
 
 ### 1. Pure Constructor Injection
 *   You must use pure Constructor Injection, the `\app()` helper, or container resolution.
-*   Rather than attaching a macro to an existing class, create a child class that extends it and register it inside your `app/Application.php` file using the `registerExplicitBindingsMap` method.
+*   Rather than attaching a macro to an existing class, create a child class that extends it and register it inside your `app/Application.php` file using the `$bindings` map.
 
 ### 2. Zero-Overhead Container Bindings
 *   To achieve maximum performance during application boot, IoC bindings should be configured directly on the application instance rather than wrapped in Service Provider classes.

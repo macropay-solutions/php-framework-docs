@@ -86,7 +86,7 @@ The matching logic is port-agnostic. A configuration for `http://localhost` will
 >
 > The `domain` key can be used in route groups.
 >
-> Create and use/uncomment the GLOBAL (mandatory GLOBAL) middleware \App\Http\Middleware\TrustProxies::class, in \App\Application::registerExplicitBindingsMap or in bootstrap/app.php:
+> Create and use/uncomment the GLOBAL (mandatory GLOBAL) middleware \App\Http\Middleware\TrustProxies::class, in \App\Application::$middleware or in bootstrap/app.php:
 
     $app->middleware([
         \App\Http\Middleware\TrustProxies::class,
