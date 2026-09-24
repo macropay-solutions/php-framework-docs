@@ -37,7 +37,7 @@ As an example, let's modify the default `DatabaseSeeder` class and add a databas
 
     namespace Database\Seeders;
 
-    use MacropaySolutions\Kernel\Database\Seeder;
+    use MacropaySolutions\KernelDev\Database\Seeder;
     use MacropaySolutions\Kernel\Support\Str;
 
     class DatabaseSeeder extends Seeder
@@ -104,7 +104,7 @@ While running seeds, you may want to prevent models from dispatching events. You
 
     namespace Database\Seeders;
 
-    use MacropaySolutions\Kernel\Database\Seeder;
+    use MacropaySolutions\KernelDev\Database\Seeder;
     use MacropaySolutions\Kernel\Database\Console\Seeds\WithoutModelEvents;
 
     class DatabaseSeeder extends Seeder
