@@ -696,13 +696,12 @@ namespace App\Models;
 use MacropaySolutions\Kernel\Broadcasting\Channel;
 use MacropaySolutions\Kernel\Broadcasting\PrivateChannel;
 use MacropaySolutions\Kernel\Database\Obvious\BroadcastsEvents;
-use MacropaySolutions\Kernel\Database\Obvious\Factories\HasFactory;
 use MacropaySolutions\Kernel\Database\Obvious\Model;
 use MacropaySolutions\Kernel\Database\Obvious\Relations\BelongsTo;
 
 class Post extends Model
 {
-    use BroadcastsEvents, HasFactory;
+    use BroadcastsEvents;
 
     /**
      * Get the user that the post belongs to.

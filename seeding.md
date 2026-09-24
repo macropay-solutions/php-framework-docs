@@ -72,7 +72,7 @@ For example, let's create 50 users that each has one related post:
      */
     public function run(): void
     {
-        User::factory()
+        UserFactory::new()
                 ->count(50)
                 ->hasPosts(1)
                 ->create();

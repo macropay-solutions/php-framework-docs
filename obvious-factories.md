@@ -32,7 +32,7 @@ To see an example of how to write a factory, take a look at the `database/factor
     namespace Database\Factories;
 
     use MacropaySolutions\Kernel\Support\Str;
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory;
 
     class UserFactory extends Factory
     {
@@ -77,25 +77,12 @@ The new factory class will be placed in your `database/factories` directory.
 <a name="factory-and-model-discovery-conventions"></a>
 #### Model and Factory Discovery Conventions
 
-Once you have defined your factories, you may use the static `factory` method provided to your models by the `MacropaySolutions\Kernel\Database\Obvious\Factories\HasFactory` trait in order to instantiate a factory instance for that model.
+Factories belong exclusively to the dev environment (`MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory`) and are instantiated directly via `UserFactory::new()` to prevent production trait pollution.
 
-The `HasFactory` trait's `factory` method will use conventions to determine the proper factory for the model the trait is assigned to. Specifically, the method will look for a factory in the `Database\Factories` namespace that has a class name matching the model name and is suffixed with `Factory`. If these conventions do not apply to your particular application or factory, you may overwrite the `newFactory` method on your model to return an instance of the model's corresponding factory directly:
-
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
-    use Database\Factories\Administration\FlightFactory;
-
-    /**
-     * Create a new factory instance for the model.
-     */
-    protected static function newFactory(): Factory
-    {
-        return FlightFactory::new();
-    }
-
-Then, define a `model` property on the corresponding factory:
+If your factory does not follow standard naming conventions, define a `$model` property on the factory class:
 
     use App\Administration\Flight;
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory;
 
     class FlightFactory extends Factory
     {
@@ -114,7 +101,7 @@ State manipulation methods allow you to define discrete modifications that can b
 
 State transformation methods typically call the `state` method provided by Framework's base factory class. The `state` method accepts a closure which will receive the array of raw attributes defined for the factory and should return an array of attributes to modify:
 
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory;
 
     /**
      * Indicate that the user is suspended.
@@ -133,9 +120,9 @@ State transformation methods typically call the `state` method provided by Frame
 
 If your Obvious model can be [soft deleted](/obvious#soft-deleting), you may invoke the built-in `trashed` state method to indicate that the created model should already be "soft deleted". You do not need to manually define the `trashed` state as it is automatically available to all factories:
 
-    use App\Models\User;
+    use Database\Factories\UserFactory;
 
-    $user = User::factory()->trashed()->create();
+    $user = UserFactory::new()->trashed()->create();
 
 <a name="factory-callbacks"></a>
 ### Factory Callbacks
@@ -145,7 +132,7 @@ Factory callbacks are registered using the `afterMaking` and `afterCreating` met
     namespace Database\Factories;
 
     use App\Models\User;
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory;
 
     class UserFactory extends Factory
     {
@@ -167,7 +154,7 @@ Factory callbacks are registered using the `afterMaking` and `afterCreating` met
 You may also register factory callbacks within state methods to perform additional tasks that are specific to a given state:
 
     use App\Models\User;
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory;
 
     /**
      * Indicate that the user is suspended.
@@ -191,35 +178,35 @@ You may also register factory callbacks within state methods to perform addition
 <a name="instantiating-models"></a>
 ### Instantiating Models
 
-Once you have defined your factories, you may use the static `factory` method provided to your models by the `MacropaySolutions\Kernel\Database\Obvious\Factories\HasFactory` trait in order to instantiate a factory instance for that model. Let's take a look at a few examples of creating models. First, we'll use the `make` method to create models without persisting them to the database:
+To instantiate models without persisting them to the database, invoke `new()` on your factory class followed by `make()`:
 
-    use App\Models\User;
+    use Database\Factories\UserFactory;
 
-    $user = User::factory()->make();
+    $user = UserFactory::new()->make();
 
 You may create a collection of many models using the `count` method:
 
-    $users = User::factory()->count(3)->make();
+    $users = UserFactory::new()->count(3)->make();
 
 <a name="applying-states"></a>
 #### Applying States
 
 You may also apply any of your [states](#factory-states) to the models. If you would like to apply multiple state transformations to the models, you may simply call the state transformation methods directly:
 
-    $users = User::factory()->count(5)->suspended()->make();
+    $users = UserFactory::new()->count(5)->suspended()->make();
 
 <a name="overriding-attributes"></a>
 #### Overriding Attributes
 
 If you would like to override some of the default values of your models, you may pass an array of values to the `make` method. Only the specified attributes will be replaced while the rest of the attributes remain set to their default values as specified by the factory:
 
-    $user = User::factory()->make([
+    $user = UserFactory::new()->make([
         'name' => 'Abigail Name',
     ]);
 
 Alternatively, the `state` method may be called directly on the factory instance to perform an inline state transformation:
 
-    $user = User::factory()->state([
+    $user = UserFactory::new()->state([
         'name' => 'Abigail Name',
     ])->make();
 
@@ -231,17 +218,17 @@ Alternatively, the `state` method may be called directly on the factory instance
 
 The `create` method instantiates model instances and persists them to the database using Obvious's `save` method:
 
-    use App\Models\User;
+    use Database\Factories\UserFactory;
 
-    // Create a single App\Models\User instance...
-    $user = User::factory()->create();
+    // Create a single User instance...
+    $user = UserFactory::new()->create();
 
-    // Create three App\Models\User instances...
-    $users = User::factory()->count(3)->create();
+    // Create three User instances...
+    $users = UserFactory::new()->count(3)->create();
 
 You may override the factory's default model attributes by passing an array of attributes to the `create` method:
 
-    $user = User::factory()->create([
+    $user = UserFactory::new()->create([
         'name' => 'Abigail',
     ]);
 
@@ -250,10 +237,10 @@ You may override the factory's default model attributes by passing an array of a
 
 Sometimes you may wish to alternate the value of a given model attribute for each created model. You may accomplish this by defining a state transformation as a sequence. For example, you may wish to alternate the value of an `admin` column between `Y` and `N` for each created user:
 
-    use App\Models\User;
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Sequence;
+    use Database\Factories\UserFactory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Sequence;
 
-    $users = User::factory()
+    $users = UserFactory::new()
                     ->count(10)
                     ->state(new Sequence(
                         ['admin' => 'Y'],
@@ -265,9 +252,9 @@ In this example, five users will be created with an `admin` value of `Y` and fiv
 
 If necessary, you may include a closure as a sequence value. The closure will be invoked each time the sequence needs a new value:
 
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Sequence;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Sequence;
 
-    $users = User::factory()
+    $users = UserFactory::new()
                     ->count(10)
                     ->state(new Sequence(
                         fn(Sequence $sequence) => ['role' => UserRoles::query()->all()->random()],
@@ -276,14 +263,14 @@ If necessary, you may include a closure as a sequence value. The closure will be
 
 Within a sequence closure, you may access the `$index` or `$count` properties on the sequence instance that is injected into the closure. The `$index` property contains the number of iterations through the sequence that have occurred thus far, while the `$count` property contains the total number of times the sequence will be invoked:
 
-    $users = User::factory()
+    $users = UserFactory::new()
                     ->count(10)
                     ->sequence(fn(Sequence $sequence) => ['name' => 'Name '.$sequence->index])
                     ->create();
 
 For convenience, sequences may also be applied using the `sequence` method, which simply invokes the `state` method internally. The `sequence` method accepts a closure or arrays of sequenced attributes:
 
-    $users = User::factory()
+    $users = UserFactory::new()
                     ->count(2)
                     ->sequence(
                         ['name' => 'First User'],
@@ -299,24 +286,24 @@ For convenience, sequences may also be applied using the `sequence` method, whic
 
 Next, let's explore building Obvious model relationships using Framework's fluent factory methods. First, let's assume our application has an `App\Models\User` model and an `App\Models\Post` model. Also, let's assume that the `User` model defines a `hasMany` relationship with `Post`. We can create a user that has three posts using the `has` method provided by the Framework's factories. The `has` method accepts a factory instance:
 
-    use App\Models\Post;
-    use App\Models\User;
+    use Database\Factories\PostFactory;
+    use Database\Factories\UserFactory;
 
-    $user = User::factory()
-                ->has(Post::factory()->count(3))
+    $user = UserFactory::new()
+                ->has(PostFactory::new()->count(3))
                 ->create();
 
 By convention, when passing a `Post` model to the `has` method, Framework will assume that the `User` model must have a `posts` method that defines the relationship. If necessary, you may explicitly specify the name of the relationship that you would like to manipulate:
 
-    $user = User::factory()
-                ->has(Post::factory()->count(3), 'posts')
+    $user = UserFactory::new()
+                ->has(PostFactory::new()->count(3), 'posts')
                 ->create();
 
 Of course, you may perform state manipulations on the related models. In addition, you may pass a closure based state transformation if your state change requires access to the parent model:
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->has(
-                    Post::factory()
+                    PostFactory::new()
                             ->count(3)
                             ->state(function (array $attributes, User $user) {
                                 return ['user_type' => $user->a->type];
@@ -329,13 +316,13 @@ Of course, you may perform state manipulations on the related models. In additio
 
 For convenience, you may use Framework's magic factory relationship methods to build relationships. For example, the following example will use convention to determine that the related models should be created via a `posts` relationship method on the `User` model:
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->hasPosts(3)
                 ->create();
 
 When using magic methods to create factory relationships, you may pass an array of attributes to override on the related models:
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->hasPosts(3, [
                     'published' => false,
                 ])
@@ -343,7 +330,7 @@ When using magic methods to create factory relationships, you may pass an array 
 
 You may provide a closure based state transformation if your state change requires access to the parent model:
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->hasPosts(3, function (array $attributes, User $user) {
                     return ['user_type' => $user->a->type];
                 })
@@ -354,21 +341,21 @@ You may provide a closure based state transformation if your state change requir
 
 Now that we have explored how to build "has many" relationships using factories, let's explore the inverse of the relationship. The `for` method may be used to define the parent model that factory created models belong to. For example, we can create three `App\Models\Post` model instances that belong to a single user:
 
-    use App\Models\Post;
-    use App\Models\User;
+    use Database\Factories\PostFactory;
+    use Database\Factories\UserFactory;
 
-    $posts = Post::factory()
+    $posts = PostFactory::new()
                 ->count(3)
-                ->for(User::factory()->state([
+                ->for(UserFactory::new()->state([
                     'name' => 'Jessica Archer',
                 ]))
                 ->create();
 
 If you already have a parent model instance that should be associated with the models you are creating, you may pass the model instance to the `for` method:
 
-    $user = User::factory()->create();
+    $user = UserFactory::new()->create();
 
-    $posts = Post::factory()
+    $posts = PostFactory::new()
                 ->count(3)
                 ->for($user)
                 ->create();
@@ -378,7 +365,7 @@ If you already have a parent model instance that should be associated with the m
 
 For convenience, you may use Framework's magic factory relationship methods to define "belongs to" relationships. For example, the following example will use convention to determine that the three posts should belong to the `user` relationship on the `Post` model:
 
-    $posts = Post::factory()
+    $posts = PostFactory::new()
                 ->count(3)
                 ->forUser([
                     'name' => 'Jessica Archer',
@@ -390,11 +377,11 @@ For convenience, you may use Framework's magic factory relationship methods to d
 
 Like [has many relationships](#has-many-relationships), "many to many" relationships may be created using the `has` method:
 
-    use App\Models\Role;
-    use App\Models\User;
+    use Database\Factories\RoleFactory;
+    use Database\Factories\UserFactory;
 
-    $user = User::factory()
-                ->has(Role::factory()->count(3))
+    $user = UserFactory::new()
+                ->has(RoleFactory::new()->count(3))
                 ->create();
 
 <a name="pivot-table-attributes"></a>
@@ -402,21 +389,22 @@ Like [has many relationships](#has-many-relationships), "many to many" relations
 
 If you need to define attributes that should be set on the pivot / intermediate table linking the models, you may use the `hasAttached` method. This method accepts an array of pivot table attribute names and values as its second argument:
 
-    use App\Models\Role;
     use App\Models\User;
+    use Database\Factories\RoleFactory;
+    use Database\Factories\UserFactory;
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->hasAttached(
-                    Role::factory()->count(3),
+                    RoleFactory::new()->count(3),
                     ['active' => true]
                 )
                 ->create();
 
 You may provide a closure based state transformation if your state change requires access to the related model:
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->hasAttached(
-                    Role::factory()
+                    RoleFactory::new()
                         ->count(3)
                         ->state(function (array $attributes, User $user) {
                             return ['name' => $user->a->name.' Role'];
@@ -427,9 +415,9 @@ You may provide a closure based state transformation if your state change requir
 
 If you already have model instances that you would like to be attached to the models you are creating, you may pass the model instances to the `hasAttached` method. In this example, the same three roles will be attached to all three users:
 
-    $roles = Role::factory()->count(3)->create();
+    $roles = RoleFactory::new()->count(3)->create();
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->count(3)
                 ->hasAttached($roles, ['active' => true])
                 ->create();
@@ -439,7 +427,7 @@ If you already have model instances that you would like to be attached to the mo
 
 For convenience, you may use Framework's magic factory relationship methods to define many to many relationships. For example, the following example will use convention to determine that the related models should be created via a `roles` relationship method on the `User` model:
 
-    $user = User::factory()
+    $user = UserFactory::new()
                 ->hasRoles(1, [
                     'name' => 'Editor'
                 ])
@@ -450,7 +438,7 @@ For convenience, you may use Framework's magic factory relationship methods to d
 
 To define a relationship within your model factory, you will typically assign a new factory instance to the foreign key of the relationship. This is normally done for the "inverse" relationships such as `belongsTo` relationships. For example, if you would like to create a new user when creating a post, you may do the following:
 
-    use App\Models\User;
+    use Database\Factories\UserFactory;
 
     /**
      * Define the model's default state.
@@ -460,7 +448,7 @@ To define a relationship within your model factory, you will typically assign a 
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'user_id' => UserFactory::new(),
             'title' => fake()->title(),
             'content' => fake()->paragraph(),
         ];
@@ -476,7 +464,7 @@ If the relationship's columns depend on the factory that defines it you may assi
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'user_id' => UserFactory::new(),
             'user_type' => function (array $attributes) {
                 return User::query()->find($attributes['user_id'])->a->type;
             },
@@ -492,14 +480,14 @@ If you have models that share a common relationship with another model, you may 
 
 For example, imagine you have `Airline`, `Flight`, and `Ticket` models, where the ticket belongs to an airline and a flight, and the flight also belongs to an airline. When creating tickets, you will probably want the same airline for both the ticket and the flight, so you may pass an airline instance to the `recycle` method:
 
-    Ticket::factory()
-        ->recycle(Airline::factory()->create())
+    TicketFactory::new()
+        ->recycle(AirlineFactory::new()->create())
         ->create();
 
 You may find the `recycle` method particularly useful if you have models belonging to a common user or team.
 
 The `recycle` method also accepts a collection of existing models. When a collection is provided to the `recycle` method, a random model from the collection will be chosen when the factory needs a model of that type:
 
-    Ticket::factory()
+    TicketFactory::new()
         ->recycle($airlines)
         ->create();

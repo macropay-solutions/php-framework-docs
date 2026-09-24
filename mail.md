@@ -988,11 +988,11 @@ Framework provides a variety of methods for inspecting your mailable's structure
 As you might expect, the "HTML" assertions assert that the HTML version of your mailable contains a given string, while the "text" assertions assert that the plain-text version of your mailable contains a given string:
 
     use App\Mail\InvoicePaid;
-    use App\Models\User;
+    use Database\Factories\UserFactory;
 
     public function test_mailable_content(): void
     {
-        $user = User::factory()->create();
+        $user = UserFactory::new()->create();
 
         $mailable = new InvoicePaid($user);
 

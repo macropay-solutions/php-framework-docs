@@ -704,7 +704,7 @@ If you only want to fake event listeners for a specific set of events, you may p
         Model::setEventDispatcher($fake);
         \app('cache')->refreshEventDispatcher();
 
-        $order = Order::factory()->create();
+        $order = \Database\Factories\OrderFactory::new()->create();
 
         $fake->assertDispatched(OrderCreated::class);
     }

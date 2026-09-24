@@ -187,11 +187,11 @@ The `freezeTime` method may be used to freeze the current time. Similarly, the `
 
 As you would expect, all the methods discussed above are primarily useful for testing time sensitive application behavior, such as locking inactive posts on a discussion forum:
 
-    use App\Models\Thread;
+    use Database\Factories\ThreadFactory;
     
     public function test_forum_threads_lock_after_one_week_of_inactivity()
     {
-        $thread = Thread::factory()->create();
+        $thread = ThreadFactory::new()->create();
         
         $this->travel(1)->week();
         

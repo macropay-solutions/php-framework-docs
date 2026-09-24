@@ -107,7 +107,7 @@ The `actingAs` helper method provides a simple way to authenticate a given user 
     {
         public function testApplication()
         {
-            $user = \App\Models\User::factory()->create();
+            $user = \Database\Factories\UserFactory::new()->create();
 
             $this->actingAs($user)
                  ->get('/user');
@@ -220,7 +220,7 @@ To get started, take a look at the `database/factories/UserFactory.php` file in 
     namespace Database\Factories;
     
     use App\Models\User;
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory;
     
     class UserFactory extends Factory
     {
@@ -256,7 +256,7 @@ State manipulation methods allow you to define discrete modifications that can b
     /**
      * Indicate that the user is suspended.
      *
-     * @return \MacropaySolutions\Kernel\Database\Obvious\Factories\Factory
+     * @return \MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory
      */
     public function suspended()
     {
@@ -270,7 +270,7 @@ If your state transformation requires access to the other attributes defined by 
     /**
      * Indicate that the user is suspended.
      *
-     * @return \MacropaySolutions\Kernel\Database\Obvious\Factories\Factory
+     * @return \MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory
      */
     public function suspended()
     {
@@ -288,7 +288,7 @@ Factory callbacks are registered using the `afterMaking` and `afterCreating` met
     namespace Database\Factories;
 
     use App\Models\User;
-    use MacropaySolutions\Kernel\Database\Obvious\Factories\Factory;
+    use MacropaySolutions\KernelDev\Database\Obvious\Factories\Factory;
     use MacropaySolutions\Kernel\Support\Str;
 
     class UserFactory extends Factory
