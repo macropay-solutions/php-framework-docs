@@ -359,11 +359,11 @@ If you would like to totally reset the database, you may use the `DatabaseMigrat
 
 When testing, you may need to insert a few records into your database before executing your test. PHP-Framework allows you to define a set of default attributes for each of your Obvious models using model factories. Once you have defined a model factory, you may utilize the factory within your test to create models:
 
-    use App\Models\User;
+    use Database\Factories\UserFactory;
 
     public function test_models_can_be_instantiated(): void
     {
-        $user = User::factory()->create();
+        $user = UserFactory::new()->create();
         // ...
     }
 
