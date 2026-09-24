@@ -461,6 +461,11 @@ If some of your class's dependencies are not resolvable via the container, you m
     $transistor = $this->app->makeWith(Transistor::class, ['id' => 1]);
     $transistor = $this->app->make(Transistor::class, [1]);
 
+> [!WARNING]  
+> **Singletons and Custom Parameters**  
+> If you pass custom parameters to a service that is registered as a **singleton** (e.g., via `makeWith` or the `$parameters` array), the container will intentionally bypass the shared singleton cache. It will construct and return a completely new instance using your provided parameters, and it will **not** save this customized instance back into the container's shared memory. This safeguard ensures that custom configurations do not silently overwrite the global state for the rest of the application.
+> `beforeResolving`, `resolving` and `afterResolving` events will be fired only on the first resolve for a singleton and never for a prepopulated instance (when no parameters are given).
+
 The `bound` method may be used to determine if a class or interface has been explicitly bound in the container:
 
     if ($this->app->bound(Transistor::class)) {
@@ -611,6 +616,8 @@ The service container fires events at various stages of an object's resolution l
 
 > [!WARNING]  
 > Use resolution callbacks sparingly. The container engine must compute dynamic cache keys, perform key intersections (`\array_intersect_key`), and flatten callback matrices via `\array_merge` on **every single resolution**. As the number of registered callbacks increases, container execution speed degrades significantly.
+> 
+> > `beforeResolving`, `resolving` and `afterResolving` events will be fired only on the first resolve for a singleton and never for a prepopulated instance (when no parameters are given).
 
 #### Before Resolving
 
