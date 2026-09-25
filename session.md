@@ -35,9 +35,7 @@ When explicitly enabled, sessions provide a structured way to store user data ac
 
 To utilize cookies and sessions, you must actively toggle them on within the application lifecycle:
 
-1. **Composer Realignment**: Remove cookie and session exclusions from the `exclude-from-classmap` collection inside your `composer.json` file.
-2. **Container Activation**: Open `App\Application.php` and uncomment the native session and cookie service container bindings.
-3. **Middleware Isolation**: Manually declare the necessary session middlewares *only* on the specific controller route buckets that require state preservation.
+**Middleware Isolation**: Manually declare the necessary session middlewares *only* on the specific controller route buckets that require state preservation.
 
 > [!WARNING]  
 > Automatic session blocks are not available. Though manual `.withErrors()` view chaining remains fully supported for manual redirect implementations.

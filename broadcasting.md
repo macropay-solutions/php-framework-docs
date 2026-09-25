@@ -66,10 +66,6 @@ Event broadcasting is accomplished by a server-side broadcasting driver that bro
 
 All of your application's event broadcasting configuration is stored in the `config/broadcasting.php` configuration file. Framework supports several broadcast drivers out of the box: [Pusher Channels](https://pusher.com/channels), [Redis](/redis), and a `log` driver for local development and debugging. Additionally, a `null` driver is included which allows you to totally disable broadcasting during testing. A configuration example is included for each of these drivers in the `config/broadcasting.php` configuration file.
 
-<a name="broadcast-service-provider"></a>
-#### Broadcast Service Provider
-
-Before broadcasting any events, you will first need to register the `App\Providers\BroadcastServiceProvider`. In new Framework applications, you only need to uncomment this provider in the `providers` array of your `config/app.php` configuration file. This `BroadcastServiceProvider` contains the code necessary to register the broadcast authorization routes and callbacks.
 
 <a name="queue-configuration"></a>
 #### Queue Configuration
