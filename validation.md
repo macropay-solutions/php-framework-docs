@@ -51,9 +51,7 @@ Framework provides several different approaches to validate your application's i
 Framework includes a wide variety of convenient validation rules that you may apply to data, even providing the ability to validate if values are unique in a given database table. We'll cover each of these validation rules in detail so that you are familiar with all of Framework's validation features.
 
 > **Note on Sessions & Cookies:** Session and Cookie support can be enabled as an OPT IN feature. To enable it:
-> 1. Remove `vendor/macropay-solutions/php-kernel/kernel/Session/` and `vendor/macropay-solutions/php-kernel/kernel/Cookie/` from the `exclude-from-classmap` array in your `composer.json` and run `composer dump-autoload`.
-> 2. Uncomment the `session`, `session.store`, and `cookie` lines in the `$availableBindings`, `$abstractAliases`, and `$aliases` arrays within your `App\Application` class.
-> 3. Assign the `\MacropaySolutions\Kernel\Session\Middleware\StartSession` middleware to your routes.
+> Assign the `\MacropaySolutions\Kernel\Session\Middleware\StartSession` middleware to your routes.
 
 <a name="validation-quickstart"></a>
 ## Validation Quickstart

@@ -41,7 +41,6 @@ When running tests, Framework will automatically set the [configuration environm
 
 You are free to define other testing environment configuration values as necessary. The `testing` environment variables may be configured in your application's `phpunit.xml` file, but make sure to clear your configuration cache using the `config:clear` Run command before running your tests!
 
-> **Note:** Because PHP-Framework is optimized for performance-tuned, headless APIs, memory-heavy components like Sessions, Cookies, and HTML Views are completely disabled by default. If your tests require them, you must explicitly opt-in by modifying your `exclude-from-classmap` rules and uncommenting the relevant bindings in `App\Application.php`.
 
 <a name="the-env-testing-environment-file"></a>
 #### The `.env.testing` Environment File

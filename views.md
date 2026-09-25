@@ -8,7 +8,6 @@ context: views
 
 - [Introduction](#introduction)
   - [Writing Views in React / Vue](#writing-views-in-react-or-vue)
-  - [Explicit View Opt-In Flow](#explicit-view-opt-in-flow)
 - [Creating and Rendering Views](#creating-and-rendering-views)
   - [Nested View Directories](#nested-view-directories)
   - [Package Views](#package-views)
@@ -57,30 +56,6 @@ Since this view is stored at `resources/views/greeting.template.php`, we may ret
 
 Instead of writing their frontend templates in PHP via Template, many developers have begun to prefer to write their templates using React or Vue. Framework makes this painless thanks to [Inertia](https://inertiajs.com/), a library that makes it a cinch to tie your React / Vue frontend to your Framework backend without the typical complexities of building an SPA.
 
-<a name="explicit-view-opt-in-flow"></a>
-### Explicit View Opt-In Flow
-
-Because PHP-Framework is optimized for headless JSON APIs, the HTML View rendering engine is completely disabled by default to conserve memory. To utilize Template views, you must actively toggle the engine on within the application lifecycle:
-
-1. **Composer Realignment**: Open your `composer.json` file and remove the `"vendor/macropay-solutions/php-kernel/kernel/View/"` string from the `exclude-from-classmap` array.
-2. **Container Activation**: Open `App\Application.php` and uncomment the view factory container bindings inside the `$availableBindings` array:
-
-    ```php
-    public $availableBindings = [
-        // ...
-        'view' => 'registerViewBindings',
-        \MacropaySolutions\Kernel\Contracts\View\Factory::class => 'registerViewBindings',
-        'view.finder' => 'registerViewBindings',
-        'template.compiler' => 'registerViewBindings',
-        'view.engine.resolver' => 'registerViewBindings',
-        \MacropaySolutions\Kernel\View\Engines\EngineResolver::class => 'registerViewBindings',
-    ];
-    ```
-
-3. **Alias Activation**: While still inside `App\Application.php`, scroll down to the `registerContainerAliases` method and uncomment the corresponding view aliases in both the `$abstractAliases` and `$aliases` arrays.
-
-Once uncommented, run `composer dump-autoload` in your terminal to rebuild the classmap.
-
 <a name="creating-and-rendering-views"></a>
 ## Creating and Rendering Views
 
@@ -90,7 +65,7 @@ You may create a view by placing a file with the `.template.php` extension in yo
 php run make:view greeting
 ```
 
-The `.template.php` extension informs the framework that the file contains a [Template template](/template). View templates contain HTML as well as Template directives that allow you to easily echo values, create "if" statements, iterate over data, and more.
+The `.template.php` extension informs the framework that the file contains a [Template](/template). View templates contain HTML as well as Template directives that allow you to easily echo values, create "if" statements, iterate over data, and more.
 
 Once you have created a view, you may return it from one of your application's controllers using the global `view` helper:
 
