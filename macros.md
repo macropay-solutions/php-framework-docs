@@ -36,7 +36,7 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
         });
     }
 
-> In this case you should replace the BussServiceProvider by overriding in your `\App\Application`:
+> In this case you should replace the BusServiceProvider by overriding in your `\App\Application`:
 
      /**
      * Register container bindings for the application.
@@ -166,16 +166,6 @@ class AppServiceProvider extends ServiceProvider
     {
         return static fn(string $param): string => 'static ' . $param;
     }
-
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
-        if (\str_starts_with(\config('app.url'), 'https://')) {
-            \app('url')->forceScheme('https');
-        }
-    }
 }
 ```
 ```bash
@@ -248,11 +238,15 @@ use MacropaySolutions\Kernel\Support\Collection;
 Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::class, 'getClosure']);
 ```
 > [!CRITICAL]
-> Boot-Time Only Registration
-> All macros must be registered strictly during the application boot phase (inside Service Provider register). Registering macros after the application has booted is strictly forbidden. Dynamic runtime macro registration during HTTP request handling or console command execution breaks AOT compilation guarantees and is not supported.
+> **Registration-Phase Only**
+> All macros must be registered strictly during the application's registration phase (e.g., inside a Service Provider's `register` method). Registering macros dynamically at runtime during HTTP request handling or console command execution breaks AOT compilation guarantees and is strictly forbidden.
 
 > [!WARNING]
 > Instance macro closures must not be declared static, because they are bound to the target object using Closure::call(). Static macro closures may be declared static, because they are invoked without object binding.
+
+> **WARNING**
+> **Deferred Providers & Macros**
+> Do not register macros inside a `DeferrableProvider` unless you are registering the provider *before* the target class is instantiated via Application::availableBindings. If the provider has not been registered, the macro will not be registered and will throw an error when called. For global availability, always register macros inside a **non-deferrable** Service Provider (like `AppServiceProvider`).
 
 > **WARNING**
 > The second argument of `deferredMacro` **must** be an array callable in `[Class::class, 'method']` format (using a class FQN string, not an instantiated object) that resolves to a static method and returns the macro callable. The closure will be bound to the target class on execution.
@@ -268,7 +262,7 @@ To maximize performance, the `Macroable` trait has been entirely removed from th
 
 If your application requires custom helper methods on the Request object, you must define them natively:
 
-1.  **Modify the Base Class Directly:** Open `App/RequestTrait.php` and add your strictly-typed method directly to the class body.
+1.  **Modify the Trait Directly:** Open `App/RequestTrait.php` and add your strictly-typed method directly to the trait body.
 2.  **IDE autocomplete:** To enable autocomplete, add these new methods in your `App\Request` docblock via `@method Request newMethod(array $data)`. This is needed because `\MacropaySolutions\Kernel\Http\Request` is the key that resolves the global request singleton but in fact it is an instance of `\App\Request`.
 
 By forcing developers to physically define the methods in the class, you get guaranteed autocompletion, strict type hinting, and better performance by eliminating the macro closure-binding pipeline.
