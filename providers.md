@@ -112,19 +112,30 @@ class AppServiceProvider extends ServiceProvider
 
 If your provider is **only** registering bindings in the service container or performing component registration (such as calling `loadViewComponentsAs()`), you should defer its registration until one of the provided services is actually needed. Deferring the loading of such a provider will improve the performance of your application because it is not loaded from the filesystem on every request.
 
-To defer a provider you must follow the logic of `MailServiceProvider` from your `\App\Application` file. Implementing the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface will not help.
+To defer a provider you must follow the logic of `MailServiceProvider` from your `\App\Application` file and DO NOT register it in bootstrap/app.php via $app->register(...).
+Implement the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface and define a `provides(): array` method. Deferred providers are skipped by `Application::boot()` and will never have their `boot()` method called automatically. If a deferred provider requires JIT setup logic upon resolution, register an `$this->app->afterResolving()` array callable inside its `register()` method.
 
 <a name="registering-providers"></a>
 ## Registering Providers
 
-If your provider defines a `boot` method, register it directly on the `$app` instance inside `bootstrap/app.php`:
+If your provider **is non-deferrable**, register it directly on the `$app` instance inside `bootstrap/app.php`:
 
 ```php
 $app->register(App\Providers\AppServiceProvider::class);
 ```
 
+If your provider is non-deferrable and **has a `boot` method defined** register it by passing its class name directly into `$app->boot([...])` inside `bootstrap/app.php`:
+
+```php
+return $app->boot([
+    App\Providers\AppServiceProvider::class,
+]);
+```
+
 If a Service Provider's `register()` logic has been refactored into the `App\Application::$bindings` array, its `$app->register()` line in `bootstrap/app.php` should be commented out or removed entirely.
 
 > [!CRITICAL]
-> Providers that implement DeferrableProvider will not be booted (Their `boot` method will not be called even if it exists).
-> Providers that DO NOT implement DeferrableProvider will be booted WITHOUT autowiring.
+> Providers that implement `DeferrableProvider` or are omitted from `$app->boot([...])` **will NOT be booted** during application startup.
+> **Only NON-DEFERRABLE providers explicitly listed in** `$app->boot([ ... ])` inside `bootstrap/app.php` will be booted during application startup. Non-deferrable providers MUST declare an explicit `boot()` method if listed in the boot array. This `boot` method is not included in autowiring, so be sure to leave its definition without parameters.
+> 
+> Not allowing providers to be booted automatically, increases the visibility on the boot logic and prevents devs from adding overhead logic on each request when not needed.
