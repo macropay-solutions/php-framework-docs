@@ -121,14 +121,14 @@ Implement the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` in
 If your provider **is non-deferrable**, register it directly on the `$app` instance inside `bootstrap/app.php`:
 
 ```php
-$app->register(App\Providers\AppServiceProvider::class);
+$app->register(\App\Providers\AppServiceProvider::class);
 ```
 
 If your provider is non-deferrable and **has a `boot` method defined** register it by passing its class name directly into `$app->boot([...])` inside `bootstrap/app.php`:
 
 ```php
 return $app->boot([
-    App\Providers\AppServiceProvider::class,
+    \App\Providers\AppServiceProvider::class,
 ]);
 ```
 
