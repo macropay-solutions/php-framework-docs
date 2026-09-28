@@ -124,18 +124,22 @@ If your provider **is non-deferrable**, register it directly on the `$app` insta
 $app->register(\App\Providers\AppServiceProvider::class);
 ```
 
-If your provider is non-deferrable and **has a `boot` method defined** register it by passing its class name directly into `$app->boot([...])` inside `bootstrap/app.php`:
+If your provider **has a `boot` method defined**, execute it by passing its class name directly into the variadic `$app->boot(...)` method inside `bootstrap/app.php`:
 
 ```php
-return $app->boot([
+return $app->boot(
     \App\Providers\AppServiceProvider::class,
-]);
+);
 ```
 
 If a Service Provider's `register()` logic has been refactored into the `App\Application::$bindings` array, its `$app->register()` line in `bootstrap/app.php` should be commented out or removed entirely.
 
+> [!TIP]  
+> If a Service Provider *only* contains a `boot()` method and no `register()` logic, do not call `$app->register()`. Simply pass the class name directly to `$app->boot(...)`.
+> When passing any kind of providers to `$app->boot(...)` the framework will Just-In-Time (JIT) instantiate it (if not loaded already), execute the boot method, and if not loaded already, discard the instance without consuming permanent memory in the loaded providers state.
+
 > [!CRITICAL]
-> Providers that implement `DeferrableProvider` or are omitted from `$app->boot([...])` **will NOT be booted** during application startup.
-> **Only NON-DEFERRABLE providers explicitly listed in** `$app->boot([ ... ])` inside `bootstrap/app.php` will be booted during application startup. Non-deferrable providers MUST declare an explicit `boot()` method if listed in the boot array. This `boot` method is not included in autowiring, so be sure to leave its definition without parameters.
+> Providers that are omitted from `$app->boot(...)` **will NOT be booted** during application startup.
+> **Only providers explicitly listed in** `$app->boot(...)` inside `bootstrap/app.php` will be booted during application startup. Providers MUST declare an explicit `boot()` method if listed in the boot arguments. This `boot` method is not included in autowiring, so be sure to leave its definition without parameters.
 > 
 > Not allowing providers to be booted automatically, increases the visibility on the boot logic and prevents devs from adding overhead logic on each request when not needed.
