@@ -94,7 +94,7 @@ Note that each connection configuration example in the `queue` configuration fil
 
 Some applications may not need to ever push jobs onto multiple queues, instead preferring to have one simple queue. However, pushing jobs to multiple queues can be especially useful for applications that wish to prioritize or segment how jobs are processed, since the Framework queue worker allows you to specify which queues it should process by priority. For example, if you push jobs to a `high` queue, you may run a worker that gives them higher processing priority:
 
-    php run queue:work --queue=high,default
+    php run-warm queue:work --queue=high,default
 
 <a name="driver-prerequisites"></a>
 ### Driver Notes and Prerequisites
@@ -949,7 +949,7 @@ If one of your queued jobs is encountering an error, you likely do not want it t
 
 One approach to specifying the maximum number of times a job may be attempted is via the `--tries` switch on the Run command line. This will apply to all jobs processed by the worker unless the job being processed specifies the number of times it may be attempted:
 
-    php run queue:work --tries=3
+    php run-warm queue:work --tries=3
 
 If a job exceeds its maximum number of attempts, it will be considered a "failed" job. For more information on handling failed jobs, consult the [failed job documentation](#dealing-with-failed-jobs). If `--tries=0` is provided to the `queue:work` command, the job will be retried indefinitely.
 
@@ -1045,7 +1045,7 @@ Often, you know roughly how long you expect your queued jobs to take. For this r
 
 The maximum number of seconds that jobs can run may be specified using the `--timeout` switch on the Run command line:
 
-    php run queue:work --timeout=30
+    php run-warm queue:work --timeout=30
 
 If the job exceeds its maximum attempts by continually timing out, it will be marked as failed.
 
@@ -1485,26 +1485,27 @@ If you defined your DynamoDB table with a `ttl` attribute, you may define config
 ## Running the Queue Worker
 
 <a name="the-queue-work-command"></a>
-### The `queue:work` Command
+### The `run-warm queue:work` Command
 
 Framework includes an Run command that will start a queue worker and process new jobs as they are pushed onto the queue. You may run the worker using the `queue:work` Run command:
 
-    php run queue:work
+    php run-warm queue:work
 
 > [!NOTE]  
-> To keep the `queue:work` process running permanently in the background, you should use a process monitor such as [Supervisor](#supervisor-configuration) to ensure that the queue worker does not stop running.
+> To keep the `run-warm queue:work` process running permanently in the background, you should use a process monitor such as [Supervisor](#supervisor-configuration) to ensure that the queue worker does not stop running.
 >
 > But be aware that Supervisor is NOT AWARE of signals! That means that it will restart the worker after a `SIGTERM` on scale down or deploy scenario in the time between the signal is received and the container is killed!
 
 You may include the `-v` flag when invoking the `queue:work` command if you would like the processed job IDs to be included in the command's output:
 
 
-    php run queue:work -v
+    php run-warm queue:work -v
 
 
 Remember, queue workers are long-lived processes and store the booted application state in memory. As a result, they will not notice changes in your code base after they have been started. So, during your deployment process, be sure to [restart your queue workers](#queue-workers-and-deployment). In addition, remember that any static state created or modified by your application will not be automatically reset between jobs.
 
-To avoid issues you can use the `--once` flag because the `commands:cache` command will shorten the run boot time. Also, if you want to fail the jobs that exceed the memory limit and result in a fatal error, use the `--fail-on-fatal` flag.
+> [!NOTE]
+> The `php run queue:work` command processes a single job per execution. Use `run-warm queue:work` for a `pcntl_fork` share-nothing daemon alternative. If you want to NOT fail jobs that encounter a fatal error, use the `--fail-on-fatal=0` option (default is 1/true).
 
 Alternatively, you may run the `queue:listen` command. When using the `queue:listen` command, you don't have to manually restart the worker when you want to reload your updated code or reset the application state; however, this command is significantly less efficient than the `queue:work` command:
 
@@ -1523,43 +1524,13 @@ To assign multiple workers to a queue and process jobs concurrently, you should 
 You may also specify which queue connection the worker should utilize. The connection name passed to the `work` command should correspond to one of the connections defined in your `config/queue.php` configuration file:
 
 
-    php run queue:work redis
+    php run-warm queue:work redis
 
 
 By default, the `queue:work` command only processes jobs for the default queue on a given connection. However, you may customize your queue worker even further by only processing particular queues for a given connection. For example, if all of your emails are processed in an `emails` queue on your `redis` queue connection, you may issue the following command to start a worker that only processes that queue:
 
 
-    php run queue:work redis --queue=emails
-
-
-<a name="processing-a-specified-number-of-jobs"></a>
-#### Processing a Specified Number of Jobs
-
-The `--once` option may be used to instruct the worker to only process a single job from the queue:
-
-    php run queue:work --once
-
-The `--max-jobs` option may be used to instruct the worker to process the given number of jobs and then exit. This option may be useful when combined with [Supervisor](#supervisor-configuration) so that your workers are automatically restarted after processing a given number of jobs, releasing any memory they may have accumulated:
-
-```shell
-php run queue:work --max-jobs=1000
-```
-
-<a name="processing-all-queued-jobs-then-exiting"></a>
-#### Processing All Queued Jobs and Then Exiting
-
-The `--stop-when-empty` option may be used to instruct the worker to process all jobs and then exit gracefully. This option can be useful when processing Framework queues within a Docker container if you wish to shutdown the container after the queue is empty:
-
-php run queue:work --stop-when-empty
-
-<a name="processing-jobs-for-a-given-number-of-seconds"></a>
-#### Processing Jobs for a Given Number of Seconds
-
-The `--max-time` option may be used to instruct the worker to process jobs for the given number of seconds and then exit. This option may be useful when combined with [Supervisor](#supervisor-configuration) so that your workers are automatically restarted after processing jobs for a given amount of time, releasing any memory they may have accumulated:
-
-# Process jobs for one hour and then exit...
-
-    php run queue:work --max-time=3600
+    php run-warm queue:work redis --queue=emails
 
 
 <a name="worker-sleep-duration"></a>
@@ -1567,7 +1538,7 @@ The `--max-time` option may be used to instruct the worker to process jobs for t
 
 When jobs are available on the queue, the worker will keep processing jobs with no delay in between jobs. However, the `sleep` option determines how many seconds the worker will "sleep" if there are no jobs available. Of course, while sleeping, the worker will not process any new jobs:
 
-    php run queue:work --sleep=3
+    php run-warm queue:work --sleep=3
 
 <a name="resource-considerations"></a>
 #### Resource Considerations
@@ -1584,7 +1555,7 @@ Sometimes you may wish to prioritize how your queues are processed. For example,
 To start a worker that verifies that all the `high` queue jobs are processed before continuing to any jobs on the `low` queue, pass a comma-delimited list of queue names to the `work` command:
 
 
-    php run queue:work --queue=high,low
+    php run-warm queue:work --queue=high,low
 
 
 <a name="queue-workers-and-deployment"></a>
@@ -1617,7 +1588,7 @@ In your `config/queue.php` configuration file, each queue connection defines a `
 
 The `queue:work` Run command exposes a `--timeout` option. By default, the `--timeout` value is 60 seconds. If a job is processing for longer than the number of seconds specified by the timeout value, the worker processing the job will exit with an error. Typically, the worker will be restarted automatically by a process manager configured on your server:
 
-    php run queue:work --timeout=60
+    php run-warm queue:work --timeout=60
 
 The `retry_after` configuration option and the `--timeout` CLI option are different, but work together to ensure that jobs are not lost and that jobs are only successfully processed once.
 
@@ -1657,11 +1628,11 @@ A migration to create the `failed_jobs` table is typically already present in ne
 
 When running a [queue worker](#running-the-queue-worker) process, you may specify the maximum number of times a job should be attempted using the `--tries` switch on the `queue:work` command. If you do not specify a value for the `--tries` option, jobs will only be attempted once or as many times as specified by the job class' `$tries` property:
 
-    php run queue:work redis --tries=3
+    php run-warm queue:work redis --tries=3
 
 Using the `--backoff` option, you may specify how many seconds Framework should wait before retrying a job that has encountered an exception. By default, a job is immediately released back onto the queue so that it may be attempted again:
 
-    php run queue:work redis --tries=3 --backoff=3
+    php run-warm queue:work redis --tries=3 --backoff=3
 
 If you would like to configure how many seconds Framework should wait before retrying a job that has encountered an exception on a per-job basis, you may do so by defining a `backoff` property on your job class:
 
@@ -2064,21 +2035,5 @@ Using the `before` and `after` methods on the queue service, you may specify cal
         {
             \app('queue')->before([\App\Listeners\QueueEventListener::class, 'onBefore']);
             \app('queue')->after([\App\Listeners\QueueEventListener::class, 'onAfter']);
-        }
-    }
-
-Using the `looping` method, you may specify callbacks that execute before the worker attempts to fetch a job from a queue. For example, you might register a closure to rollback any transactions that were left open by a previously failed job:
-
-    \app('queue')->looping([\App\Listeners\QueueLoopListener::class, 'resetTransactions']);
-
-    class QueueLoopListener
-    {
-        public static function resetTransactions(): void
-        {
-            $db = \app('db');
-
-            while ($db->transactionLevel() > 0) {
-                $db->rollBack();
-            }
         }
     }
