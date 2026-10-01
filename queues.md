@@ -1561,16 +1561,7 @@ To start a worker that verifies that all the `high` queue jobs are processed bef
 <a name="queue-workers-and-deployment"></a>
 ### Queue Workers and Deployment
 
-Since queue workers are long-lived processes, they will not notice changes to your code without being restarted. So, the simplest way to deploy an application using queue workers is to restart the workers during your deployment process. You may gracefully restart all the workers by issuing the `queue:restart` command:
-
-
-    php run queue:restart
-
-
-This command will instruct all queue workers to gracefully exit after they finish processing their current job so that no existing jobs are lost. Since the queue workers will exit when the `queue:restart` command is executed, you should be running a process manager such as [Supervisor](#supervisor-configuration) to automatically restart the queue workers.
-
-> [!NOTE]  
-> The queue uses the [cache](/cache) to store restart signals, so you should verify that a cache driver is properly configured for your application before using this feature.
+Since `php run-warm queue:work` is a long-lived process, it will not notice changes to your code without being restarted. During deployment, queue workers should be restarted by sending OS process signals (`SIGTERM`) to the workers. This instructs the workers to gracefully exit after finishing their active job. Your process manager (e.g., Supervisor, Docker, or Systemd) will then spin up fresh processes running the updated codebase.
 
 <a name="job-expirations-and-timeouts"></a>
 ### Job Expirations and Timeouts
@@ -1598,9 +1589,9 @@ The `retry_after` configuration option and the `--timeout` CLI option are differ
 <a name="supervisor-configuration"></a>
 ## Supervisor Configuration
 
-In production, you need a way to keep your `queue:work` processes running. A `queue:work` process may stop running for a variety of reasons, such as an exceeded worker timeout or the execution of the `queue:restart` command.
+In production, you need a way to keep your `php run-warm queue:work` processes running. A `queue:work` process may stop by receiving a termination signal (`SIGTERM`) during deployment.
 
-For this reason, you need to configure a process monitor that can detect when your `queue:work` processes exit and automatically restart them. In addition, process monitors can allow you to specify how many `queue:work` processes you would like to run concurrently. Supervisor is a process monitor commonly used in Linux environments and we will discuss how to configure it in the following documentation.
+For this reason, you need to configure a process monitor that can detect when your `php run-warm queue:work` processes exit and automatically restart them. In addition, process monitors can allow you to specify how many `php run-warm queue:work` processes you would like to run concurrently. Supervisor is a process monitor commonly used in Linux environments and we will discuss how to configure it in the following documentation.
 
 <a name="installing-supervisor"></a>
 #### Installing Supervisor
