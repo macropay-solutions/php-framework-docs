@@ -9,6 +9,7 @@ context: database
 - [Introduction](#introduction)
     - [Configuration](#configuration)
     - [Read and Write Connections](#read-and-write-connections)
+    - [Database Connection Proxies and Transaction Pooling](#database-connection-proxies-and-transaction-pooling)
 - [Basic Usage & Running Queries](#running-queries)
     - [Using Multiple Database Connections](#using-multiple-database-connections)
     - [Listening for Query Events](#listening-for-query-events)
@@ -110,6 +111,102 @@ When multiple values exist in the `host` configuration array, a database host wi
 #### The `sticky` Option
 
 The `sticky` option is an *optional* value that can be used to allow the immediate reading of records that have been written to the database during the current request cycle. If the `sticky` option is enabled and a "write" operation has been performed against the database during the current request cycle, any further "read" operations will use the "write" connection.
+
+<a name="database-connection-proxies-and-transaction-pooling"></a>
+### Database Connection Proxies and Transaction Pooling
+
+When deploying high-throughput applications behind database connection proxies such as PgBouncer or ProxySQL, backend connections may be multiplexed among frontend clients. In PgBouncer transaction-pooling mode, a backend connection is assigned to a client only for the duration of a transaction. With autocommit enabled, an individual SQL statement forms its own transaction.
+
+#### PgBouncer & PostgreSQL
+
+PostgreSQL server-side prepared statements are tied to the underlying backend connection where they were prepared. In transaction pooling, a statement prepared on backend connection A will not exist if a subsequent query in a new transaction is routed to backend connection B.
+
+PgBouncer 1.21 and later supports protocol-level prepared statement tracking in transaction-pooling mode. You can enable this by setting `max_prepared_statements` in `pgbouncer.ini`:
+
+```ini
+[pgbouncer]
+pool_mode = transaction
+max_prepared_statements = 100
+```
+
+> [!NOTE]  
+> Choose `max_prepared_statements` based on the number of distinct query templates in your application and available database memory. Setting this value unnecessarily high increases memory usage in PgBouncer and on PostgreSQL backend connections This setting applies to protocol-level prepared statements; SQL-level `PREPARE` and `EXECUTE` commands remain session-scoped and unsupported in transaction pooling.
+
+##### PHP/PDO Runtime Compatibility
+
+Before enabling native prepared statements (`PDO::ATTR_EMULATE_PREPARES => false`) with PgBouncer statement tracking, verify compatibility with your environment's PHP, `pdo_pgsql`, and `libpq` versions. Certain older PHP/PDO runtime combinations dispatch explicit `DEALLOCATE pdo_stmt_...` cleanup commands upon PDO statement destruction, which can conflict with PgBouncer's internal statement management.
+
+If your runtime environment exhibits statement deallocation conflicts or if you cannot verify full `libpq` tracking compatibility, configure emulated prepares on the database connection:
+
+```php
+<?php
+
+return [
+    'pgsql' => [
+        'driver' => 'pgsql',
+        'host' => env('DB_HOST', '127.0.0.1'),
+        'port' => env('DB_PORT', 6432),
+        'database' => env('DB_DATABASE', 'main'),
+        'username' => env('DB_USERNAME', 'app'),
+        'password' => env('DB_PASSWORD'),
+        'options' => [
+            \PDO::ATTR_EMULATE_PREPARES => true,
+        ],
+    ],
+];
+```
+
+With emulated prepares, PDO performs parameter substitution on the client side and sends the resulting SQL to the database. This avoids backend-local prepared-statement state, but has different parsing, typing, and performance characteristics from native prepares.
+
+> [!WARNING]  
+> Depending on the framework's binding normalization and the PDO driver path, boolean parameters in emulated mode may be sent as `1` or `0` rather than PostgreSQL boolean values. Test boolean, date, binary, and numeric bindings thoroughly when toggling prepare modes.
+
+#### ProxySQL & MySQL
+
+ProxySQL does not use PgBouncer's `pool_mode` setting. It multiplexes frontend connections onto backend connections and relies on hostgroups and query rules for routing. Review `mysql-multiplexing`, transaction persistence, and query-rule routing when using session-scoped MySQL features.
+
+#### Temporary Tables & Session State
+
+Temporary tables (`CREATE TEMPORARY TABLE`) and session variables exist strictly within the scope of a single backend database connection. Because transaction poolers swap underlying connections, temporary tables require specific proxy-aware handling:
+
+* **PgBouncer (PostgreSQL):**  In transaction-pooling mode, create and use temporary tables within the same transaction. Prefer `ON COMMIT DROP` so the temporary table is automatically removed when the transaction finishes. The table must not be referenced after the transaction closure returns:
+
+  ```php
+  app('db')->transaction(function () {
+      app('db')->statement(
+          'CREATE TEMPORARY TABLE tmp_session_data (...) ON COMMIT DROP'
+      );
+      app('db')->insert('INSERT INTO tmp_session_data ...');
+      
+      return app('db')->select('SELECT * FROM tmp_session_data');
+  });
+  ```
+  
+  Temporary tables that must survive across transactions require PgBouncer `session` pooling or a direct database connection.
+
+* **ProxySQL (MySQL):** ProxySQL inspects SQL query traffic on the wire and automatically disables connection multiplexing (`multiplexing = 0`) when it detects a `CREATE TEMPORARY TABLE` statement. However, **disabling multiplexing does not prevent ProxySQL query rules from routing queries across hostgroups**. A `SELECT` query on a temporary table may still be routed to a reader hostgroup where the temporary table does not exist.
+
+  Configure ProxySQL routing rules so the complete temporary-table workflow uses the writer hostgroup, or execute all statements using an explicitly bound writer connection instance:
+
+  ```php
+  $connection = app('db')->connection('mysql-write');
+
+  $connection->transaction(function () use ($connection) {
+      $connection->statement('CREATE TEMPORARY TABLE tmp_session_data (...)');
+
+      try {
+          $connection->insert('INSERT INTO tmp_session_data ...');
+          return $connection->select('SELECT * FROM tmp_session_data');
+     } finally {
+          $connection->statement('DROP TEMPORARY TABLE IF EXISTS tmp_session_data');
+      }
+  });
+  ```
+
+The `mysql-write` connection must be configured as a write-only connection that routes to the ProxySQL writer hostgroup.
+
+> [!WARNING]  
+> Transaction pooling is appropriate for stateless database work. Do not rely on session state surviving across transactions, including bare `SET` commands, session-level advisory locks (`pg_advisory_lock`), `LISTEN` listeners, temporary tables that survive a transaction, SQL-level `PREPARE` statements, or session-scoped cursors that require a stable backend connection. Use transaction-scoped alternatives (such as `pg_advisory_xact_lock`), session pooling, a direct database connection, or an explicitly pinned write connection as appropriate.
 
 <a name="running-queries"></a>
 ## Basic Usage & Running Queries
