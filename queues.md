@@ -47,7 +47,7 @@ context: queues
   - [Storing Batches in DynamoDB](#storing-batches-in-dynamodb)
 - [Queueing Closures](#queueing-closures)
 - [Running the Queue Worker](#running-the-queue-worker)
-  - [The `queue:work` Command](#the-queue-work-command)
+  - [The `queue:work` Command](#the-queuework-command)
   - [Queue Priorities](#queue-priorities)
   - [Queue Workers and Deployment](#queue-workers-and-deployment)
   - [Job Expirations and Timeouts](#job-expirations-and-timeouts)
@@ -1485,7 +1485,7 @@ If you defined your DynamoDB table with a `ttl` attribute, you may define config
 ## Running the Queue Worker
 
 <a name="the-queue-work-command"></a>
-### The `run-warm queue:work` Command
+### The `queue:work` Command
 
 Framework includes an Run command that will start a queue worker and process new jobs as they are pushed onto the queue. You may run the worker using the `queue:work` Run command:
 
