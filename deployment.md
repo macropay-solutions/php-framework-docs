@@ -148,6 +148,14 @@ ln -s ../public/favicon.ico web/favicon.ico
 ln -s ../public/robots.txt web/robots.txt
 ```
 
+#### Running Qbix Locally
+
+Install `qbix/webserver` via Composer `--dev` or clone it alongside the project:
+
+```shell
+php vendor/bin/qbixserver --port=8080
+```
+
 > [!NOTE]  
 > **Deployment Restarts**
 >
