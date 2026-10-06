@@ -19,6 +19,7 @@ context: deployment
 - [Server Requirements](#server-requirements)
 - [Server Configuration](#server-configuration)
     - [Nginx](#nginx)
+    - [Qbix](#qbix)
 - [Optimization](#optimization)
     - [Autoloader Optimization](#autoloader-optimization)
     - [Caching Configuration](#caching-configuration)
@@ -106,6 +107,52 @@ server {
     }
 }
 ```
+
+<a name="qbix"></a>
+### Qbix
+
+To run this framework in a high-performance Copy-on-Write (CoW) pre-forking environment, you can use Qbix Server. Because PHP-Framework is strictly share-nothing, it avoids memory bloating and state-bleeding, making it a perfect fit for Qbix's fork-per-request architecture.
+
+To deploy with Qbix, create a `your-project/local/app.json` file in your project root with the following configuration:
+
+```json
+{
+    "Q": {
+        "webserver": {
+            "root": "web",
+            "boot": {
+                "adapter": "custom",
+                "custom": {
+                    "bootstrap": "bootstrap/cli.php",
+                    "front": "web/index.php"
+                }
+            }
+        }
+    }
+}
+```
+
+PHP-Framework is adapted to run with Qbix out of the box. The framework safely disconnects databases and Redis instances before the process forks (handled internally by `bootstrap/cli.php`), ensuring that no network file descriptors are shared between child workers.
+
+#### Serving Static Assets
+
+Because Qbix uses `web/` as its document root, static assets and public files located in `public/` or `storage/app/public/` must be manually symlinked into `web/`. This allows Qbix to serve static requests directly from disk without spawning PHP worker processes:
+
+```shell
+# Symlink compiled assets and storage
+ln -s ../public/assets web/assets
+ln -s ../storage/app/public web/storage
+
+# Symlink static root files
+ln -s ../public/favicon.ico web/favicon.ico
+ln -s ../public/robots.txt web/robots.txt
+```
+
+> [!NOTE]  
+> **Deployment Restarts**
+>
+> When deploying new code using this adapter, the worker daemon must be fully restarted on each deploy to load the new changes into the parent's memory (there is no need to configure file watchers). For more details, see the [Qbix Boot Adapter documentation](https://github.com/Qbix/webserver/blob/master/docs/FRAMEWORKS.md).
+> Use this only for HTTP request. See [run-warm queue:work](/queues#the-queuework-command) for CoW on queue workers.
 
 <a name="optimization"></a>
 ## Optimization
