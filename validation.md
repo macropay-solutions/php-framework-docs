@@ -421,7 +421,7 @@ By adding a `stopOnFirstFailure` property to your request class, you may inform 
 <a name="customizing-the-redirect-location"></a>
 #### Customizing the Redirect Location
 
-As previously discussed, a redirect response will be generated to send the user back to their previous location when form request validation fails. However, you are free to customize this behavior. To do so, define a `$redirect` property on your form request:
+As previously discussed, failed form request validation generates a 422 JSON response by default. However, if you have enabled session support and wish to trigger a traditional HTTP redirect upon validation failure, you may explicitly opt into this behavior. To do so, define a `$redirect` property on your form request indicating the URI that users should be sent back to:
 
     /**
      * The URI that users should be redirected to if validation fails.
