@@ -44,15 +44,29 @@ Framework automatically generates a CSRF "token" for each active [user session](
 
 The current session's CSRF token can be accessed via the request's session or via the `csrf_token` helper function:
 
+    // routes/web.php
+    use App\Controllers\TokenController;
+    
+    $router->get('/token', [TokenController::class, 'show']);
+
+    // App/Controllers/TokenController.php
+    namespace App\Controllers;
+    
     use MacropaySolutions\Kernel\Http\Request;
-
-    $router->get('/token', function (Request $request) {
-        $token = $request->session()->token();
-
-        $token = csrf_token();
-
-        // ...
-    });
+    
+    class TokenController
+    {
+        public function show(Request $request)
+        {
+            // Retrieve via the request session
+            $token = $request->session()->token();
+    
+            // Retrieve via the global helper
+            $token = csrf_token();
+    
+            // ...
+        }
+    }
 
 Anytime you define a "POST", "PUT", "PATCH", or "DELETE" HTML form in your application, you should include a hidden CSRF `_token` field in the form so that the CSRF protection middleware can validate the request. For convenience, you may use the `@csrf` Template directive to generate the hidden token input field:
 
