@@ -2168,6 +2168,17 @@ Of course, you may chain all the methods in the examples above:
         ->symbols()
         ->uncompromised()
 
+<a name="configuring-the-uncompromised-timeout"></a>
+#### Configuring the Uncompromised Timeout
+
+Under the hood, the `uncompromised` validation rule makes an HTTP request to the haveibeenpwned.com API. By default, this request has a 30-second timeout.
+
+Unlike other frameworks where changing this timeout requires rewriting complex container bindings in a Service Provider, PHP-Framework's container natively supports parameter injection. You can easily resolve the verifier with a custom timeout (in seconds) directly on the fly:
+
+    use MacropaySolutions\Kernel\Contracts\Validation\UncompromisedVerifier;
+
+    $verifier = app()->make(UncompromisedVerifier::class, ['timeout' => 5]);
+
 <a name="defining-default-password-rules"></a>
 #### Defining Default Password Rules
 
