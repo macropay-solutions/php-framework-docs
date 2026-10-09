@@ -18,6 +18,7 @@ context: routing
   - [Middleware](#route-group-middleware)
   - [Namespaces](#route-group-namespaces)
   - [Route Prefixes](#route-group-prefixes)
+- [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
 
 <a name="basic-routing"></a>
 ## Basic Routing
@@ -251,3 +252,88 @@ You may also use the `prefix` parameter to specify common parameters for your gr
 > Do **NOT** run PHP-Framework with long-running, multithreaded, or coroutine-based application servers (such as **Swoole, OpenSwoole, or RoadRunner**).
 >
 > Because `strtok()` relies on a single global internal pointer within the PHP thread state, concurrent asynchronous requests sharing the same process worker will overwrite each other's routing tokens mid-flight. This will result in critical security vulnerabilities, including routing desynchronization, cross-user data leaks, and authentication middleware bypasses.
+
+<a name="cross-origin-resource-sharing-cors"></a>
+## Cross-Origin Resource Sharing (CORS)
+
+By default, PHP-Framework executes with **zero global CORS overhead**.
+
+Unmatched preflight requests that produce a routing MethodNotAllowedHttpException or NotFoundHttpException for `OPTIONS` method/verb and have an `Origin` header are intercepted universally at the Exception layer (`Handler::render`) without path-matching loops or redundant configuration arrays. For actual data responses (`GET`, `POST`, streams), you can choose between two operational strategies:
+
+---
+
+### Option A: Scoped Route Middleware (Recommended for Hybrid Apps)
+
+If your application serves both same-origin web traffic (e.g., View templates) and cross-origin endpoints, assign `RouteAppendCorsHeaders` strictly to the relevant route groups.
+
+    use MacropaySolutions\Kernel\Http\Middleware\RouteAppendCorsHeaders;
+
+    $router->group([
+        'prefix' => 'api',
+        'middleware' => RouteAppendCorsHeaders::class,
+    ], function () use ($router) {
+        // All routes inside this group will attach CORS headers to responses
+        $router->get('users', 'UserController@index');
+        $router->post('export', 'ExportController@download');
+    });
+
+- **Pros:** Standard web routes pay zero CORS overhead.
+- **How it works:** The router evaluates path matching. The middleware strictly attaches response headers to responses returned normally for matching requests that contain an `Origin` request header.
+
+---
+
+### Option B: Global Middleware or Reverse Proxy
+
+If your application operates as a full API backend, or you prefer global/infrastructure handling, choose one of the following setups:
+
+1. **Framework Global Middleware (`HandleCors`)**
+   If you want the framework to manage CORS globally across all routes, register `HandleCors` in `\App\Application::$middleware`:
+
+        $middleware = [
+            // ...
+            \MacropaySolutions\Kernel\Http\Middleware\HandleCors::class,
+        ];
+
+  - **Note:** Global `HandleCors` requires defining the `paths` array in `config/cors.php` to perform path-matching checks before running.
+
+2. **Infrastructure Layer (Nginx / CDN)**
+   For maximum throughput, let your reverse proxy (Nginx, Apache, or Cloudflare) inject `Access-Control-Allow-Origin` headers on successful responses.
+
+  - **Config:** Do not register any CORS middleware in PHP.
+  - **Behavior:** The framework's `Handler.php` continues to safely intercept unmatched preflight requests that produce a routing MethodNotAllowedHttpException or NotFoundHttpException for `OPTIONS` method/verb and have an `Origin` header, while Nginx handles header injection for all intended responses without PHP-side CORS middleware or header processing.
+
+---
+
+### Configuration (`config/cors.php`)
+
+CORS handling requires `fruitcake/php-cors`, whether you use route middleware, global middleware, or exception-layer preflight handling.
+
+Ensure `cors` configuration is loaded in `bootstrap/app.php`:
+
+    if (!$app->configurationIsCached()) {
+        // ...
+        $app->configure('cors');
+    }
+
+`config/cors.php` in your application configuration directory:
+
+    <?php
+
+    return [
+        /*
+        | Define paths only if you use global HandleCors middleware.
+        | RouteAppendCorsHeaders ignores this array (route groups define scope).
+        */
+        // 'paths' => ['api/*', 'webhook/*'],
+
+        'allowed_methods' => ['*'],
+        'allowed_origins' => ['*'],
+        'allowed_origins_patterns' => [],
+        'allowed_headers' => ['*'],
+        'exposed_headers' => [],
+        'max_age' => 0,
+        'supports_credentials' => false,
+    ];
+
+> **WARNING:** Do not add `HandleCors` to your global middleware if your application only serves same-origin traffic. Running CORS path-matching checks on same-origin requests wastes container resolutions and configuration lookups.
+> If you register an OPTIONS route and rely on the exception-layer fallback, that route must handle preflight headers itself.
