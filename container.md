@@ -293,6 +293,8 @@ The fastest way to bypass contextual lookup is by defining your array callables 
         );
     }
 
+> [!NOTE] DO NOT use aliases in $bindings as keys!
+
 #### 2. Manual Factory Closures in Service Providers
 
 If you prefer to configure your bindings within standard Service Providers, you can avoid contextual evaluations by using a factory closure inside a standard `bind` or `singleton` method. This allows you to manually instantiate the target class and explicitly pass the concrete dependencies it requires.
