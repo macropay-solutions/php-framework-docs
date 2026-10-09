@@ -693,22 +693,26 @@ Direct assignment bypasses standard container overhead and, crucially, **preserv
 
 If the container has aliases configured (e.g., `'request' => Request::class`), those aliases act as signposts pointing to the root target. By injecting the object directly into the root target key (`Request::class`), all existing aliases remain perfectly intact and successfully route developer requests (like `app('request')`) to your injected object.
 
-<a name="the-instance-method-and-alias-removal"></a>
-### The `instance()` Method and Alias Removal
+<a name="the-instance-method-and-alias-protection"></a>
+### The `instance()` Method and Alias Protection
 
-While direct assignment is used for core bootstrapping, developers and runtime processes must use the `$this->instance()` method when injecting or overriding objects dynamically.
+While direct assignment is used for core bootstrapping, developers and runtime processes must use the `$this->instance()` method when injecting or overriding objects dynamically:
 
     // Injecting a mock during testing or runtime
-    $this->instance(\MacropaySolutions\Kernel\Cache\CacheManager::class, $mockCache);
+    $this->app->instance(\MacropaySolutions\Kernel\Cache\CacheManager::class, $mockCache);
 
-When you call `instance()`, the container performs two critical operations that direct assignment does not:
+To guarantee container state integrity and prevent split-state bugs, `instance()`, `bind()`, and `alias()` enforce strict target rules:
 
-1. **Alias Removal:** If the key provided (e.g., `\MacropaySolutions\Kernel\Cache\CacheManager::class`) is currently registered as an alias (pointing to `cache`), the container **destroys that alias**. If it didn't, the container would see `\MacropaySolutions\Kernel\Cache\CacheManager::class`, follow the alias to `cache`, build a brand new manager from scratch, and completely bypass the user's injected `$mockCache`. Destroying the alias forces the container to stop and serve the injected instance directly.
-2. **Rebound Events:** If the object being replaced was already resolved previously by other services, `instance()` fires a `rebound` event. This notifies all singleton services that hold the old instance to update their internal state with the new one.
+1. **Alias Protection (`LogicException`):** Passing an alias key (e.g., `'\MacropaySolutions\Kernel\Cache\CacheManager::class'` or `'request'`) to `bind()`, `instance()`, or `alias()` is strictly prohibited. If an alias key is passed, the container throws a `LogicException` instructing you to target the root FQCN directly.
+2. **Rebound Events:** If the root target object being replaced was already resolved previously by other services, `instance()` fires a `rebound` event. This notifies all singleton services that hold the old instance to update their internal state with the new one.
+
+> [!CRITICAL]  
+> **Always Target Root FQCNs**  
+> To prevent silent alias deletion and container split-state bugs, never use alias keys when calling `bind()`, `instance()`, or defining `$bindings` / `$instances` array keys. Always bind directly to the Fully Qualified Class Name (FQCN) root target.
 
 > [!NOTE]  
 > **Rebinding the Request in the Pipeline**  
-> If global middleware mutates or completely replaces the incoming `Request` object mid-flight, the framework safely uses `$this->instance(Request::class, $mutatedRequest)`. Because `Request::class` is the *target* (the value on the right side of the alias map) and not an alias itself, the container skips alias removal but correctly fires the `rebound` events to synchronize the rest of the application.
+> If global middleware mutates or completely replaces the incoming `Request` object mid-flight, the framework safely uses `$this->instance(Request::class, $mutatedRequest)`. Because `Request::class` is the *target* (the value on the right side of the alias map) and not an alias itself, the container skips alias checks but correctly fires the `rebound` events to synchronize the rest of the application.
 
 <a name="psr-11"></a>
 ## PSR-11
