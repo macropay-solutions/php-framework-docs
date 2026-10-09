@@ -293,12 +293,13 @@ If your application operates as a full API backend, or you prefer global/infrast
             // ...
             \MacropaySolutions\Kernel\Http\Middleware\HandleCors::class,
         ];
-    **Note:** Global `HandleCors` requires defining the `paths` array in `config/cors.php` to perform path-matching checks before running.
+
+   - **Note:** Global `HandleCors` requires defining the `paths` array in `config/cors.php` to perform path-matching checks before running.
 2. **Infrastructure Layer (Nginx / CDN)**
    For maximum throughput, let your reverse proxy (Nginx, Apache, or Cloudflare) inject `Access-Control-Allow-Origin` headers on successful responses.
 
-  - **Config:** Do not register any CORS middleware in PHP.
-  - **Behavior:** The framework's `Handler.php` continues to safely intercept unmatched preflight requests that produce a routing MethodNotAllowedHttpException or NotFoundHttpException for `OPTIONS` method/verb and have an `Origin` header, while Nginx handles header injection for all intended responses without PHP-side CORS middleware or header processing.
+   - **Config:** Do not register any CORS middleware in PHP.
+   - **Behavior:** The framework's `Handler.php` continues to safely intercept unmatched preflight requests that produce a routing MethodNotAllowedHttpException or NotFoundHttpException for `OPTIONS` method/verb and have an `Origin` header, while Nginx handles header injection for all intended responses without PHP-side CORS middleware or header processing.
 
 ---
 
