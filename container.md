@@ -24,6 +24,7 @@ context: container
   - [Array Access](#array-access)
 - [Method Invocation and Injection](#method-invocation-and-injection)
 - [Container Events](#container-events)
+- [Internal Mechanics: State vs. Services and Bootstrapping](#internal-mechanics-state-vs-services-and-bootstrapping)
 - [PSR-11](#psr-11)
 
 <a name="introduction"></a>
@@ -291,6 +292,8 @@ The fastest way to bypass contextual lookup is by defining your array callables 
             $container->resolve(\App\Services\Filesystem\S3Filesystem::class, $parameters, false)
         );
     }
+
+> [!NOTE] DO NOT use aliases in $bindings as keys!
 
 #### 2. Manual Factory Closures in Service Providers
 
@@ -661,6 +664,51 @@ The `afterResolving` method fires at the absolute tail end of the resolution pip
         // Called after the instance is completely built and decorated...
     }
 
+
+<a name="internal-mechanics-state-vs-services-and-bootstrapping"></a>
+## Internal Mechanics: State vs. Services and Bootstrapping
+
+When contributing to the core framework or building deeply integrated packages, it is critical to understand the distinction between static services and runtime state, as well as how the container manages alias resolution during the boot phase.
+
+<a name="services-vs-runtime-state"></a>
+### Services vs. Runtime State
+
+The container's `$bindings` array is exclusively designed for **Services** (e.g., `Router`, `Logger`, `DatabaseManager`). A binding acts as a static recipe that tells the container how to construct an object from scratch if a developer requests it.
+
+Foundation objects like the `Request` or the `Application` itself are **Runtime State**. The container cannot conjure a meaningful HTTP request out of thin air—it depends entirely on the incoming PHP superglobals (`$_GET`, `$_POST`, etc.) present at that exact millisecond. 
+
+For this reason, runtime state objects are **never** placed in the `$bindings` array. Instead, they are fully formed by the framework's bootstrapper and injected directly into the container's resolved `$instances` array.
+
+<a name="core-bootstrapping-and-aliases"></a>
+### Core Bootstrapping (Direct Assignment)
+
+When bootstrapping the foundational core of the framework (like injecting the initial `Request` or the `Application` instance), the framework uses highly optimized direct array assignment to the object's **Root Target** (its Fully Qualified Class Name or primary identifier):
+
+    // Inside early framework bootstrapping
+    $this->instances[Request::class] = $request;
+    $this->instances['app'] = $this;
+
+**Why direct assignment?** 
+Direct assignment bypasses standard container overhead and, crucially, **preserves container aliases**. 
+
+If the container has aliases configured (e.g., `'request' => Request::class`), those aliases act as signposts pointing to the root target. By injecting the object directly into the root target key (`Request::class`), all existing aliases remain perfectly intact and successfully route developer requests (like `app('request')`) to your injected object.
+
+<a name="the-instance-method-and-alias-removal"></a>
+### The `instance()` Method and Alias Removal
+
+While direct assignment is used for core bootstrapping, developers and runtime processes must use the `$this->instance()` method when injecting or overriding objects dynamically.
+
+    // Injecting a mock during testing or runtime
+    $this->instance(\MacropaySolutions\Kernel\Cache\CacheManager::class, $mockCache);
+
+When you call `instance()`, the container performs two critical operations that direct assignment does not:
+
+1. **Alias Removal:** If the key provided (e.g., `\MacropaySolutions\Kernel\Cache\CacheManager::class`) is currently registered as an alias (pointing to `cache`), the container **destroys that alias**. If it didn't, the container would see `\MacropaySolutions\Kernel\Cache\CacheManager::class`, follow the alias to `cache`, build a brand new manager from scratch, and completely bypass the user's injected `$mockCache`. Destroying the alias forces the container to stop and serve the injected instance directly.
+2. **Rebound Events:** If the object being replaced was already resolved previously by other services, `instance()` fires a `rebound` event. This notifies all singleton services that hold the old instance to update their internal state with the new one.
+
+> [!NOTE]  
+> **Rebinding the Request in the Pipeline**  
+> If global middleware mutates or completely replaces the incoming `Request` object mid-flight, the framework safely uses `$this->instance(Request::class, $mutatedRequest)`. Because `Request::class` is the *target* (the value on the right side of the alias map) and not an alias itself, the container skips alias removal but correctly fires the `rebound` events to synchronize the rest of the application.
 
 <a name="psr-11"></a>
 ## PSR-11
