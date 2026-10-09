@@ -293,7 +293,7 @@ The fastest way to bypass contextual lookup is by defining your array callables 
         );
     }
 
-> [!NOTE] DO NOT use aliases in $bindings as keys!
+> [!NOTE] DO NOT use aliases (keys from `$aliases` app property) in $bindings as keys! Same is valid for `$instances`.
 
 #### 2. Manual Factory Closures in Service Providers
 
