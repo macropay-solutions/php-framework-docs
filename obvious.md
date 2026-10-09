@@ -1090,6 +1090,10 @@ So, to get started, you should define which model attributes you want to make ma
         protected $fillable = ['name'];
     }
 
+
+> [!WARNING]  
+> **Never define both `$fillable` and `$guarded` on the same model.** If both are defined, the framework will evaluate `$fillable` first and return immediately. This means your `$guarded` blacklist will be completely ignored, potentially exposing protected columns to mass assignment. You must strictly choose one approach or the other.
+
 Once you have specified which attributes are mass assignable, you may use the `create` method to insert a new record in the database. The `create` method returns the newly created model instance:
 
     $flight = Flight::query()->create(['name' => 'London to Paris']);
@@ -1097,6 +1101,21 @@ Once you have specified which attributes are mass assignable, you may use the `c
 If you already have a model instance, you may use the `fill` method to populate it with an array of attributes:
 
     $flight->fill(['name' => 'Amsterdam to Frankfurt']);
+
+<a name="crufd-wizard-strict-lifecycle-security"></a>
+#### Crufd Wizard Strict Lifecycle Security & Schema Mapping
+
+If your models extend `MacropaySolutions\CrufdWizard\Models\BaseModel`, the paradigm around `$fillable` shifts entirely to provide **stricter, enterprise-grade security**.
+
+In `BaseModel`, the `$fillable` array is repurposed as the **strict schema definition**—it maps exactly which columns exist in the database for high-performance, zero-reflection attribute routing. Because of this, you must include all database columns in `$fillable` so the model recognizes them. Also leave `$guarded` untouched as `[*]`.
+
+To protect columns (like `is_admin`, `created_at`, or internal statuses) from unauthorized modification, `BaseModel` utilizes lifecycle-aware security arrays instead of `$guarded`:
+
+* **`$ignoreUpdateFor`**: Columns that must *never* be updated.
+* **`$ignoreExternalCreateFor`**: Columns that external users/APIs are not allowed to set during the *creation* phase.
+* **`$allowNonExternalUpdatesFor`**: Internal exceptions allowing background jobs/code to update otherwise ignored columns.
+
+Unlike standard mass-assignment protection (which only blocks bulk `fill()` or `create()` arrays but allows silent bypasses via manual property assignment), `BaseModel` hooks these arrays directly into `setAttribute()`. This guarantees that protected columns are locked down at the lowest level. Attempting to mutate a locked column (even manually via `$model->a->is_admin = true`) will instantly intercept the change, throw a `Development bug` error (in non-live mode) with a backtrace, and drop the value.
 
 <a name="allowing-mass-assignment"></a>
 #### Allowing Mass Assignment
