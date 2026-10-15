@@ -153,9 +153,9 @@ return response()->download($pathToFile, $name, $headers);
 <a name="streamed-json-responses"></a>
 #### Streamed JSON Responses
 
-If you need to return large sets of JSON data, you can use a streamed response to keep server memory usage low. 
+If you need to return large sets of JSON data, you can use a streamed response to keep server memory usage low.
 
-Symfony's `StreamedJsonResponse` natively handles streaming, provided you pass an `iterator` directly. If you pass an object implementing `JsonSerializable` (like a Collection/[`LazyCollection`](#lazy-collections)), the framework will load the entire dataset into memory at once, potentially causing out-of-memory errors.
+Symfony's `StreamedJsonResponse` natively handles streaming, provided you pass an `iterator` directly. If you pass an object implementing `JsonSerializable` (like a Collection/[`LazyCollection`](#lazy-collections)),the framework will load the entire dataset into memory, defeating the stream and potentially causing out-of-memory errors.
 
 ```php
 use Symfony\Component\HttpFoundation\StreamedJsonResponse;
@@ -167,6 +167,49 @@ return new StreamedJsonResponse(
     [],
     JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
 );
+```
+
+If you are consuming a standard JSON array stream and need to parse it chunk-by-chunk in the browser without loading the entire array into memory, you can use a streaming JSON parser library like `@streamparser/json-whatwg`.
+
+By configuring the parser with `paths: ['$.*']` and `keepStack: false`, it emits each item of the top-level array as soon as it is parsed, discarding the previous ones to keep memory usage low.
+```javascript
+    <script type="module">
+        import { JSONParser } from 'https://cdn.jsdelivr.net/npm/@streamparser/json-whatwg@0.0.21/+esm';
+
+        async function requestStandardJsonStream(e, form) {
+            e.preventDefault();
+            const outputElement = document.getElementById("streamed_operations_response");
+            outputElement.textContent = '';
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'post', 
+                    headers: { 'Accept': 'application/json' }, 
+                    body: new URLSearchParams(new FormData(form))
+                });
+
+                const parser = new JSONParser({ paths: ['$.*'], keepStack: false });
+
+                parser.onValue = ({ value }) => {
+                    let child = document.createElement('p');
+                    child.textContent = JSON.stringify(value); // Prevents HTML injection
+                    outputElement.appendChild(child);
+                };
+
+                const reader = response.body.pipeThrough(parser).getReader();
+
+                while (true) {
+                    const { done } = await reader.read();
+                    if (done) {
+                        console.log("Streaming complete");
+                        break;
+                    }
+                }
+            } catch (error) {
+                console.error("Streaming error:", error);
+            }
+        }
+    </script>
 ```
 
 For applications that need to parse massive datasets incrementally on the client side (e.g., via JavaScript `fetch` and `ReadableStream`), standard JSON chunks can break parsers. In these cases, it is highly recommended to stream the data as **JSON Lines (JSONL)**.
@@ -195,7 +238,7 @@ $response = new StreamedJsonResponse(Operation::query()->with('client')->lazyByI
        'data' => [],
    ]))
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
- // DO NOT use JSON_PRETTY_PRINT to avoid issues with \n
+// DO NOT use JSON_PRETTY_PRINT to avoid issues with \n
 ```
 
 This will output:
@@ -204,7 +247,7 @@ This will output:
 {"id":17008,"value":"87.00","created_at":"2024-01-17 09:17:11","updated_at":null,"primary_key_identifier":"17008"}
 ```
 
-Example of JS parser:
+Example of a hardened JS parser for JSON Lines:
 ```javascript
  <script>
      function requestStream(e,form) {
@@ -280,7 +323,8 @@ Example of JS parser:
              });
      }
  </script>
-````
+```
+
 <a name="redirects"></a>
 ## Redirects
 
