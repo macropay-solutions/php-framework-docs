@@ -11,6 +11,7 @@ context: responses
 - [Other Response Types](#other-response-types)
   - [JSON Responses](#json-responses)
   - [File Downloads](#file-downloads)
+  - [Streamed JSON Responses](#streamed-json-responses)
 - [Redirects](#redirects)
   - [Redirecting To Named Routes](#redirecting-named-routes)
 
@@ -148,6 +149,181 @@ return response()->download($pathToFile, $name, $headers);
 
 > [!NOTE]  
 > Symfony HttpFoundation, which manages file downloads, requires the file being downloaded to have an ASCII file name.
+
+<a name="streamed-json-responses"></a>
+#### Streamed JSON Responses
+
+If you need to return large sets of JSON data, you can use a streamed response to keep server memory usage low.
+
+Symfony's `StreamedJsonResponse` natively handles streaming, provided you pass an `iterator` directly. If you pass an object implementing `JsonSerializable` (like a Collection/[`LazyCollection`](#lazy-collections)),the framework will load the entire dataset into memory, defeating the stream and potentially causing out-of-memory errors.
+
+```php
+use Symfony\Component\HttpFoundation\StreamedJsonResponse;
+
+// Ensure you pass the iterator via ->getIterator()
+return new StreamedJsonResponse(
+    Operation::query()->with('client')->lazyByIdDesc(1000, 'id')->getIterator(),
+    200,
+    [],
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+);
+```
+
+If you are consuming a standard JSON array stream and need to parse it chunk-by-chunk in the browser without loading the entire array into memory, you can use a streaming JSON parser library like `@streamparser/json-whatwg`.
+
+By configuring the parser with `paths: ['$.*']` and `keepStack: false`, it emits each item of the top-level array as soon as it is parsed, discarding the previous ones to keep memory usage low.
+```javascript
+    <script type="module">
+        import { JSONParser } from 'https://cdn.jsdelivr.net/npm/@streamparser/json-whatwg@0.0.21/+esm';
+
+        async function requestStandardJsonStream(e, form) {
+            e.preventDefault();
+            const outputElement = document.getElementById("streamed_operations_response");
+            outputElement.textContent = '';
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'post', 
+                    headers: { 'Accept': 'application/json' }, 
+                    body: new URLSearchParams(new FormData(form))
+                });
+
+                const parser = new JSONParser({ paths: ['$.*'], keepStack: false });
+
+                parser.onValue = ({ value }) => {
+                    let child = document.createElement('p');
+                    child.textContent = JSON.stringify(value); // Prevents HTML injection
+                    outputElement.appendChild(child);
+                };
+
+                const reader = response.body.pipeThrough(parser).getReader();
+
+                while (true) {
+                    const { done } = await reader.read();
+                    if (done) {
+                        console.log("Streaming complete");
+                        break;
+                    }
+                }
+            } catch (error) {
+                console.error("Streaming error:", error);
+            }
+        }
+    </script>
+```
+
+For applications that need to parse massive datasets incrementally on the client side (e.g., via JavaScript `fetch` and `ReadableStream`), standard JSON chunks can break parsers. In these cases, it is highly recommended to stream the data as **JSON Lines (JSONL)**.
+
+Using the `StreamedJsonResponse` from the `php-crufd-wizard` package, you can stream each database record as an independent, single-line JSON object while returning the pagination data in the `metadata` header:
+
+```php
+use MacropaySolutions\CrufdWizard\Responses\StreamedJsonResponse;
+
+$response = new StreamedJsonResponse(Operation::query()->with('client')->lazyByIdDesc(1000, 'id'), 200, [
+   StreamedJsonResponse::META_DATA => \json_encode(\array_merge([ // use this only if you want metaData info
+       'has_more_pages' => false,
+   ], $appends, $paginator instanceof Paginator ? [
+       'current_page' => 1,
+       'from' => 1,
+       'per_page' => $paginator->perPage(),
+       'to' => $paginator->perPage(),
+       'data' => [],
+   ] : [
+       'current_page' => 1,
+       'from' => 1,
+       'last_page' => 1,
+       'per_page' => $paginator->total(),
+       'to' => $paginator->total(),
+       'total' => $paginator->total(),
+       'data' => [],
+   ]))
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+// DO NOT use JSON_PRETTY_PRINT to avoid issues with \n
+```
+
+This will output:
+```json
+{"id":17009,"value":"92.00","created_at":"2024-01-17 09:17:11","updated_at":null,"primary_key_identifier":"17009"}
+{"id":17008,"value":"87.00","created_at":"2024-01-17 09:17:11","updated_at":null,"primary_key_identifier":"17008"}
+```
+
+Example of a hardened JS parser for JSON Lines:
+```javascript
+ <script>
+     function requestStream(e,form) {
+         e.preventDefault();
+         const outputElement = document.getElementById("streamed_operations_response");
+
+         outputElement.innerHTML = '';
+         fetch(form.action, {method:'post', headers: {
+                 'Accept': 'application/json'
+             }, body: new URLSearchParams(new FormData(form))})
+             .then(response => {
+                 if (!response.headers.get('metadata')) {
+                     outputElement.innerHTML =
+                         '<b style="color:red">⚠️ Streaming not supported by this backend engine.</b>';
+                     
+                     throw new Error("Backend did not return a stream.");
+                 }
+
+                 const reader = response.body.getReader();
+                 const decoder = new TextDecoder();
+                 let leftOver = '';
+                 return new ReadableStream({
+                     start(controller) {
+                         function push() {
+                             reader.read().then(({ done, value }) => {
+                                 if (done) {
+                                     controller.close();
+                                     return;
+                                 }
+                                 const chunk = decoder.decode(value, { stream: true });
+                                 chunk.split(/\n/).forEach(function (element) {
+                                     let row;
+                                     try {
+                                         row = JSON.parse(element);
+                                     } catch (e) {
+                                         console.log('e');
+                                         if (leftOver === '') {
+                                             leftOver = element;
+
+                                             return;
+                                         }
+                                         try {
+                                             row = JSON.parse(leftOver + element);
+                                             leftOver = '';
+                                         } catch (ex) {
+                                             console.log('ex');
+                                             leftOver += element;
+                                             console.log('This leftOver should not happen: ' + leftOver);
+
+                                             return;
+                                         }
+                                     }
+
+                                     let child = document.createElement('p');
+                                     child.innerHTML = JSON.stringify(row);
+                                     outputElement.appendChild(child);
+                                 });
+                                 controller.enqueue(value);
+                                 push();
+                             });
+                         }
+                         push();
+                     }
+                 });
+             })
+             .then(stream => new Response(stream))
+             .then(response => response.text())
+             .then(data => {
+                 console.log("Streaming complete");
+             })
+             .catch(error => {
+                 console.error("Streaming error:", error);
+             });
+     }
+ </script>
+```
 
 <a name="redirects"></a>
 ## Redirects
