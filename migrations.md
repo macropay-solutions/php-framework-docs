@@ -142,6 +142,8 @@ To run all of your outstanding migrations, execute the `migrate` command:
 php run migrate
 ```
 
+It will run only if it can acquire a lock for the case when multiple containers start at the same time. See `database.migrations_lock_ttl` config.
+
 If you would like to see which migrations have run thus far, you may use the `migrate:status` command:
 
 ```shell
@@ -184,6 +186,8 @@ To roll back the latest migration operation, you may use the `rollback` command.
 ```shell
 php run migrate:rollback
 ```
+
+It will run only if it can acquire a lock for the case when multiple containers start at the same time. See `database.migrations_lock_ttl` config.
 
 You may roll back a limited number of migrations by providing the `step` option to the `rollback` command. For example, the following command will roll back the last five migrations:
 
