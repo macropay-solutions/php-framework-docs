@@ -62,13 +62,13 @@ use App\Models\User;
 use MacropaySolutions\Kernel\Http\Request;
 
 $this->app['auth']->viaRequest('api', function (Request $request): ?User {
-    $token = (string) $request->getFiltered('api_token');
+    $token = (string)$request->getFiltered('api_token');
 
     if ($token === '') {
         return null;
     }
 
-    return User::query()->where('api_token', $token)->first();
+    return User::query()->where('api_token', \hash('sha256', $token))->first();
 });
 ```
 
