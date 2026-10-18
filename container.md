@@ -160,9 +160,12 @@ As mentioned, you will typically be interacting with the container within servic
 
 You may use the `bindIf` method to register a container binding only if a binding has not already been registered for the given type:
 
-    $this->app->bindIf(Transistor::class, function (Application $app) {
+    $this->app->bindIf(Transistor::class, [\App\Factories\Factory::class, 'createTransistor']);
+
+    public static function createTransistor(Application $app) {
         return new Transistor($app->make(PodcastParser::class));
-    });
+    }
+
 
 > [!TIP]
 > **Closure Scoping & Performance Guidelines (`static`)**
@@ -295,17 +298,20 @@ The fastest way to bypass contextual lookup is by defining your array callables 
 
 > [!NOTE] DO NOT use aliases (keys from `$aliases` app property) in $bindings as keys! Same is valid for `$instances`.
 
-#### 2. Manual Factory Closures in Service Providers
+#### 2. Manual Factory Callables in Service Providers
 
-If you prefer to configure your bindings within standard Service Providers, you can avoid contextual evaluations by using a factory closure inside a standard `bind` or `singleton` method. This allows you to manually instantiate the target class and explicitly pass the concrete dependencies it requires.
+If you prefer to configure your bindings within standard Service Providers, you can avoid contextual evaluations by using a factory callable inside a standard `bind` or `singleton` method. This allows you to manually instantiate the target class and explicitly pass the concrete dependencies it requires.
 
     use App\Http\Controllers\PhotoController;
     use App\Services\Filesystem\LocalFilesystem;
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->bind(PhotoController::class, static function (Application $app) {
+    $this->app->bind(PhotoController::class, [\App\Factories\Factory::class, 'createPhotoControllerContext']);
+
+    public static function createPhotoControllerContext(Application $app)
+    {
         return new PhotoController($app->make(LocalFilesystem::class));
-    });
+    }
 
 #### 3. Type-Hinting Concrete Classes (Zero-Configuration)
 
@@ -353,9 +359,12 @@ Sometimes a class may depend on an array of [tagged](#tagging) instances. Using 
 
 If you need to inject a value from one of your application's configuration files, you may manually resolve the `config` service:
 
-    $this->app->bind(ReportAggregator::class, static function (Application $app) {
+    $this->app->bind(ReportAggregator::class, [\App\Factories\Factory::class, 'createAggregatorWithTimezone']);
+
+    public static function createAggregatorWithTimezone(Application $app)
+    {
         return new ReportAggregator($app->make('config')->get('app.timezone'));
-    });
+    }
 
 <a name="binding-typed-variadics"></a>
 ### Binding Typed Variadics
@@ -439,11 +448,14 @@ Once the services have been tagged, you may easily resolve them all via the cont
 <a name="extending-bindings"></a>
 ### Extending Bindings
 
-The `extend` method allows the modification of resolved services. For example, when a service is resolved, you may run additional code to decorate or configure the service. The `extend` method accepts two arguments, the service class you're extending and a closure that should return the modified service. The closure receives the service being resolved and the container instance:
+The `extend` method allows the modification of resolved services. For example, when a service is resolved, you may run additional code to decorate or configure the service. The `extend` method accepts two arguments, the service class you're extending and a callable that should return the modified service. The callable receives the service being resolved and the container instance:
 
-    $this->app->extend(Service::class, static function (Service $service, Application $app) {
+    $this->app->extend(Service::class, [\App\Factories\Factory::class, 'extendService']);
+
+    public static function extendService(Service $service, Application $app)
+    {
         return new DecoratedService($service);
-    });
+    }
 
 <a name="resolving"></a>
 ## Resolving
@@ -577,7 +589,13 @@ While the service container implements PHP's `ArrayAccess` interface for legacy 
 <a name="method-invocation-and-injection"></a>
 ## Method Invocation and Injection
 
-Sometimes you may wish to invoke a method on an object instance while allowing the container to automatically inject that method's dependencies. For example, given the following class:
+Sometimes you may wish to invoke a method on an object instance while allowing the container to automatically inject that method's dependencies. You may invoke a method via the container using the `call` method.
+
+The `call` method is highly flexible and accepts a variety of callback formats—including arrays, strings, and closures—while automatically resolving and injecting all required dependencies:
+
+#### Array Callables
+You can pass a standard PHP array callable. If you pass a class name string as the first element and it is not statically callable, the container will automatically resolve the class instance before calling the method:
+
 
     <?php
 
@@ -598,17 +616,30 @@ Sometimes you may wish to invoke a method on an object instance while allowing t
         }
     }
 
-You may invoke the `generate` method via the container like so:
+    // Static array callable (Instantiated automatically by the container)
+    $result = \app()->call([\App\UserReport::class, 'generate']);
 
-    use App\UserReport;
+    // Object instance array callable
+    $result = \app()->call([new \App\UserReport, 'generate']);
 
-    $report = \app()->call([new UserReport, 'generate']);
+#### String Callables
+The container supports multiple string-based callable formats. It can parse `@` delimited strings, `::` static method strings, and automatically detect and execute invokable classes:
 
-The `call` method accepts any PHP callable. The container's `call` method may even be used to invoke a closure while automatically injecting its dependencies:
+    // Class and method delimited by '@'
+    $result = \app()->call('App\UserReport@generate');
+
+    // Class and method delimited by '::'
+    $result = \app()->call('App\UserReport::generate');
+
+    // Invokable class (Container resolves the class and automatically calls __invoke)
+    $result = \app()->call(\App\UserReport::class);
+
+#### Closures are not recommended!
+The container's `call` method may also be used to invoke a closure while automatically injecting its dependencies via **reflection, which is SLOW** and does not account for `autowiring:cache` command:
 
     use App\Services\ReportService;
 
-    $result = \app()->call(function (ReportService $service) {
+    $result = \app()->call(static function (ReportService $service) {
         // ...
     });
 
