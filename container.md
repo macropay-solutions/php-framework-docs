@@ -126,7 +126,7 @@ First, if you write a class that implements an interface and you wish to type-hi
 
 Almost all of your service container bindings will be registered within [service providers](/providers), so most of these examples will demonstrate using the container in that context.
 
-Within a service provider, you always have access to the container via the `$this->app` property. We can register a binding using the `bind` method, passing the class or interface name that we wish to register along with a closure that returns an instance of the class:
+Within a service provider, you always have access to the container via the `$this->app` property. We can register a binding using the `bind` method, passing the class or interface name that we wish to register along with an array callable that returns an instance of the class:
 
 > [!CRITICAL]  
 > **Closures are Forbidden**
