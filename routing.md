@@ -235,7 +235,7 @@ You may also use the `prefix` parameter to specify common parameters for your gr
 > Because the Trie walking mechanism evaluates string delimiters natively, endpoints like `/users/1` and `/users/1/` map to the identical execution leaf automatically without triggering extra middleware overhead.
 >
 > **2. The 404 Firewall & 405 Behavior**
-> To maximize network scanning defense and eliminate lookup leaks, basic and dynamic routes handled by the native Trie engine will return a `404 Not Found` instead of `405 Method Not Allowed`. However, **Complex Routes handled by the `nikic/fast-route` fallback will still return a `405`** to retain strict compliance.
+> To maximize network scanning defense and eliminate lookup leaks, basic and dynamic routes handled by the native Trie engine will return a `404 Not Found` instead of `405 Method Not Allowed`.
 >
 > **3. Understanding Complex Route Fallbacks**
 > During the `route:cache` AOT compilation phase, the builder separates standard hot-paths from "Complex Routes." Pure dynamic paths (even those utilizing inline validation parameters like `/user/{id:\d+}`) are **not** complex and run on the raw Trie.
