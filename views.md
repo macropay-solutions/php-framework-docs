@@ -162,18 +162,16 @@ You can generate multiple sheets within the same Excel file by creating new shee
         function (Spreadsheet $spreadsheet) use ($sheet2Html) {
             // 1. Configure the primary sheet
             $sheet1 = $spreadsheet->getActiveSheet();
-            $sheet1->setTitle('Summary');
+            $sheet1->setTitle('Sheet1');
 
-            // 2. Create a second sheet and make it the active sheet
-            $spreadsheet->createSheet();
-            $spreadsheet->setActiveSheetIndex(1); // Index 1 is the 2nd sheet
-            $sheet2 = $spreadsheet->getActiveSheet();
-            $sheet2->setTitle('Details');
-            
-            // 3. Load the second HTML view into the active sheet
+            // 2. Tell the reader to target the 2nd sheet (Index 1) and load HTML
             $reader = new Html();
-            $reader->setSheetIndex(1); // Tell the reader to target the 2nd sheet
-            $reader->loadFromString($sheet2Html, $spreadsheet); // Pass the $spreadsheet, not $sheet2
+            $reader->setSheetIndex(1); // <-- CRITICAL: Do not forget this!
+            $reader->loadFromString($sheet2Html, $spreadsheet);
+
+            // 3. Grab that newly auto-created sheet and set its title safely
+            $sheet2 = $spreadsheet->getSheet(1);
+            $sheet2->setTitle('Details');
         }
     );
 
