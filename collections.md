@@ -3742,9 +3742,24 @@ If you need to store the export to a local file instead of streaming it directly
 
     $tmpFile = \tempnam(\sys_get_temp_dir(), 'excel_');
     
+    if ($tmpFile === false) {
+        throw new \RuntimeException('Unable to create a temporary file.');
+    }
+    
     try {
-        \app(IteratorExporter::class)->store(Operation::uery()->cursor(), $tmpFile);
-        \app('filesystem')->disk('s3')->put('exports/users.xlsx', \fopen($tmpFile, 'r'));
+        \app(IteratorExporter::class)->store(Operation::query()->cursor(), $tmpFile);
+    
+        $stream = \fopen($tmpFile, 'r');
+    
+        if ($stream === false) {
+            throw new \RuntimeException('Unable to open the generated export.');
+        }
+    
+        try {
+            \app('filesystem')->disk('s3')->put('exports/operations.xlsx', $stream);
+        } finally {
+            \fclose($stream);
+        }
     } finally {
         \unlink($tmpFile);
     }
