@@ -171,7 +171,7 @@ You can generate multiple sheets within the same Excel file by creating new shee
 
             // 3. Grab that newly auto-created sheet and set its title safely
             $sheet2 = $spreadsheet->getSheet(1);
-            $sheet2->setTitle('Details');
+            $sheet2->setTitle('Sheet2');
         }
     );
 
