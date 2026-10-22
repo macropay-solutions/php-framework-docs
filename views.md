@@ -13,6 +13,7 @@ context: views
   - [Package Views](#package-views)
   - [Creating the First Available View](#creating-the-first-available-view)
   - [Determining if a View Exists](#determining-if-a-view-exists)
+  - [Exporting Views to Excel](#exporting-views-to-excel)
 - [Passing Data to Views](#passing-data-to-views)
   - [Sharing Data With All Views](#sharing-data-with-all-views)
 - [View Composers](#view-composers)
@@ -121,6 +122,44 @@ If you need to determine if a view exists, you may use the view factory. The `ex
     if (\app('view')->exists('admin.profile')) {
         // ...
     }
+
+<a name="exporting-views-to-excel"></a>
+### Exporting Views to Excel
+
+```bash
+composer require phpoffice/phpspreadsheet:^5.0
+```
+
+If you need to export a rendered HTML view directly to an Excel spreadsheet, you may use the `HtmlToExcelExporter` utility. This allows you to stream a downloaded file to the browser or store it on disk. This approach is excellent for producing styled, heavily-formatted reports:
+
+    use MacropaySolutions\Kernel\Support\Excel\HtmlToExcelExporter;
+    use PhpOffice\PhpSpreadsheet\Spreadsheet;
+
+    return \app(HtmlToExcelExporter::class)->streamDownload(
+        view('reports.sales', $data)->toHtml(),
+        'sales-report.xlsx',
+        [], // Optional headers
+        function (Spreadsheet $spreadsheet) {
+            // Optionally configure the spreadsheet styles...
+            $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(20);
+        }
+    );
+
+To store the Excel file on a disk instead of streaming it to the browser, you may use the `store` method. This is useful when generating exports in the background to be uploaded to a remote disk (like S3):
+
+    use MacropaySolutions\Kernel\Support\Excel\HtmlToExcelExporter;
+
+    $tmpFile = \tempnam(\sys_get_temp_dir(), 'excel_');
+    
+    try {
+        \app(HtmlToExcelExporter::class)->store(\view('reports.sales', $data)->toHtml(), $tmpFile);
+        \app('filesystem')->disk('s3')->put('exports/file.xlsx', \fopen($tmpFile, 'r'));
+    } finally {
+        \unlink($tmpFile);
+    }
+
+> [!WARNING]  
+> The HTML parser loads the entire HTML structure and the resulting Spreadsheet model into memory. It is not suitable for massive dataset exports. For large data exports, rely on collections and the `IteratorExporter`.
 
 <a name="passing-data-to-views"></a>
 ## Passing Data to Views

@@ -14,6 +14,7 @@ context: collections
     - [Creating Lazy Collections](#creating-lazy-collections)
     - [The Enumerable Contract](#the-enumerable-contract)
     - [Lazy Collection Methods](#lazy-collection-methods)
+- [Exporting to Excel](#exporting-to-excel)
 
 <a name="introduction"></a>
 ## Introduction
@@ -3716,3 +3717,37 @@ The `remember` method returns a new lazy collection that will remember any value
     // First 5 users come from the collection's cache...
     // The rest are hydrated from the database...
     $users->take(20)->all();
+
+<a name="exporting-to-excel"></a>
+## Exporting to Excel
+```bash
+    composer require openspout/openspout:^4.28
+```
+
+Both standard and lazy collections can be seamlessly exported to Excel using the `IteratorExporter` utility. Because the exporter works with any `iterable`, combining it with lazy collections allows you to stream massive datasets directly to an Excel file with extremely low memory overhead:
+
+    use App\Models\Operation;
+    use MacropaySolutions\Kernel\Support\Excel\IteratorExporter;
+
+    // Streams directly to the browser, keeping memory usage minimal...
+    return \app(IteratorExporter::class)->streamDownload(
+        Operation::query()->cursor(), // Returns a LazyCollection
+        'operations.xlsx'
+    );
+
+If you need to store the export to a local file instead of streaming it directly to the browser, you may use the `store` method. This is particularly useful when dispatching a background job to build an export and upload it to a remote disk:
+
+    use App\Models\Operation;
+    use MacropaySolutions\Kernel\Support\Excel\IteratorExporter;
+
+    $tmpFile = \tempnam(\sys_get_temp_dir(), 'excel_');
+    
+    try {
+        \app(IteratorExporter::class)->store(Operation::uery()->cursor(), $tmpFile);
+        \app('filesystem')->disk('s3')->put('exports/users.xlsx', \fopen($tmpFile, 'r'));
+    } finally {
+        \unlink($tmpFile);
+    }
+
+> [!NOTE]  
+> This exports a single sheet with flattened values.
