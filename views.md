@@ -145,6 +145,38 @@ If you need to export a rendered HTML view directly to an Excel spreadsheet, you
         }
     );
 
+#### Multi-Sheet Exports
+You can generate multiple sheets within the same Excel file by creating new sheets inside the configuration callback and parsing additional HTML views into them using the `Html` reader:
+
+    use MacropaySolutions\Kernel\Support\Excel\HtmlToExcelExporter;
+    use PhpOffice\PhpSpreadsheet\Spreadsheet;
+    use PhpOffice\PhpSpreadsheet\Reader\Html;
+
+    $sheet1Html = view('reports.sheet1',$data)->toHtml();
+    $sheet2Html = view('reports.sheet1',$data)->toHtml();
+
+    return \app(HtmlToExcelExporter::class)->streamDownload(
+        $sheet1Html, // Populates Sheet 1 automatically
+        'full_report.xlsx',
+        [],
+        function (Spreadsheet $spreadsheet) use ($sheet2Html) {
+            // 1. Configure the primary sheet
+            $sheet1 = $spreadsheet->getActiveSheet();
+            $sheet1->setTitle('Summary');
+
+            // 2. Create a second sheet and make it the active sheet
+            $spreadsheet->createSheet();
+            $spreadsheet->setActiveSheetIndex(1); // Index 1 is the 2nd sheet
+            $sheet2 = $spreadsheet->getActiveSheet();
+            $sheet2->setTitle('Details');
+            
+            // 3. Load the second HTML view into the active sheet
+            $reader = new Html();
+            $reader->setSheetIndex(1); // Tell the reader to target the 2nd sheet
+            $reader->loadFromString($sheet2Html, $spreadsheet); // Pass the $spreadsheet, not $sheet2
+        }
+    );
+
 To store the Excel file on a disk instead of streaming it to the browser, you may use the `store` method. This is useful when generating exports in the background to be uploaded to a remote disk (like S3):
 
     use MacropaySolutions\Kernel\Support\Excel\HtmlToExcelExporter;

@@ -3720,8 +3720,9 @@ The `remember` method returns a new lazy collection that will remember any value
 
 <a name="exporting-to-excel"></a>
 ## Exporting to Excel
+
 ```bash
-    composer require openspout/openspout:^4.28
+composer require openspout/openspout:^4.28
 ```
 
 Both standard and lazy collections can be seamlessly exported to Excel using the `IteratorExporter` utility. Because the exporter works with any `iterable`, combining it with lazy collections allows you to stream massive datasets directly to an Excel file with extremely low memory overhead:
@@ -3734,6 +3735,43 @@ Both standard and lazy collections can be seamlessly exported to Excel using the
         Operation::query()->cursor(), // Returns a LazyCollection
         'operations.xlsx'
     );
+
+#### Cursor vs. Lazy: Database Connection and Eager Loading
+When streaming massive datasets from the database, you must choose between `cursor()` and `lazyById()` based on your data structure and connection limits:
+
+**Using `cursor()` (Best for flat tables):**
+The `cursor()` method executes a single query and keeps the database connection active while pulling one row at a time. This is the fastest and most memory-efficient approach for flat tables. However, because it keeps the socket occupied, a slow download will lock that database connection for the entire duration of the export. Additionally, because it yields one row at a time, it makes eager loading (`with()`) impossible and will trigger an N+1 query issue if you attempt to access relationships.
+
+**Using `lazyById()` (Best for relationships and connection pooling):**
+If your export requires eager-loaded relationships, or you want to avoid holding a database connection open during a long stream, use the `lazyById()` chunking method combined with a PHP generator. For example, `lazyById(500)` fetches and eager-loads 500 records, releases the database connection to process the chunk, and then briefly reconnects for the next 500:
+
+    use App\Models\Operation;
+    use MacropaySolutions\Kernel\Support\Excel\IteratorExporter;
+    use Symfony\Component\HttpFoundation\StreamedResponse;
+
+    public function export(): StreamedResponse
+    {
+        $query = Operation::query()->with(['category', 'client']);
+
+        // A generator is a valid iterable that the IteratorExporter accepts natively
+        $exportGenerator = function () use ($query) {
+            // lazyById(500) fetches and eager-loads 500 records at a time
+            foreach ($query->lazyById(500) as $model) {
+                yield [
+                    'ID' => $model->id,
+                    'Amount' => $model->amount,
+                    'Category' => $model->category?->name ?? 'N/A',
+                    'Client' => $model->client?->name ?? 'N/A',
+                    'Date' => $model->created_at,
+                ];
+            }
+        };
+
+        return \app(IteratorExporter::class)->streamDownload(
+            $exportGenerator(), 
+            'operations_with_relations.xlsx'
+        );
+    }
 
 If you need to store the export to a local file instead of streaming it directly to the browser, you may use the `store` method. This is particularly useful when dispatching a background job to build an export and upload it to a remote disk:
 
