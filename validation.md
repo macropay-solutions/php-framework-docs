@@ -353,6 +353,9 @@ The `\App\FormRequest` can also be used without the autowiring code above by lev
         $formRequest->setContainer(\app());
         $formRequest->validateResolved();
 
+        // if you really want to make sure that unvalidated data is not used, purge the not validated data from request
+        // $request->forceReplace($formRequest->validated());
+
         return $formRequest->validated();
     }
 
