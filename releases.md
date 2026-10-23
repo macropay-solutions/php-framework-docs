@@ -29,9 +29,9 @@ For PHP-Framework releases, bug fixes and security fixes are provided for 3 year
 
 <div class="overflow-auto" markdown="1">
 
-| Version | PHP (*)              | Release | Bug Fixes Until | Security Fixes Until |
-|---------|----------------------|---------|-----------------|----------------------|
-| 1       | 8.2 - 8.4 (8.5 Beta) | Q4 2026 | 30 Nov 2029     | 30 Nov 2029          |
+| Version | PHP (*)              | Release     | Bug Fixes Until | Security Fixes Until |
+|---------|----------------------|-------------|-----------------|----------------------|
+| 1       | 8.2 - 8.4 (8.5 Beta) | 08 Oct 2026 | 30 Nov 2029     | 30 Nov 2029          |
 
 </div>
 
