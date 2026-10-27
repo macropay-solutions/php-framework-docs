@@ -64,20 +64,30 @@ use App\Models\User;
 use MacropaySolutions\Kernel\Http\Request;
 
 $this->app['auth']->viaRequest('api', function (Request$request): ?User {
-    $id = $request->header('X-API-ID');
-    $pass = $request->header('X-API-PASS');
+       $apiToken = $request->input('api_token');
 
-    if (!\is_string($id) || $id === '' || !\is_string($pass) || $pass === '') {
-        return null;
-    }
+       return (\is_string($apiToken) && $apiToken !== '') ?
+           User::query()->where('api_token', \hash('sha256', $apiToken))->first() :
+           null;
+      //or
+      $id = $request->header('X-API-ID');
+      $pass = $request->header('X-API-PASS');
 
-    $user = User::query()->find($id);
+      if (!\is_string($id) || $id === '' || !\is_string($pass) || $pass === '') {
+          return null;
+      }
 
-    if ($user instanceof User && \password_verify($pass, $user->pass)) {
-        return $user;
-    }
+      $user = User::query()->find($id) ?? new User();
 
-    return null;
+      if (
+          \password_verify($pass, $user->getAttributeValue('pass') ??
+              '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm') // hash for `secret`
+          && $user->exists
+      ) {
+          return $user;
+      }
+
+      return null;
 });
 ```
 
