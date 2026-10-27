@@ -55,20 +55,29 @@ When building the database schema for the `App\Models\User` model, ensure the pa
 > [!NOTE]  
 > Before using Framework's authentication features, ensure the `AuthServiceProvider` registration call is active in your `bootstrap/app.php` file.
 
-The `AuthServiceProvider` located in your `app/Providers` directory contains a call to `app('auth')->viaRequest`. The `viaRequest` method accepts a Closure that is executed when an incoming request requires authentication. Within this Closure, you may resolve your `App\Models\User` instance using any strategy required:
+The `AuthServiceProvider` located in your `app/Providers` directory contains a call to `app('auth')->viaRequest`. The `viaRequest` method accepts a Closure that is executed when an incoming request requires authentication. Within this Closure, you may resolve your `App\Models\User` instance using any strategy required.
+
+For maximum security against timing attacks and database leaks, it is recommended to query the user by an identifier first, and then verify their token or secret using a constant-time cryptographic function like `password_verify`:
 
 ```php
 use App\Models\User;
 use MacropaySolutions\Kernel\Http\Request;
 
-$this->app['auth']->viaRequest('api', function (Request $request): ?User {
-    $token = (string)$request->getFiltered('api_token');
+$this->app['auth']->viaRequest('api', function (Request$request): ?User {
+    $id = $request->header('X-API-ID');
+    $pass = $request->header('X-API-PASS');
 
-    if ($token === '') {
+    if (!\is_string($id) || $id === '' || !\is_string($pass) || $pass === '') {
         return null;
     }
 
-    return User::query()->where('api_token', \hash('sha256', $token))->first();
+    $user = User::query()->find($id);
+
+    if ($user instanceof User && \password_verify($pass, $user->pass)) {
+        return $user;
+    }
+
+    return null;
 });
 ```
 
