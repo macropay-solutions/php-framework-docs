@@ -147,7 +147,7 @@ To give your application a speed boost, you should cache all of your configurati
 
 You should typically run the `php run config:cache` command as part of your production deployment process. The command should not be run during local development as configuration options will frequently need to be changed during the course of your application's development.
 
-> [NOTE]  
+> [!NOTE]  
 > In addition to manual compilation via the console tool, configurations are **automatically cached by the framework within `--no-dev` Composer deployment environments**.
 
 Once the configuration has been cached, your application's `.env` file will not be loaded by the framework during requests or Run commands; therefore, the `env` function will only return external, system level environment variables.

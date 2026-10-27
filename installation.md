@@ -84,6 +84,14 @@ Register the configuration in `bootstrap/app.php`:
         $app->configure('my-package');
     }
 
+> [!NOTE] Some packages may auto publish their configs through composer hooks (install and update):
+
+      "extra": {
+        "publish-assets": {
+          "config/crufd_wizard.php": "config/crufd_wizard.php"
+        }
+      },
+
 #### Step 4: Copy Views (if package has resources/views/)
 
     mkdir -p resources/views/vendor/my-package
