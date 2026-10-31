@@ -13,6 +13,7 @@ context: requests
   - [Content Negotiation](#content-negotiation)
   - [PSR-7 Requests](#psr-7-requests)
 - [Retrieving Input](#retrieving-input)
+  - [Automatic Stream Wrapper Protection (Security)](#automatic-stream-wrapper-protection-security)
   - [Input Presence and Mutation](#input-presence-and-mutation)
   - [Cookies](#cookies)
   - [Files](#files)
@@ -221,6 +222,29 @@ When working with explicitly verified array data structure inputs or JSON payloa
 
     $excluded = $request->except(['credit_card']);
     $excluded = $request->except('credit_card');
+
+### Automatic Stream Wrapper Protection (Security)
+
+By default, the framework provides a defense-in-depth layer to help mitigate Local File Inclusion (LFI) and Remote Code Execution (RCE) vulnerabilities leveraging malicious stream wrappers (`php://` and `phar://`).
+
+This automatic guard recursively inspects both array keys and values across all primary request data fetchers, including `get()`, `post()`, `cookie()`, `input()`, `query()`, `route()`, `all()`, dynamic properties (`__get`), and `getFiltered()`.
+
+If a dangerous stream wrapper is detected, the framework will silently strip the payload and return your specified `$default` value (or `null`) instead:
+
+    // If 'theme' contains "php://filter/read=...", this safely returns 'default.php'
+    $theme = $request->get('theme', 'default.php');
+    
+    // If an attacker smuggles a wrapper in an array key, the key is safely unset.
+    $payload = $request->input('payload');
+
+While this regex permits normal `http://` and `https://` URLs, it targets strings starting with `php://` or `phar://` (including chained wrappers like compress.zlib://php://). Legitimate inputs starting with these schemes (e.g., in documentation or markdown editors) will be filtered.
+
+> [!WARNING]
+> This is a defense-in-depth measure, not a complete RCE boundary. Values can still bypass this guard if developers read from raw property bags (e.g., `$request->query->get('key')`) or manually decode/transform values after retrieval. For file operations, you must still implement strict allowlists mapping user-facing identifiers to server-controlled paths.
+
+> [!NOTE] To fetch the raw value use: `$request->query->get('key')`, `$request->request->get('key')` and so on. Beware that this removes the protection unless you wrap the result into `$request->filterDangerousWrapper(....);`
+> 
+> If a dangerous stream wrapper is detected in route parameters, the route will not be matched, resulting in 404 response.
 
 <a name="input-presence-and-mutation"></a>
 ### Input Presence and Mutation
