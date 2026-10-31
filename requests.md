@@ -227,7 +227,7 @@ When working with explicitly verified array data structure inputs or JSON payloa
 
 By default, the framework provides a defense-in-depth layer to help mitigate Local File Inclusion (LFI) and Remote Code Execution (RCE) vulnerabilities leveraging malicious stream wrappers (`php://` and `phar://`).
 
-This automatic guard recursively inspects both array keys and values across all primary request data fetchers, including `get()`, `post()`, `cookie()`, `input()`, `query()`, `route()`, `all()`, dynamic properties (`__get`), and `getFiltered()`.
+This automatic guard recursively inspects both array keys and values across all primary request data fetchers, including `get()`, `post()`, `cookie()`, `input()`, `query()`, `route()`, `all()`, `header()`, `server()`, dynamic properties (`__get`), and `getFiltered()`.
 
 If a dangerous stream wrapper is detected, the framework will silently strip the payload and return your specified `$default` value (or `null`) instead:
 
