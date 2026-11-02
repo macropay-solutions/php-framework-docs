@@ -17,6 +17,7 @@ context: authentication
 - [Adding Custom User Providers](#adding-custom-user-providers)
   - [The User Provider Contract](#the-user-provider-contract)
   - [The Authenticatable Contract](#the-authenticatable-contract)
+  - [The Authenticatable Trait and Token Rotation](#the-authenticatable-trait-and-token-rotation)
 - [Events](#events)
 
 <a name="introduction"></a>
@@ -44,7 +45,7 @@ While Framework is optimized for stateless JSON APIs by default, stateful sessio
 
 By default, Framework includes an `App\Models\User` Obvious model in your `app/Models` directory. This model may be used with the default Obvious authentication driver. If your application is not using Obvious, you may use the `database` authentication provider which uses the database query builder.
 
-When building the database schema for the `App\Models\User` model, ensure the password column is at least 60 characters in length.
+When building the database schema for the `App\Models\User` model, ensure the password column is at least 60 characters in length. If utilizing stateful session authentication with "Remember Me" support, your table must also include a nullable string column named `remember_token` (e.g., `VARCHAR(100)`).
 
 <a name="getting-started"></a>
 ## Getting Started
@@ -241,6 +242,36 @@ interface Authenticatable
     public function getRememberTokenName();
 }
 ```
+
+<a name="the-authenticatable-trait-and-token-rotation"></a>
+### The Authenticatable Trait and Token Rotation
+
+Framework provides the `MacropaySolutions\Kernel\Auth\Authenticatable` trait to satisfy the `Authenticatable` contract on your Obvious models>.
+
+#### Automatic Remember Token Rotation
+
+Whenever an existing user's password attribute is modified on a model instance (`$user->password = ...` or `$user->update(['password' => ...])`), the trait intercepts the write in `Authenticatable::setAttribute()` and automatically rotates the `remember_token` to a new random 60-character string.
+
+This mechanism invalidates all active "Remember Me" sessions across other devices on the server side without exposing raw password hashes or derivatives in the client recaller cookie (`ID|Token`).
+
+> [!WARNING]
+> **Direct Query Builder Updates & Mutator Bypass**
+> Direct query builder updates (such as `User::query()->where(...)->update(['password' => ...])` or `DB::table('users')->update(...)`) execute raw SQL queries and bypass Obvious model mutators, lifecycle hooks, and `setAttribute()`.
+>
+> When performing bulk updates directly through the query builder, the `remember_token` will not be rotated automatically. You must explicitly pass a newly generated `remember_token` in the update payload to prevent old remember-me cookies from remaining valid against the updated credentials:
+
+    use MacropaySolutions\Kernel\Support\Str;
+
+    // Explicitly rotate the remember_token during direct query builder updates
+    User::query()->where('id', $userId)->update([
+        'password' => $newHashedPassword,
+        'remember_token' => Str::random(60),
+    ]);
+
+Failing to rotate the `remember_token` when updating a password will result in:
+- **Old sessions remain fully valid:** Any previously issued "Remember Me" cookies (`ID|Token`) on other browsers, devices, or in the hands of an attacker will continue to authenticate successfully.
+- **Global logout bypass:** Because the password hash derivative was removed from the cookie and `AuthenticateSession` no longer compares the cookie against the database password, the `remember_token` in the database is now the sole gatekeeper for persistent sessions. If it does not change, changing the password does nothing to revoke existing sessions.
+- **No automatic session termination on credential compromise:** If an account is reset due to being compromised, the attacker retains access indefinitely until their local cookie reaches its natural expiration (e.g., 400 days) or the user explicitly clicks "Log out" to invoke `cycleRememberToken()`.
 
 <a name="events"></a>
 ## Events
