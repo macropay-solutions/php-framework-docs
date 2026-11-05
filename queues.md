@@ -620,6 +620,8 @@ Behind the scenes, when a `ShouldBeUnique` job is dispatched, Framework attempts
         }
     }
 
+The `uniqueVia` method must be public and return a store resolved by the cache manager (such as `\app('cache')->driver('redis')` or `\app('cache')->store('redis')`), because the store name is written into the job payload so the worker releases the lock in the same store. Instead of `uniqueVia`, you may define a public `$uniqueCacheStore` property with the store name (for example `public string $uniqueCacheStore = 'redis';`). When both are defined, the property is used.
+
 > [!NOTE]  
 > If you only need to limit the concurrent processing of a job, use [cache atomic locks](/queues#preventing-job-overlaps) instead.
 
