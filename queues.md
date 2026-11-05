@@ -447,6 +447,9 @@ The dispatcher automatically injects the `CallQueuedCallable` instance itself in
 > [!WARNING]  
 > Creating and dispatching traditional job objects or commands is completely blocked by the framework. Because the transport layer strictly uses JSON to prevent PHP Object Injection, traditional objects silently lose their class identity when encoded and cannot be routed by the worker. You must use Storable Array Callables or implement the `StorableCallable` interface instead.
 
+> [!NOTE]  
+> Job classes dispatched with `::new()->dispatch()` (they implement `StorableCallable` through the `InstanceDispatchable` trait) are kept for backward compatibility with class-based jobs. For simple jobs, [Storable Array Callables](#queueing-storable-array-callables-recommended) dispatched with `\dispatch([...])` remain the recommended way to queue work. Only job classes read the class-level job settings described in [Specifying Max Job Attempts / Timeout Values](#max-job-attempts-and-timeout).
+
 <a name="generating-job-classes"></a>
 ### Generating Job Classes
 
@@ -955,6 +958,17 @@ When dispatching instantiated objects (such as `ShouldQueue` Notifications, Mail
 
 > [!NOTE]
 > The job settings described below are copied from the job when it is dispatched, so they must be **public**. Only public `$tries`, `$timeout`, `$maxExceptions`, `$backoff`, `$retryUntil` and `$failOnTimeout` properties and public `tries`, `backoff`, `retryUntil` and `failed` methods are used. A `protected` or `private` property or method (for example `protected $tries = 5;`) is silently ignored.
+
+These class-level settings apply to job classes dispatched with `::new()->dispatch()`. A Storable Array Callable dispatched with `\dispatch([...])` does not read them from its target class. To configure one, set them on the queued callable before dispatching it:
+
+    $job = \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
+        [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
+    );
+    $job->tries = 3;
+    $job->timeout = 120;
+    $job->dispatch();
+
+Without that, the worker's own options (such as `--tries` and `--timeout`) apply.
 
 <a name="max-attempts"></a>
 #### Max Attempts
