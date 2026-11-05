@@ -140,14 +140,6 @@ However, instead of manually calling `json_encode`, you may use the `MacropaySol
 </script>
 ```
 
-The latest versions of the Framework application skeleton include a `Js` facade, which provides convenient access to this functionality within your View templates:
-
-```template
-<script>
-    var app = {{ Js::from($array) }};
-</script>
-```
-
 > [!WARNING]  
 > You should only use the `Js::from` method to render existing variables as JSON. The Template templating is based on regular expressions and attempts to pass a complex expression to the directive may cause unexpected failures.
 
@@ -187,7 +179,7 @@ You may construct `if` statements using the `@if`, `@elseif`, `@else`, and `@end
 For convenience, Template also provides an `@unless` directive:
 
 ```template
-@unless (Auth::check())
+@unless (auth()->check())
     You are not signed in.
 @endunless
 ```
@@ -477,7 +469,7 @@ Likewise, the `@selected` directive may be used to indicate if a given select op
 Additionally, the `@disabled` directive may be used to indicate if a given element should be "disabled":
 
 ```template
-<button type="submit" @disabled($errors->isNotEmpty())>Submit</button>
+<button type="submit" @disabled($errors->any())>Submit</button>
 ```
 
 Moreover, the `@readonly` directive may be used to indicate if a given element should be "readonly":
@@ -874,7 +866,7 @@ Template components also allow you to access the component name, attributes, and
         };
     }
 
-The `componentName` is equal to the name used in the HTML tag after the `x-` prefix. So `<x-alert />`'s `componentName` will be `alert`. The `attributes` element will contain all the attributes that were present on the HTML tag. The `slot` element is an `MacropaySolutions\Kernel\Support\HtmlString` instance with the contents of the component's slot.
+The `componentName` is equal to the name used in the HTML tag after the `x-` prefix. So `<x-alert />`'s `componentName` will be `alert`. The `attributes` element will contain all the attributes that were present on the HTML tag. The `slot` element is an `MacropaySolutions\Kernel\View\ComponentSlot` instance with the contents of the component's slot.
 
 The closure should return a string. If the returned string corresponds to an existing view, that view will be rendered; otherwise, the returned string will be evaluated as an inline Template view.
 
@@ -1608,7 +1600,7 @@ Since HTML forms can't make `PUT`, `PATCH`, or `DELETE` requests, you will need 
 <a name="validation-errors"></a>
 ### Validation Errors
 
-The `@error` directive may be used to quickly check if [validation error messages](/validation#quick-displaying-the-validation-errors) exist for a given attribute. Within an `@error` directive, you may echo the `$message` variable to display the error message:
+The `@error` directive may be used to quickly check if [validation error messages](/validation#quick-displaying-the-validation-errors) exist for a given attribute. The `$errors` variable must be [passed to the view](/validation#manually-flashing-errors-and-input), because it is not shared automatically. Within an `@error` directive, you may echo the `$message` variable to display the error message:
 
 ```template
 <!-- /resources/views/post/create.template.php -->

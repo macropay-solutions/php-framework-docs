@@ -11,7 +11,6 @@ context: errors
 - [The Exception Handler](#the-exception-handler)
     - [Reporting Exceptions](#reporting-exceptions)
     - [The `report` Helper](#the-report-helper)
-    - [Exception Log Context](#exception-log-context)
     - [Ignoring Exceptions by Type](#ignoring-exceptions-by-type)
     - [Rendering Exceptions](#rendering-exceptions)
     - [Reportable and Renderable Exceptions](#reportable-and-renderable-exceptions)
@@ -55,41 +54,6 @@ public function process(string $data): bool
         \report($e);
 
         return false;
-    }
-}
-```
-
-<a name="exception-log-context"></a>
-### Exception Log Context
-
-To add custom contextual data to log entries for a specific exception, define a `context` method on the exception class. The returned array will automatically be passed into log records:
-
-```php
-namespace App\Exceptions;
-
-use Exception;
-
-class InvalidOrderException extends Exception
-{
-    /**
-     * Create a new exception instance.
-     */
-    public function __construct(
-        protected int $orderId
-    ) {
-        parent::__construct('Invalid order payload.');
-    }
-
-    /**
-     * Get the exception's context information for logging.
-     *
-     * @return array<string, mixed>
-     */
-    public function context(): array
-    {
-        return [
-            'order_id' => $this->orderId,
-        ];
     }
 }
 ```
@@ -231,4 +195,4 @@ With `APP_DEBUG=false`:
 
 #### Non-JSON Requests
 
-When `$request->expectsJson()` is false and `APP_DEBUG=false`, the exception handler returns a lightweight, centered HTML layout containing the status code and text (e.g., `<h1>404: Not Found</h1>` or `<h1>500: Server Error</h1>`).
+When `$request->expectsJson()` is false and `APP_DEBUG=false`, the exception handler returns a lightweight, centered HTML layout containing the status code and text (e.g., `<h1>404: Not Found</h1>` or `<h1>500: Internal Server Error</h1>`).

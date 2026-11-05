@@ -49,7 +49,7 @@ To serve your project locally, you may use the built-in PHP development server:
 <a name="configuration"></a>
 ### Configuration
 
-All the configuration options for the PHP Framework are stored in the `.env` file. Once PHP Framework is installed, you should also [configure your local environment](/php-framework-docs/configuration#environment-configuration).
+All the configuration options for the PHP Framework are stored in the `.env` file. Once PHP Framework is installed, you should also [configure your local environment](/configuration#environment-configuration).
 
 #### Application Key
 

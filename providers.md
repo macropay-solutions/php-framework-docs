@@ -33,7 +33,7 @@ To achieve maximum performance during application boot, IoC bindings should be c
 For core services and autoloaded singletons, define your available bindings and class aliases directly within your application class (`App\Application`):
 
 - `$availableBindings`: Maps abstract keys or interfaces to their concrete resolvers.
-- `registerContainerAliases()`: Registers container aliases without instantiating provider objects.
+- `$aliases`: Registers container aliases without instantiating provider objects.
 
 ### 2. Explicit Binding Maps
 

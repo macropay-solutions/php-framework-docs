@@ -24,7 +24,6 @@ context: events
     - [Dispatching Events After Database Transactions](#dispatching-events-after-database-transactions)
 - [Testing](#testing)
     - [Faking a Subset of Events](#faking-a-subset-of-events)
-    - [Scoped Events Fakes](#scoped-event-fakes)
 
 <a name="introduction"></a>
 ## Introduction
@@ -161,7 +160,7 @@ By default, all listeners within your application's `app/Listeners` directory wi
     protected function discoverEventsWithin(): array
     {
         return [
-            $this->app->path('Listeners'),
+            $this->app->path() . DIRECTORY_SEPARATOR . 'Listeners',
         ];
     }
 
@@ -438,17 +437,17 @@ If you need to manually access the listener's underlying queue job's `delete` an
 
 When queued listeners are dispatched within database transactions, they may be processed by the queue before the database transaction has committed. When this happens, any updates you have made to models or database records during the database transaction may not yet be reflected in the database. In addition, any models or database records created within the transaction may not exist in the database. If your listener depends on these models, unexpected errors can occur when the job that dispatches the queued listener is processed.
 
-If your queue connection's `after_commit` configuration option is set to `false`, you may still indicate that a particular queued listener should be dispatched after all open database transactions have been committed by implementing the `ShouldHandleEventsAfterCommit` interface on the listener class:
+If your queue connection's `after_commit` configuration option is set to `false`, you may still indicate that a particular queued listener should be dispatched after all open database transactions have been committed by implementing the `ShouldQueueAfterCommit` interface on the listener class:
 
     <?php
 
     namespace App\Listeners;
 
-    use MacropaySolutions\Kernel\Contracts\Events\ShouldHandleEventsAfterCommit;
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
+    use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueueAfterCommit;
     use MacropaySolutions\Kernel\Queue\InteractsWithQueue;
 
-    class SendShipmentNotification implements ShouldQueue, ShouldHandleEventsAfterCommit
+    class SendShipmentNotification implements ShouldQueue, ShouldQueueAfterCommit
     {
         use InteractsWithQueue;
     }
@@ -518,16 +517,14 @@ You may define a `$tries` property on your listener class to specify how many ti
         public $tries = 5;
     }
 
-As an alternative to defining how many times a listener may be attempted before it fails, you may define a time at which the listener should no longer be attempted. This allows a listener to be attempted any number of times within a given time frame. To define the time at which a listener should no longer be attempted, add a `retryUntil` method to your listener class. This method should return a `DateTime` instance:
-
-    use DateTime;
+As an alternative to defining how many times a listener may be attempted before it fails, you may define a time at which the listener should no longer be attempted. This allows a listener to be attempted any number of times within a given time frame. To define the time at which a listener should no longer be attempted, add a `retryUntil` method to your listener class. This method should return a Unix timestamp (`int`):
 
     /**
      * Determine the time at which the listener should timeout.
      */
-    public function retryUntil(): DateTime
+    public function retryUntil(): int
     {
-        return now()->addMinutes(5);
+        return \appDate()->now()->addMinutes(5)->getTimestamp();
     }
 
 <a name="dispatching-events"></a>

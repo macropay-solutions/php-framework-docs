@@ -169,6 +169,9 @@ php run migrate --isolated
 > [!WARNING]  
 > To utilize this feature, your application must be using the `memcached`, `redis`, `dynamodb`, `database`, `file`, or `array` cache driver as your application's default cache driver. In addition, all servers must be communicating with the same central cache server.
 
+> [!NOTE]
+> Even without the `isolated` option, the `migrate` command always acquires its own `framework_migrate_lock` cache lock (held for `database.migrations_lock_ttl` seconds, `300` by default). If that lock is already held, the command does not run and exits with status code `1`.
+
 <a name="forcing-migrations-to-run-in-production"></a>
 #### Forcing Migrations to Run in Production
 
@@ -288,7 +291,7 @@ You may determine the existence of a table or column using the `hasTable` and `h
 
 If you want to perform a schema operation on a database connection that is not your application's default connection, use the `connection` method:
 
-    \app('db')->connection()->getSchemaBuilder()->connection('sqlite')->create('users', function (Blueprint $table) {
+    \app('db')->connection('sqlite')->getSchemaBuilder()->create('users', function (Blueprint $table) {
         $table->id();
     });
 
@@ -383,14 +386,6 @@ The schema builder blueprint offers a variety of methods that correspond to the 
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-
-    .collection-method code {
-        font-size: 14px;
-    }
-
-    .collection-method:not(.first-collection-method) {
-        margin-top: 50px;
-    }
 </style>
 
 <div class="collection-method-list" markdown="1">
@@ -421,154 +416,154 @@ The schema builder blueprint offers a variety of methods that correspond to the 
 </div>
 
 <a name="column-method-bigIncrements"></a>
-#### `bigIncrements()` {.collection-method .first-collection-method}
+#### `bigIncrements()`
 
 The `bigIncrements` method creates an auto-incrementing `UNSIGNED BIGINT` (primary key) equivalent column:
 
     $table->bigIncrements('id');
 
 <a name="column-method-bigInteger"></a>
-#### `bigInteger()` {.collection-method}
+#### `bigInteger()`
 
 The `bigInteger` method creates a `BIGINT` equivalent column:
 
     $table->bigInteger('votes');
 
 <a name="column-method-binary"></a>
-#### `binary()` {.collection-method}
+#### `binary()`
 
 The `binary` method creates a `BLOB` equivalent column:
 
     $table->binary('photo');
 
 <a name="column-method-boolean"></a>
-#### `boolean()` {.collection-method}
+#### `boolean()`
 
 The `boolean` method creates a `BOOLEAN` equivalent column:
 
     $table->boolean('confirmed');
 
 <a name="column-method-char"></a>
-#### `char()` {.collection-method}
+#### `char()`
 
 The `char` method creates a `CHAR` equivalent column with of a given length:
 
     $table->char('name', 100);
 
 <a name="column-method-dateTimeTz"></a>
-#### `dateTimeTz()` {.collection-method}
+#### `dateTimeTz()`
 
 The `dateTimeTz` method creates a `DATETIME` (with timezone) equivalent column with an optional precision (total digits):
 
     $table->dateTimeTz('created_at', $precision = 0);
 
 <a name="column-method-dateTime"></a>
-#### `dateTime()` {.collection-method}
+#### `dateTime()`
 
 The `dateTime` method creates a `DATETIME` equivalent column with an optional precision (total digits):
 
     $table->dateTime('created_at', $precision = 0);
 
 <a name="column-method-date"></a>
-#### `date()` {.collection-method}
+#### `date()`
 
 The `date` method creates a `DATE` equivalent column:
 
     $table->date('created_at');
 
 <a name="column-method-decimal"></a>
-#### `decimal()` {.collection-method}
+#### `decimal()`
 
 The `decimal` method creates a `DECIMAL` equivalent column with the given precision (total digits) and scale (decimal digits):
 
     $table->decimal('amount', $precision = 8, $scale = 2);
 
 <a name="column-method-double"></a>
-#### `double()` {.collection-method}
+#### `double()`
 
 The `double` method creates a `DOUBLE` equivalent column with the given precision (total digits) and scale (decimal digits):
 
     $table->double('amount', 8, 2);
 
 <a name="column-method-enum"></a>
-#### `enum()` {.collection-method}
+#### `enum()`
 
 The `enum` method creates a `ENUM` equivalent column with the given valid values:
 
     $table->enum('difficulty', ['easy', 'hard']);
 
 <a name="column-method-float"></a>
-#### `float()` {.collection-method}
+#### `float()`
 
 The `float` method creates a `FLOAT` equivalent column with the given precision (total digits) and scale (decimal digits):
 
     $table->float('amount', 8, 2);
 
 <a name="column-method-foreignId"></a>
-#### `foreignId()` {.collection-method}
+#### `foreignId()`
 
 The `foreignId` method creates an `UNSIGNED BIGINT` equivalent column:
 
     $table->foreignId('user_id');
 
 <a name="column-method-foreignIdFor"></a>
-#### `foreignIdFor()` {.collection-method}
+#### `foreignIdFor()`
 
 The `foreignIdFor` method adds a `{column}_id` equivalent column for a given model class. The column type will be `UNSIGNED BIGINT`, `CHAR(36)`, or `CHAR(26)` depending on the model key type:
 
     $table->foreignIdFor(User::class);
 
 <a name="column-method-foreignUlid"></a>
-#### `foreignUlid()` {.collection-method}
+#### `foreignUlid()`
 
 The `foreignUlid` method creates a `ULID` equivalent column:
 
     $table->foreignUlid('user_id');
 
 <a name="column-method-foreignUuid"></a>
-#### `foreignUuid()` {.collection-method}
+#### `foreignUuid()`
 
 The `foreignUuid` method creates a `UUID` equivalent column:
 
     $table->foreignUuid('user_id');
 
 <a name="column-method-geometryCollection"></a>
-#### `geometryCollection()` {.collection-method}
+#### `geometryCollection()`
 
 The `geometryCollection` method creates a `GEOMETRYCOLLECTION` equivalent column:
 
     $table->geometryCollection('positions');
 
 <a name="column-method-geometry"></a>
-#### `geometry()` {.collection-method}
+#### `geometry()`
 
 The `geometry` method creates a `GEOMETRY` equivalent column:
 
     $table->geometry('positions');
 
 <a name="column-method-id"></a>
-#### `id()` {.collection-method}
+#### `id()`
 
 The `id` method is an alias of the `bigIncrements` method. By default, the method will create an `id` column; however, you may pass a column name if you would like to assign a different name to the column:
 
     $table->id();
 
 <a name="column-method-increments"></a>
-#### `increments()` {.collection-method}
+#### `increments()`
 
 The `increments` method creates an auto-incrementing `UNSIGNED INTEGER` equivalent column as a primary key:
 
     $table->increments('id');
 
 <a name="column-method-integer"></a>
-#### `integer()` {.collection-method}
+#### `integer()`
 
 The `integer` method creates an `INTEGER` equivalent column:
 
     $table->integer('votes');
 
 <a name="column-method-ipAddress"></a>
-#### `ipAddress()` {.collection-method}
+#### `ipAddress()`
 
 The `ipAddress` method creates a `VARCHAR` equivalent column:
 
@@ -576,280 +571,280 @@ The `ipAddress` method creates a `VARCHAR` equivalent column:
 
 When using Postgres, an `INET` column will be created.
 
-#### json() {.collection-method}
+#### json()
 
 The `json` method creates a `JSON` equivalent column:
 
     $table->json('options');
 
 <a name="column-method-jsonb"></a>
-#### `jsonb()` {.collection-method}
+#### `jsonb()`
 
 The `jsonb` method creates a `JSONB` equivalent column:
 
     $table->jsonb('options');
 
 <a name="column-method-lineString"></a>
-#### `lineString()` {.collection-method}
+#### `lineString()`
 
 The `lineString` method creates a `LINESTRING` equivalent column:
 
     $table->lineString('positions');
 
 <a name="column-method-longText"></a>
-#### `longText()` {.collection-method}
+#### `longText()`
 
 The `longText` method creates a `LONGTEXT` equivalent column:
 
     $table->longText('description');
 
 <a name="column-method-macAddress"></a>
-#### `macAddress()` {.collection-method}
+#### `macAddress()`
 
 The `macAddress` method creates a column that is intended to hold a MAC address. Some database systems, such as PostgreSQL, have a dedicated column type for this type of data. Other database systems will use a string equivalent column:
 
     $table->macAddress('device');
 
 <a name="column-method-mediumIncrements"></a>
-#### `mediumIncrements()` {.collection-method}
+#### `mediumIncrements()`
 
 The `mediumIncrements` method creates an auto-incrementing `UNSIGNED MEDIUMINT` equivalent column as a primary key:
 
     $table->mediumIncrements('id');
 
 <a name="column-method-mediumInteger"></a>
-#### `mediumInteger()` {.collection-method}
+#### `mediumInteger()`
 
 The `mediumInteger` method creates a `MEDIUMINT` equivalent column:
 
     $table->mediumInteger('votes');
 
 <a name="column-method-mediumText"></a>
-#### `mediumText()` {.collection-method}
+#### `mediumText()`
 
 The `mediumText` method creates a `MEDIUMTEXT` equivalent column:
 
     $table->mediumText('description');
 
 <a name="column-method-multiLineString"></a>
-#### `multiLineString()` {.collection-method}
+#### `multiLineString()`
 
 The `multiLineString` method creates a `MULTILINESTRING` equivalent column:
 
     $table->multiLineString('positions');
 
 <a name="column-method-multiPoint"></a>
-#### `multiPoint()` {.collection-method}
+#### `multiPoint()`
 
 The `multiPoint` method creates a `MULTIPOINT` equivalent column:
 
     $table->multiPoint('positions');
 
 <a name="column-method-multiPolygon"></a>
-#### `multiPolygon()` {.collection-method}
+#### `multiPolygon()`
 
 The `multiPolygon` method creates a `MULTIPOLYGON` equivalent column:
 
     $table->multiPolygon('positions');
 
 <a name="column-method-nullableTimestamps"></a>
-#### `nullableTimestamps()` {.collection-method}
+#### `nullableTimestamps()`
 
 The `nullableTimestamps` method is an alias of the [timestamps](#column-method-timestamps) method:
 
     $table->nullableTimestamps(0);
 
 <a name="column-method-point"></a>
-#### `point()` {.collection-method}
+#### `point()`
 
 The `point` method creates a `POINT` equivalent column:
 
     $table->point('position');
 
 <a name="column-method-polygon"></a>
-#### `polygon()` {.collection-method}
+#### `polygon()`
 
 The `polygon` method creates a `POLYGON` equivalent column:
 
     $table->polygon('position');
 
 <a name="column-method-rememberToken"></a>
-#### `rememberToken()` {.collection-method}
+#### `rememberToken()`
 
 The `rememberToken` method creates a nullable, `VARCHAR(100)` equivalent column that is intended to store the current "remember me" authentication token:
 
     $table->rememberToken();
 
 <a name="column-method-set"></a>
-#### `set()` {.collection-method}
+#### `set()`
 
 The `set` method creates a `SET` equivalent column with the given list of valid values:
 
     $table->set('flavors', ['strawberry', 'vanilla']);
 
 <a name="column-method-smallIncrements"></a>
-#### `smallIncrements()` {.collection-method}
+#### `smallIncrements()`
 
 The `smallIncrements` method creates an auto-incrementing `UNSIGNED SMALLINT` equivalent column as a primary key:
 
     $table->smallIncrements('id');
 
 <a name="column-method-smallInteger"></a>
-#### `smallInteger()` {.collection-method}
+#### `smallInteger()`
 
 The `smallInteger` method creates a `SMALLINT` equivalent column:
 
     $table->smallInteger('votes');
 
 <a name="column-method-softDeletesTz"></a>
-#### `softDeletesTz()` {.collection-method}
+#### `softDeletesTz()`
 
 The `softDeletesTz` method adds a nullable `deleted_at` `TIMESTAMP` (with timezone) equivalent column with an optional precision (total digits). This column is intended to store the `deleted_at` timestamp needed for the model's "soft delete" functionality:
 
     $table->softDeletesTz($column = 'deleted_at', $precision = 0);
 
 <a name="column-method-softDeletes"></a>
-#### `softDeletes()` {.collection-method}
+#### `softDeletes()`
 
 The `softDeletes` method adds a nullable `deleted_at` `DATETIME` equivalent column with an optional precision (total digits). Storing as literal `DATETIME` prevents hidden database-level SQL timezone conversions:
 
     $table->softDeletes($column = 'deleted_at', $precision = 0);
 
 <a name="column-method-string"></a>
-#### `string()` {.collection-method}
+#### `string()`
 
 The `string` method creates a `VARCHAR` equivalent column of the given length:
 
     $table->string('name', 100);
 
 <a name="column-method-text"></a>
-#### `text()` {.collection-method}
+#### `text()`
 
 The `text` method creates a `TEXT` equivalent column:
 
     $table->text('description');
 
 <a name="column-method-timeTz"></a>
-#### `timeTz()` {.collection-method}
+#### `timeTz()`
 
 The `timeTz` method creates a `TIME` (with timezone) equivalent column with an optional precision (total digits):
 
     $table->timeTz('sunrise', $precision = 0);
 
 <a name="column-method-time"></a>
-#### `time()` {.collection-method}
+#### `time()`
 
 The `time` method creates a `TIME` equivalent column with an optional precision (total digits):
 
     $table->time('sunrise', $precision = 0);
 
 <a name="column-method-timestampTz"></a>
-#### `timestampTz()` {.collection-method}
+#### `timestampTz()`
 
 The `timestampTz` method creates a `TIMESTAMP` (with timezone) equivalent column with an optional precision (total digits):
 
     $table->timestampTz('added_at', $precision = 0);
 
 <a name="column-method-timestamp"></a>
-#### `timestamp()` {.collection-method}
+#### `timestamp()`
 
 The `timestamp` method creates a `TIMESTAMP` equivalent column with an optional precision (total digits):
 
     $table->timestamp('added_at', $precision = 0);
 
 <a name="column-method-timestampsTz"></a>
-#### `timestampsTz()` {.collection-method}
+#### `timestampsTz()`
 
 The `timestampsTz` method creates `created_at` and `updated_at` `TIMESTAMP` (with timezone) equivalent columns with an optional precision (total digits):
 
     $table->timestampsTz($precision = 0);
 
 <a name="column-method-timestamps"></a>
-#### `timestamps()` {.collection-method}
+#### `timestamps()`
 
 The `timestamps` method creates `created_at` and `updated_at` `DATETIME` equivalent columns with an optional precision (total digits). Using `DATETIME` ensures literal raw PHP string storage without timezone conversions:
 
     $table->timestamps($precision = 0);
 
 <a name="column-method-tinyIncrements"></a>
-#### `tinyIncrements()` {.collection-method}
+#### `tinyIncrements()`
 
 The `tinyIncrements` method creates an auto-incrementing `UNSIGNED TINYINT` equivalent column as a primary key:
 
     $table->tinyIncrements('id');
 
 <a name="column-method-tinyInteger"></a>
-#### `tinyInteger()` {.collection-method}
+#### `tinyInteger()`
 
 The `tinyInteger` method creates a `TINYINT` equivalent column:
 
     $table->tinyInteger('votes');
 
 <a name="column-method-tinyText"></a>
-#### `tinyText()` {.collection-method}
+#### `tinyText()`
 
 The `tinyText` method creates a `TINYTEXT` equivalent column:
 
     $table->tinyText('notes');
 
 <a name="column-method-unsignedBigInteger"></a>
-#### `unsignedBigInteger()` {.collection-method}
+#### `unsignedBigInteger()`
 
 The `unsignedBigInteger` method creates an `UNSIGNED BIGINT` equivalent column:
 
     $table->unsignedBigInteger('votes');
 
 <a name="column-method-unsignedDecimal"></a>
-#### `unsignedDecimal()` {.collection-method}
+#### `unsignedDecimal()`
 
 The `unsignedDecimal` method creates an `UNSIGNED DECIMAL` equivalent column with an optional precision (total digits) and scale (decimal digits):
 
     $table->unsignedDecimal('amount', $precision = 8, $scale = 2);
 
 <a name="column-method-unsignedInteger"></a>
-#### `unsignedInteger()` {.collection-method}
+#### `unsignedInteger()`
 
 The `unsignedInteger` method creates an `UNSIGNED INTEGER` equivalent column:
 
     $table->unsignedInteger('votes');
 
 <a name="column-method-unsignedMediumInteger"></a>
-#### `unsignedMediumInteger()` {.collection-method}
+#### `unsignedMediumInteger()`
 
 The `unsignedMediumInteger` method creates an `UNSIGNED MEDIUMINT` equivalent column:
 
     $table->unsignedMediumInteger('votes');
 
 <a name="column-method-unsignedSmallInteger"></a>
-#### `unsignedSmallInteger()` {.collection-method}
+#### `unsignedSmallInteger()`
 
 The `unsignedSmallInteger` method creates an `UNSIGNED SMALLINT` equivalent column:
 
     $table->unsignedSmallInteger('votes');
 
 <a name="column-method-unsignedTinyInteger"></a>
-#### `unsignedTinyInteger()` {.collection-method}
+#### `unsignedTinyInteger()`
 
 The `unsignedTinyInteger` method creates an `UNSIGNED TINYINT` equivalent column:
 
     $table->unsignedTinyInteger('votes');
 
 <a name="column-method-ulid"></a>
-#### `ulid()` {.collection-method}
+#### `ulid()`
 
 The `ulid` method creates a `ULID` equivalent column:
 
     $table->ulid('id');
 
 <a name="column-method-uuid"></a>
-#### `uuid()` {.collection-method}
+#### `uuid()`
 
 The `uuid` method creates a `UUID` equivalent column:
 
     $table->uuid('id');
 
 <a name="column-method-year"></a>
-#### `year()` {.collection-method}
+#### `year()`
 
 The `year` method creates a `YEAR` equivalent column:
 
@@ -879,7 +874,7 @@ Modifier  |  Description
 `->from($integer)`  |  Set the starting value of an auto-incrementing field (MySQL / PostgreSQL).
 `->invisible()`  |  Make the column "invisible" to `SELECT *` queries (MySQL).
 `->nullable($value = true)`  |  Allow NULL values to be inserted into the column.
-`->storedAs($expression)`  |  Create a stored generated column (MySQL / PostgreSQL).
+`->storedAs($expression)`  |  Create a stored generated column (MySQL / PostgreSQL / SQLite).
 `->unsigned()`  |  Set INTEGER columns as UNSIGNED (MySQL).
 `->useCurrent()`  |  Set TIMESTAMP columns to use CURRENT_TIMESTAMP as default value.
 `->useCurrentOnUpdate()`  |  Set TIMESTAMP columns to use CURRENT_TIMESTAMP when a record is updated (MySQL).
@@ -1081,7 +1076,7 @@ Alternatively, you may enable the `innodb_large_prefix` option for your database
 
 To rename an index, you may use the `renameIndex` method provided by the schema builder blueprint. This method accepts the current index name as its first argument and the desired name as its second argument:
 
-    $table->renameIndex('from', 'to')
+    $table->renameIndex('from', 'to');
 
 > [!WARNING]  
 > If your application is utilizing an SQLite database, you must install the `doctrine/dbal` package using the Composer package manager before the `renameIndex` method may be used.
@@ -1186,7 +1181,7 @@ You may enable or disable foreign key constraints within your migrations by usin
 <a name="events"></a>
 ## Events
 
-For convenience, each migration operation will dispatch an event. All the following events extend the base `MacropaySolutions\Kernel\Database\Events\MigrationEvent` class:
+For convenience, each migration operation will dispatch an event. The `MigrationsStarted` and `MigrationsEnded` events extend the base `MacropaySolutions\Kernel\Database\Events\MigrationsEvent` class, while `MigrationStarted` and `MigrationEnded` extend the base `MacropaySolutions\Kernel\Database\Events\MigrationEvent` class:
 
  Class | Description
 -------|-------

@@ -30,7 +30,7 @@ The default hashing driver for your application is configured in your applicatio
 <a name="hashing-passwords"></a>
 ### Hashing Passwords
 
-You may hash a password by calling the `make` method via the `hash` helper:
+You may hash a password by calling the `make` method via the `hash` service:
 
     <?php
 
@@ -93,6 +93,6 @@ The `check` method provided by the `hash` service allows you to verify that a gi
 
 The `needsRehash` method provided by the `hash` service allows you to determine if the work factor used by the hasher has changed since the password was hashed. Some applications choose to perform this check during the application's authentication process:
 
-    if (Hash::needsRehash($hashed)) {
-        $hashed = Hash::make('plain-text');
+    if (app('hash')->needsRehash($hashed)) {
+        $hashed = app('hash')->make('plain-text');
     }

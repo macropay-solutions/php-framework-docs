@@ -7,7 +7,6 @@ context: redirects
 
 - [Creating Redirects](#creating-redirects)
 - [Redirecting To Named Routes](#redirecting-named-routes)
-- [Redirecting To Controller Actions](#redirecting-controller-actions)
 - [Redirecting With Flashed Session Data](#redirecting-with-flashed-session-data)
 
 <a name="creating-redirects"></a>
@@ -22,19 +21,10 @@ Redirect responses are instances of the `MacropaySolutions\Kernel\Http\RedirectR
         return redirect('/home/dashboard');
     }
 
-Sometimes you may wish to redirect the user to their previous location, such as when a submitted form is invalid. You may do so by using the global `back` helper function. Since this feature utilizes the [session](/session), make sure the route calling the `back` function is using the `web` middleware group or has all the session middleware applied:
-
-    $router->post('/user/profile', 'ProfileController@update');
-
-    public function update(): RedirectResponse
-    {
-        return back()->withInput();
-    }
-
 <a name="redirecting-named-routes"></a>
 ## Redirecting To Named Routes
 
-When you call the `redirect` helper with no parameters, an instance of `MacropaySolutions\Kernel\Routing\Redirector` is returned, allowing you to call any method on the `Redirector` instance. For example, to generate a `RedirectResponse` to a named route, you may use the `route` method:
+When you call the `redirect` helper with no parameters, an instance of `MacropaySolutions\Framework\Http\Redirector` is returned, allowing you to call any method on the `Redirector` instance. For example, to generate a `RedirectResponse` to a named route, you may use the `route` method:
 
     return redirect()->route('login');
 
@@ -43,44 +33,6 @@ If your route has parameters, you may pass them as the second argument to the `r
     // For a route with the following URI: profile/{id}
 
     return redirect()->route('profile', ['id' => 1]);
-
-For convenience, Framework also offers the global `to_route` function:
-
-    return to_route('profile', ['id' => 1]);
-
-<a name="populating-parameters-via-obvious-models"></a>
-#### Populating Parameters Via Obvious Models
-
-If you are redirecting to a route with an "ID" parameter that is being populated from an Obvious model, you may pass the model itself. The ID will be extracted automatically:
-
-    // For a route with the following URI: profile/{id}
-
-    return redirect()->route('profile', [$user]);
-
-If you would like to customize the value that is placed in the route parameter, you should override the `getRouteKey` method on your Obvious model:
-
-    /**
-     * Get the value of the model's route key.
-     */
-    public function getRouteKey(): mixed
-    {
-        return $this->slug;
-    }
-
-<a name="redirecting-controller-actions"></a>
-## Redirecting To Controller Actions
-
-You may also generate redirects to [controller actions](/controllers). To do so, pass the controller and action name to the `action` method:
-
-    use App\Http\Controllers\HomeController;
-
-    return redirect()->action([HomeController::class, 'index']);
-
-If your controller route requires parameters, you may pass them as the second argument to the `action` method:
-
-    return redirect()->action(
-        [UserController::class, 'profile'], ['id' => 1]
-    );
 
 <a name="redirecting-with-flashed-session-data"></a>
 ## Redirecting With Flashed Session Data
@@ -94,9 +46,9 @@ Redirecting to a new URL and [flashing data to the session](/session#flash-data)
         return redirect('/dashboard')->with('status', 'Profile updated!');
     }
 
-You may use the `withInput` method provided by the `RedirectResponse` instance to flash the current request's input data to the session before redirecting the user to a new location. Once the input has been flashed to the session, you may easily [retrieve it](/requests#retrieving-old-input) during the next request:
+You may use the `withInput` method provided by the `RedirectResponse` instance to flash the current request's input data to the session before redirecting the user to a new location. Once the input has been flashed to the session, you may easily [retrieve it](/validation#manually-flashing-errors-and-input) during the next request:
 
-    return back()->withInput();
+    return redirect('/dashboard')->withInput();
 
 After the user is redirected, you may display the flashed message from the [session](/session). For example, using [Template syntax](/template):
 

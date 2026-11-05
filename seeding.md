@@ -65,7 +65,7 @@ Of course, manually specifying the attributes for each model seed is cumbersome.
 
 For example, let's create 50 users that each has one related post:
 
-    use App\Models\User;
+    use Database\Factories\UserFactory;
 
     /**
      * Run the database seeders.
@@ -105,7 +105,7 @@ While running seeds, you may want to prevent models from dispatching events. You
     namespace Database\Seeders;
 
     use MacropaySolutions\KernelDev\Database\Seeder;
-    use MacropaySolutions\Kernel\Database\Console\Seeds\WithoutModelEvents;
+    use MacropaySolutions\KernelDev\Database\Console\Seeds\WithoutModelEvents;
 
     class DatabaseSeeder extends Seeder
     {

@@ -53,9 +53,6 @@ When building the database schema for the `App\Models\User` model, ensure the pa
 <a name="authentication-service-provider"></a>
 #### Authentication Service Provider
 
-> [!NOTE]  
-> Before using Framework's authentication features, ensure the `AuthServiceProvider` registration call is active in your `bootstrap/app.php` file.
-
 The `AuthServiceProvider` located in your `app/Providers` directory contains a call to `app('auth')->viaRequest`. The `viaRequest` method accepts a Closure that is executed when an incoming request requires authentication. Within this Closure, you may resolve your `App\Models\User` instance using any strategy required.
 
 For maximum security against timing attacks and database leaks, it is recommended to query the user by an identifier first, and then verify their token or secret using a constant-time cryptographic function like `password_verify`:
@@ -111,14 +108,14 @@ You may use the `auth()->user()` global helper to retrieve the currently authent
 namespace App\Http\Controllers;
 
 use MacropaySolutions\Kernel\Http\Request;
-use MacropaySolutions\Kernel\Http\Response;
+use MacropaySolutions\Kernel\Http\JsonResponse;
 
 class UserController extends Controller
 {
     /**
      * Display the authenticated user profile.
      */
-    public function profile(Request $request): Response
+    public function profile(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -141,7 +138,7 @@ if (\auth()->check()) {
 <a name="protecting-routes"></a>
 ## Protecting Routes
 
-Route middleware can be used to only allow authenticated users to access specific endpoints. Framework includes the `auth` middleware, which references `MacropaySolutions\Kernel\Auth\Middleware\Authenticate`. Attach the middleware to your route definitions inside your route files:
+Route middleware can be used to only allow authenticated users to access specific endpoints. Framework includes the `auth` middleware, which references `App\Http\Middleware\Authenticate` (uncomment the `auth` alias in the `$routeMiddleware` property of `App\Application`). Attach the middleware to your route definitions inside your route files:
 
 ```php
 $router->get('user/profile', [
@@ -256,7 +253,7 @@ This mechanism invalidates all active "Remember Me" sessions across other device
 
 > [!WARNING]
 > **Direct Query Builder Updates & Mutator Bypass**
-> Direct query builder updates (such as `User::query()->where(...)->update(['password' => ...])` or `DB::table('users')->update(...)`) execute raw SQL queries and bypass Obvious model mutators, lifecycle hooks, and `setAttribute()`.
+> Direct query builder updates (such as `User::query()->where(...)->update(['password' => ...])` or `app('db')->table('users')->update(...)`) execute raw SQL queries and bypass Obvious model mutators, lifecycle hooks, and `setAttribute()`.
 >
 > When performing bulk updates directly through the query builder, the `remember_token` will not be rotated automatically. You must explicitly pass a newly generated `remember_token` in the update payload to prevent old remember-me cookies from remaining valid against the updated credentials:
 

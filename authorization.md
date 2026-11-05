@@ -72,14 +72,14 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use MacropaySolutions\Kernel\Contracts\Auth\Access\Gate;
 use MacropaySolutions\Kernel\Http\Request;
-use MacropaySolutions\Kernel\Http\Response;
+use MacropaySolutions\Kernel\Http\JsonResponse;
 
 class PostController extends Controller
 {
     /**
      * Update the specified post.
      */
-    public function update(Request $request, int|string $id): Response
+    public function update(Request $request, int|string $id): JsonResponse
     {
         $post = Post::query()->findOrFail($id);
         $gate = \app(Gate::class);
@@ -253,14 +253,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use MacropaySolutions\Kernel\Http\Request;
-use MacropaySolutions\Kernel\Http\Response;
+use MacropaySolutions\Kernel\Http\JsonResponse;
 
 class PostController extends Controller
 {
     /**
      * Update the specified post.
      */
-    public function update(Request $request, int|string $id): Response
+    public function update(Request $request, int|string $id): JsonResponse
     {
         $post = Post::query()->findOrFail($id);
 

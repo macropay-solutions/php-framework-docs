@@ -27,7 +27,7 @@ All collections also serve as iterators, allowing you to loop over them as if th
 
 However, as previously mentioned, collections are much more powerful than arrays and expose a variety of map / reduce operations that may be chained using an intuitive interface. For example, we may remove all inactive models and then gather the first name for each remaining user:
 
-    $names = User::query()->all()->reject(function (User $user) {
+    $names = User::query()->get()->reject(function (User $user) {
         return $user->a->active === false;
     })->map(function (User $user) {
         return $user->a->name;
@@ -43,7 +43,7 @@ While most Obvious collection methods return a new instance of an Obvious collec
 
 All Obvious collections extend the base [Framework collection](/collections#available-methods) object; therefore, they inherit all the powerful methods provided by the base collection class.
 
-In addition, the `MacropaySolutions\Kernel\Database\Obvious\Collection` class provides a superset of methods to aid with managing your model collections. Most methods return `MacropaySolutions\Kernel\Database\Obvious\Collection` instances; however, some methods, like `modelKeys`, return an `MacropaySolutions\Kernel\Support\Collection` instance.
+In addition, the `MacropaySolutions\Kernel\Database\Obvious\Collection` class provides a superset of methods to aid with managing your model collections. Most methods return `MacropaySolutions\Kernel\Database\Obvious\Collection` instances; however, some methods, like `pluck`, return an `MacropaySolutions\Kernel\Support\Collection` instance.
 
 <style>
     .collection-method-list > p {
@@ -55,14 +55,6 @@ In addition, the `MacropaySolutions\Kernel\Database\Obvious\Collection` class pr
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-    }
-
-    .collection-method code {
-        font-size: 14px;
-    }
-
-    .collection-method:not(.first-collection-method) {
-        margin-top: 50px;
     }
 </style>
 
@@ -89,7 +81,7 @@ In addition, the `MacropaySolutions\Kernel\Database\Obvious\Collection` class pr
 </div>
 
 <a name="method-append"></a>
-#### `append($attributes)` {.collection-method .first-collection-method}
+#### `append($attributes)`
 
 The `append` method may be used to indicate that an attribute should be [appended](/obvious-serialization#appending-values-to-json) for every model in the collection. This method accepts an array of attributes or a single attribute:
 
@@ -98,7 +90,7 @@ The `append` method may be used to indicate that an attribute should be [appende
     $users->append(['team', 'is_admin']);
 
 <a name="method-contains"></a>
-#### `contains($key, $operator = null, $value = null)` {.collection-method}
+#### `contains($key, $operator = null, $value = null)`
 
 The `contains` method may be used to determine if a given model instance is contained by the collection. This method accepts a primary key or a model instance:
 
@@ -107,7 +99,7 @@ The `contains` method may be used to determine if a given model instance is cont
     $users->contains(User::query()->find(1));
 
 <a name="method-diff"></a>
-#### `diff($items)` {.collection-method}
+#### `diff($items)`
 
 The `diff` method returns all the models that are not present in the given collection:
 
@@ -116,23 +108,23 @@ The `diff` method returns all the models that are not present in the given colle
     $users = $users->diff(User::query()->whereIn('id', [1, 2, 3])->get());
 
 <a name="method-except"></a>
-#### `except($keys)` {.collection-method}
+#### `except($keys)`
 
 The `except` method returns all the models that do not have the given primary keys:
 
     $users = $users->except([1, 2, 3]);
 
 <a name="method-find"></a>
-#### `find($key)` {.collection-method}
+#### `find($key, $default = null)`
 
 The `find` method returns the model that has a primary key matching the given key. If `$key` is a model instance, `find` will attempt to return a model matching the primary key. If `$key` is an array of keys, `find` will return all models which have a primary key in the given array:
 
-    $users = User::query()->all();
+    $users = User::query()->get();
 
     $user = $users->find(1);
 
 <a name="method-fresh"></a>
-#### `fresh($with = [])` {.collection-method}
+#### `fresh($with = [])`
 
 The `fresh` method retrieves a fresh instance of each model in the collection from the database. In addition, any specified relationships will be eager loaded:
 
@@ -141,7 +133,7 @@ The `fresh` method retrieves a fresh instance of each model in the collection fr
     $users = $users->fresh('comments');
 
 <a name="method-intersect"></a>
-#### `intersect($items)` {.collection-method}
+#### `intersect($items)`
 
 The `intersect` method returns all the models that are also present in the given collection:
 
@@ -150,7 +142,7 @@ The `intersect` method returns all the models that are also present in the given
     $users = $users->intersect(User::query()->whereIn('id', [1, 2, 3])->get());
 
 <a name="method-load"></a>
-#### `load($relations)` {.collection-method}
+#### `load($relations)`
 
 The `load` method eager loads the given relationships for all models in the collection:
 
@@ -161,7 +153,7 @@ The `load` method eager loads the given relationships for all models in the coll
     $users->load(['comments', 'posts' => fn($query) => $query->where('active', 1)]);
 
 <a name="method-loadMissing"></a>
-#### `loadMissing($relations)` {.collection-method}
+#### `loadMissing($relations)`
 
 The `loadMissing` method eager loads the given relationships for all models in the collection if the relationships are not already loaded:
 
@@ -172,7 +164,7 @@ The `loadMissing` method eager loads the given relationships for all models in t
     $users->loadMissing(['comments', 'posts' => fn($query) => $query->where('active', 1)]);
 
 <a name="method-modelKeys"></a>
-#### `modelKeys()` {.collection-method}
+#### `modelKeys()`
 
 The `modelKeys` method returns the primary keys for all models in the collection:
 
@@ -181,42 +173,42 @@ The `modelKeys` method returns the primary keys for all models in the collection
     // [1, 2, 3, 4, 5]
 
 <a name="method-makeVisible"></a>
-#### `makeVisible($attributes)` {.collection-method}
+#### `makeVisible($attributes)`
 
 The `makeVisible` method [makes attributes visible](/obvious-serialization#hiding-attributes-from-json) that are typically "hidden" on each model in the collection:
 
     $users = $users->makeVisible(['address', 'phone_number']);
 
 <a name="method-makeHidden"></a>
-#### `makeHidden($attributes)` {.collection-method}
+#### `makeHidden($attributes)`
 
 The `makeHidden` method [hides attributes](/obvious-serialization#hiding-attributes-from-json) that are typically "visible" on each model in the collection:
 
     $users = $users->makeHidden(['address', 'phone_number']);
 
 <a name="method-only"></a>
-#### `only($keys)` {.collection-method}
+#### `only($keys)`
 
 The `only` method returns all the models that have the given primary keys:
 
     $users = $users->only([1, 2, 3]);
 
 <a name="method-setVisible"></a>
-#### `setVisible($attributes)` {.collection-method}
+#### `setVisible($visible)`
 
 The `setVisible` method [temporarily overrides](/obvious-serialization#temporarily-modifying-attribute-visibility) all the visible attributes on each model in the collection:
 
     $users = $users->setVisible(['id', 'name']);
 
 <a name="method-setHidden"></a>
-#### `setHidden($attributes)` {.collection-method}
+#### `setHidden($hidden)`
 
 The `setHidden` method [temporarily overrides](/obvious-serialization#temporarily-modifying-attribute-visibility) all the hidden attributes on each model in the collection:
 
     $users = $users->setHidden(['email', 'password', 'remember_token']);
 
 <a name="method-toquery"></a>
-#### `toQuery()` {.collection-method}
+#### `toQuery()`
 
 The `toQuery` method returns an Obvious query builder instance containing a `whereIn` constraint on the collection model's primary keys:
 
@@ -229,7 +221,7 @@ The `toQuery` method returns an Obvious query builder instance containing a `whe
     ]);
 
 <a name="method-unique"></a>
-#### `unique($key = null, $strict = false)` {.collection-method}
+#### `unique($key = null, $strict = false, $flags = SORT_REGULAR)`
 
 The `unique` method returns all the unique models in the collection. Any models of the same type with the same primary key as another model in the collection are removed:
 

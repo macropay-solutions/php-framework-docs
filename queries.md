@@ -774,7 +774,7 @@ Sometimes you may need to construct a "where" clause that compares the results o
     use App\Models\User;
     use MacropaySolutions\Kernel\Database\Query\Builder;
 
-    $users = User::where(function (Builder $query) {
+    $users = User::query()->where(function (Builder $query) {
         $query->select('type')
             ->from('membership')
             ->whereColumn('membership.user_id', 'users.id')
@@ -787,7 +787,7 @@ Or, you may need to construct a "where" clause that compares a column to the res
     use App\Models\Income;
     use MacropaySolutions\Kernel\Database\Query\Builder;
 
-    $incomes = Income::where('amount', '<', function (Builder $query) {
+    $incomes = Income::query()->where('amount', '<', function (Builder $query) {
         $query->selectRaw('avg(i.amount)')->from('incomes as i');
     })->get();
 
@@ -962,7 +962,7 @@ The `insertUsing` method will insert new records into the table while using a su
         'id', 'name', 'email', 'email_verified_at'
     ], \app('db')->table('users')->select(
         'id', 'name', 'email', 'email_verified_at'
-    )->where('updated_at', '<=', now()->subMonth()));
+    )->where('updated_at', '<=', \appDate()->now()->subMonth()));
 
 <a name="auto-incrementing-ids"></a>
 #### Auto-Incrementing IDs

@@ -15,7 +15,6 @@ context: scheduling
     - [Preventing Task Overlaps](#preventing-task-overlaps)
     - [Running Tasks on One Server](#running-tasks-on-one-server)
     - [Background Tasks](#background-tasks)
-    - [Maintenance Mode](#maintenance-mode)
 - [Running the Scheduler](#running-the-scheduler)
     - [Sub-Minute Scheduled Tasks](#sub-minute-scheduled-tasks)
     - [Running the Scheduler Locally](#running-the-scheduler-locally)
@@ -40,7 +39,7 @@ You may define all of your scheduled tasks in the `schedule` method of your appl
     namespace App\Console;
 
     use MacropaySolutions\Kernel\Console\Scheduling\Schedule;
-    use MacropaySolutions\Kernel\Foundation\Console\Kernel as ConsoleKernel;
+    use MacropaySolutions\Framework\Console\Kernel as ConsoleKernel;
 
     class Kernel extends ConsoleKernel
     {
@@ -253,19 +252,7 @@ Using the `timezone` method, you may specify that a scheduled task's time should
 
     $schedule->command('report:generate')
              ->timezone('America/New_York')
-             ->at('2:00')
-
-If you are repeatedly assigning the same timezone to all of your scheduled tasks, you may wish to define a `scheduleTimezone` method in your `App\Console\Kernel` class. This method should return the default timezone that should be assigned to all scheduled tasks:
-
-    use DateTimeZone;
-
-    /**
-     * Get the timezone that should be used by default for scheduled events.
-     */
-    protected function scheduleTimezone(): DateTimeZone|string|null
-    {
-        return 'America/Chicago';
-    }
+             ->at('2:00');
 
 > [!WARNING]  
 > Remember that some timezones utilize daylight savings time. When daylight saving time changes occur, your scheduled task may run twice or even not run at all. For this reason, we recommend avoiding timezone scheduling when possible.
@@ -283,7 +270,7 @@ If needed, you may specify how many minutes must pass before the "without overla
 
     $schedule->command('emails:send')->withoutOverlapping(10);
 
-Behind the scenes, the `withoutOverlapping` method utilizes your application's [cache](/cache) to obtain locks. If necessary, you can clear these cache locks using the `schedule:clear-cache` Run command. This is typically only necessary if a task becomes stuck due to an unexpected server problem.
+Behind the scenes, the `withoutOverlapping` method utilizes your application's [cache](/cache) to obtain locks. If necessary, you can clear these cache locks using the `schedule:clear-cache` Run command (`MacropaySolutions\Kernel\Console\Scheduling\ScheduleClearCacheCommand`, which is not registered by default; add it to the `$commands` property of your `App\Console\Kernel`). This is typically only necessary if a task becomes stuck due to an unexpected server problem.
 
 <a name="running-tasks-on-one-server"></a>
 ### Running Tasks on One Server
@@ -334,13 +321,6 @@ By default, multiple tasks scheduled at the same time will execute sequentially 
 > [!WARNING]  
 > The `runInBackground` method may only be used when scheduling tasks via the `command` and `exec` methods.
 
-<a name="maintenance-mode"></a>
-### Maintenance Mode
-
-Your application's scheduled tasks will not run when the application is in [maintenance mode](/configuration#maintenance-mode), since we don't want your tasks to interfere with any unfinished maintenance you may be performing on your server. However, if you would like to force a task to run even in maintenance mode, you may call the `evenInMaintenanceMode` method when defining the task:
-
-    $schedule->command('emails:send')->evenInMaintenanceMode();
-
 <a name="running-the-scheduler"></a>
 ## Running the Scheduler
 
@@ -376,7 +356,7 @@ Since sub-minute tasks that take longer than expected to run could delay the exe
 
 As the `schedule:run` command runs for the entire minute of invocation when sub-minute tasks are defined, you may sometimes need to interrupt the command when deploying your application. Otherwise, an instance of the `schedule:run` command that is already running would continue using your application's previously deployed code until the current minute ends.
 
-To interrupt in-progress `schedule:run` invocations, you may add the `schedule:interrupt` command to your application's deployment script. This command should be invoked after your application is finished deploying:
+To interrupt in-progress `schedule:run` invocations, you may add the `schedule:interrupt` command to your application's deployment script (`MacropaySolutions\Kernel\Console\Scheduling\ScheduleInterruptCommand`, which is not registered by default; add it to the `$commands` property of your `App\Console\Kernel`). This command should be invoked after your application is finished deploying:
 
 ```shell
 php run schedule:interrupt

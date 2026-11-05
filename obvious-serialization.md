@@ -41,7 +41,7 @@ The `attributesToArray` method may be used to convert a model's attributes to an
 
 You may also convert entire [collections](/obvious-collections) of models to arrays by calling the `toArray` method on the collection instance:
 
-    $users = User::query()->all();
+    $users = User::query()->get();
 
     return $users->toArray();
 
@@ -64,14 +64,18 @@ Alternatively, you may cast a model or collection to a string, which will automa
 
 Since models and collections are converted to JSON when cast to a string, you can return Obvious objects directly from your application's routes or controllers. Framework will automatically serialize your Obvious models and collections to JSON when they are returned from routes or controllers:
 
-    $router->get('users', function () {
-        return User::query()->all();
-    });
+    $router->get('users', 'UserController@index');
+
+    // App\Http\Controllers\UserController
+    public function index()
+    {
+        return User::query()->get();
+    }
 
 <a name="relationships"></a>
 #### Relationships
 
-When an Obvious model is converted to JSON, its loaded relationships will automatically be included as attributes on the JSON object. Also, though Obvious relationship methods are defined using "camel case" method names, a relationship's JSON attribute will be "snake case".
+When an Obvious model is converted to JSON, its loaded relationships will automatically be included as attributes on the JSON object. Also, though Obvious relationship methods are defined using "camel case" method names, a relationship's JSON attribute will only be "snake case" when the model's static `$snakeAttributes` property is `true` (it is `false` by default).
 
 <a name="hiding-attributes-from-json"></a>
 ## Hiding Attributes From JSON
@@ -91,7 +95,7 @@ Sometimes you may wish to limit the attributes, such as passwords, that are incl
          *
          * @var array
          */
-        protected $hidden = ['password'];
+        protected array $hidden = ['password'];
     }
 
 > [!NOTE]  
@@ -112,7 +116,7 @@ Alternatively, you may use the `visible` property to define an "allow list" of a
          *
          * @var array
          */
-        protected $visible = ['first_name', 'last_name'];
+        protected array $visible = ['first_name', 'last_name'];
     }
 
 <a name="temporarily-modifying-attribute-visibility"></a>
@@ -156,7 +160,7 @@ Occasionally, when converting models to arrays or JSON, you may wish to add attr
         }
     }
 
-If you would like the accessor to always be appended to your model's array and JSON representations, you may add the attribute name to the `appends` property of your model. Note that attribute names are typically referenced using their "snake case" serialized representation, even though the accessor's PHP method is defined using "camel case":
+If you would like the accessor to always be appended to your model's array and JSON representations, you may add the attribute name to the `appends` property of your model:
 
     <?php
 
@@ -171,7 +175,7 @@ If you would like the accessor to always be appended to your model's array and J
          *
          * @var array
          */
-        protected $appends = ['is_admin'];
+        protected array $appends = ['is_admin'];
     }
 
 Once the attribute has been added to the `appends` list, it will be included in both the model's array and JSON representations. Attributes in the `appends` array will also respect the `visible` and `hidden` settings configured on the model.

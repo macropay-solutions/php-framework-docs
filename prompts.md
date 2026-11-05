@@ -30,7 +30,7 @@ context: prompts
 [Framework Prompts](/prompts) adds beautiful and user-friendly forms to your command-line applications, with browser-like features including placeholder text and validation.
 
 
-Framework Prompts is perfect for accepting user input in your [Run console commands](/run#writing-commands), but it may also be used in any command-line PHP project.
+Framework Prompts is perfect for accepting user input in your [Run console commands](/run#command-structure), but it may also be used in any command-line PHP project.
 
 > [!NOTE]  
 > Framework Prompts supports macOS, Linux, and Windows with WSL. For more information, please see our documentation on [unsupported environments & fallbacks](#fallbacks).
@@ -251,7 +251,7 @@ Up to five options will be displayed before the list begins to scroll. You may c
 ```php
 $role = select(
     label: 'Which category would you like to assign?',
-    options: Category::pluck('name', 'id'),
+    options: Category::query()->pluck('name', 'id'),
     scroll: 10
 );
 ```
@@ -259,7 +259,7 @@ $role = select(
 <a name="select-validation"></a>
 #### Validation
 
-Unlike other prompt functions, the `select` function doesn't accept the `required` argument because it is not possible to select nothing. However, you may pass a closure to the `validate` argument if you need to present an option but prevent it from being selected:
+Unlike other prompt functions, the `select` function doesn't accept `required: false` (it throws an `InvalidArgumentException`) because it is not possible to select nothing. However, you may pass a closure to the `validate` argument if you need to present an option but prevent it from being selected:
 
 ```php
 $role = select(
@@ -270,7 +270,7 @@ $role = select(
         'owner' => 'Owner'
     ],
     validate: fn (string $value) =>
-        $value === 'owner' && User::where('role', 'owner')->exists()
+        $value === 'owner' && User::query()->where('role', 'owner')->exists()
             ? 'An owner already exists.'
             : null
 );
@@ -325,7 +325,7 @@ Up to five options will be displayed before the list begins to scroll. You may c
 ```php
 $categories = multiselect(
     label: 'What categories should be assigned?',
-    options: Category::pluck('name', 'id'),
+    options: Category::query()->pluck('name', 'id'),
     scroll: 10
 );
 ```
@@ -338,7 +338,7 @@ By default, the user may select zero or more options. You may pass the `required
 ```php
 $categories = multiselect(
     label: 'What categories should be assigned?',
-    options: Category::pluck('name', 'id'),
+    options: Category::query()->pluck('name', 'id'),
     required: true,
 );
 ```
@@ -348,7 +348,7 @@ If you would like to customize the validation message, you may provide a string 
 ```php
 $categories = multiselect(
     label: 'What categories should be assigned?',
-    options: Category::pluck('name', 'id'),
+    options: Category::query()->pluck('name', 'id'),
     required: 'You must select at least one category',
 );
 ```
@@ -393,7 +393,7 @@ $name = suggest(
     'What is your name?',
     fn ($value) => collect(['Surname', 'Dayle'])
         ->filter(fn ($name) => Str::contains($name, $value, ignoreCase: true))
-)
+);
 ```
 
 You may also include placeholder text, a default value, and an informational hint:
@@ -461,7 +461,7 @@ use function MacropaySolutions\Prompts\search;
 $id = search(
     'Search for the user that should receive the mail',
     fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : []
 );
 ```
@@ -475,7 +475,7 @@ $id = search(
     label: 'Search for the user that should receive the mail',
     placeholder: 'E.g. Surname Name',
     options: fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     hint: 'The user will receive an email immediately.'
 );
@@ -487,7 +487,7 @@ Up to five options will be displayed before the list begins to scroll. You may c
 $id = search(
     label: 'Search for the user that should receive the mail',
     options: fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     scroll: 10
 );
@@ -502,10 +502,10 @@ If you would like to perform additional validation logic, you may pass a closure
 $id = search(
     label: 'Search for the user that should receive the mail',
     options: fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     validate: function (int|string $value) {
-        $user = User::findOrFail($value);
+        $user = User::query()->findOrFail($value);
 
         if ($user->opted_out) {
             return 'This user has opted-out of receiving mail.';
@@ -527,7 +527,7 @@ use function MacropaySolutions\Prompts\multisearch;
 $ids = multisearch(
     'Search for the users that should receive the mail',
     fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : []
 );
 ```
@@ -541,7 +541,7 @@ $ids = multisearch(
     label: 'Search for the users that should receive the mail',
     placeholder: 'E.g. Surname Name',
     options: fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     hint: 'The user will receive an email immediately.'
 );
@@ -553,7 +553,7 @@ Up to five options will be displayed before the list begins to scroll. You may c
 $ids = multisearch(
     label: 'Search for the users that should receive the mail',
     options: fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     scroll: 10
 );
@@ -568,7 +568,7 @@ By default, the user may select zero or more options. You may pass the `required
 $ids = multisearch(
     'Search for the users that should receive the mail',
     fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     required: true,
 );
@@ -580,7 +580,7 @@ If you would like to customize the validation message, you may also provide a st
 $ids = multisearch(
     'Search for the users that should receive the mail',
     fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     required: 'You must select at least one user.'
 );
@@ -595,10 +595,10 @@ If you would like to perform additional validation logic, you may pass a closure
 $ids = multisearch(
     label: 'Search for the users that should receive the mail',
     options: fn (string $value) => strlen($value) > 0
-        ? User::where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
+        ? User::query()->where('name', 'like', "%{$value}%")->pluck('name', 'id')->all()
         : [],
     validate: function (array $values) {
-        $optedOut = User::where('name', 'like', '%a%')->findMany($values);
+        $optedOut = User::query()->where('name', 'like', '%a%')->findMany($values);
 
         if ($optedOut->isNotEmpty()) {
             return $optedOut->pluck('name')->join(', ', ', and ').' have opted out.';
@@ -641,7 +641,7 @@ use function MacropaySolutions\Prompts\table;
 
 table(
     ['Name', 'Email'],
-    User::all(['name', 'email'])
+    User::query()->get(['name', 'email'])
 );
 ```
 
@@ -672,7 +672,7 @@ use function MacropaySolutions\Prompts\progress;
 
 $users = progress(
     label: 'Updating users',
-    steps: User::all(),
+    steps: User::query()->get(),
     callback: fn ($user) => $this->performTask($user),
 );
 ```
@@ -684,7 +684,7 @@ The callback may also accept the `\MacropaySolutions\Prompts\Progress` instance,
 ```php
 $users = progress(
     label: 'Updating users',
-    steps: User::all(),
+    steps: User::query()->get(),
     callback: function ($user, $progress) {
         $progress
             ->label("Updating {$user->name}")
@@ -701,7 +701,7 @@ Sometimes, you may need more manual control over how a progress bar is advanced.
 ```php
 $progress = progress(label: 'Updating users', steps: 10);
 
-$users = User::all();
+$users = User::query()->get();
 
 $progress->start();
 

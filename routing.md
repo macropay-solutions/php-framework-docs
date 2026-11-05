@@ -68,8 +68,8 @@ To enable domain enforcement and absolute URL generation, the domain parameter m
   'domain' => 'https://api.example.com:80'
 
 If a `domain` is provided without a scheme (e.g., `api.example.com`) or app.url has no scheme:
-- named routes will fall back to relative paths (e.g., `/users`) because the system cannot safely assume the intended protocol.
-- the domain check will be skipped, and the route will resolve on any host hitting the application.
+- named routes will fall back to paths relative to the current request root (e.g., `/users`) because the system cannot safely assume the intended protocol.
+- for a `domain` without a scheme, the domain check will never match the request's `scheme://host`, and the route will return 404 on any host hitting the application.
 
 When a valid URL is provided in the route group OR app.url config, all named routes (`route('name')`) will automatically return the full absolute URL.  Example: `https://api.example.com/v1/profile`
 

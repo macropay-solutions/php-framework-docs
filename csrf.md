@@ -45,9 +45,7 @@ Framework automatically generates a CSRF "token" for each active [user session](
 The current session's CSRF token can be accessed via the request's session or via the `csrf_token` helper function:
 
     // routes/web.php
-    use App\Controllers\TokenController;
-    
-    $router->get('/token', [TokenController::class, 'show']);
+    $router->get('/token', '\App\Controllers\TokenController@show');
 
     // App/Controllers/TokenController.php
     namespace App\Controllers;
@@ -79,25 +77,20 @@ Anytime you define a "POST", "PUT", "PATCH", or "DELETE" HTML form in your appli
 </form>
 ```
 
-The `App\Http\Middleware\VerifyCsrfToken` [middleware](/middleware), which is included in the `web` middleware group by default, will automatically verify that the token in the request input matches the token stored in the session. When these two tokens match, we know that the authenticated user is the one initiating the request.
-
-<a name="csrf-tokens-and-spas"></a>
-### CSRF Tokens & SPAs
-
-If you are building a SPA that is utilizing Framework as an API backend, you should consult the [Sanctum documentation](/sanctum) for information on authenticating with your API and protecting against CSRF vulnerabilities.
+The `App\Http\Middleware\VerifyCsrfToken` [middleware](/middleware) will automatically verify that the token in the request input matches the token stored in the session. When these two tokens match, we know that the authenticated user is the one initiating the request.
 
 <a name="csrf-excluding-uris"></a>
 ### Excluding URIs From CSRF Protection
 
 Sometimes you may wish to exclude a set of URIs from CSRF protection. For example, if you are utilizing a third-party webhook system, you will need to exclude your webhook handler route from CSRF protection since the third party will not know what CSRF token to send to your routes.
 
-Typically, you should place these kinds of routes outside of the `web` middleware group that the `App\Providers\RouteServiceProvider` applies to all routes in the `routes/web.php` file. However, you may also exclude the routes by adding their URIs to the `$except` property of the `VerifyCsrfToken` middleware:
+You may exclude the routes by adding their URIs to the `$except` property of the `VerifyCsrfToken` middleware:
 
     <?php
 
     namespace App\Http\Middleware;
 
-    use MacropaySolutions\Kernel\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
+    use MacropaySolutions\Kernel\Session\Middleware\VerifyCsrfToken as Middleware;
 
     class VerifyCsrfToken extends Middleware
     {

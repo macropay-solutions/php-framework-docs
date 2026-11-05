@@ -24,7 +24,7 @@ Framework provides several helpers to assist you in generating URLs for your app
 
 The `url` helper may be used to generate arbitrary URLs for your application. The generated URL will automatically use the scheme (HTTP or HTTPS) and host from the current request being handled by the application:
 
-    $post = App\Models\Post::find(1);
+    $post = App\Models\Post::query()->find(1);
 
     echo url("/posts/{$post->id}");
 
@@ -33,13 +33,13 @@ The `url` helper may be used to generate arbitrary URLs for your application. Th
 <a name="accessing-the-current-url"></a>
 ### Accessing the Current URL
 
-If no path is provided to the `url` helper, a `MacropaySolutions\Framework\Routing\UrlGenerator` instance is returned, allowing you to access information about the current URL:
+The `url` service resolves to a `MacropaySolutions\Framework\Routing\UrlGenerator` instance, allowing you to access information about the current URL:
 
     // Get the current URL without the query string...
-    echo url()->current();
+    echo app('url')->current();
 
     // Get the current URL including the query string...
-    echo url()->full();
+    echo app('url')->full();
 
 Each of these methods may also be accessed via the `url` service:
 
@@ -75,10 +75,3 @@ Any additional array elements that do not correspond to the route's definition p
     echo route('post.show', ['post' => 1, 'search' => 'rocket']);
 
     // http://example.com/post/1?search=rocket
-
-<a name="obvious-models"></a>
-#### Obvious Models
-
-You will often be generating URLs using the route key (typically the primary key) of [Obvious models](/obvious). For this reason, you may pass Obvious models as parameter values. The `route` helper will automatically extract the model's route key:
-
-    echo route('post.show', ['post' => $post]);

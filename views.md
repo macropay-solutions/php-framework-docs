@@ -97,7 +97,7 @@ Views may also be nested within subdirectories of the `resources/views` director
 <a name="package-views"></a>
 ### Package Views
 
-Because the framework is optimized for API speed, double-colon namespaces (e.g., `package::view`) are not supported. All package views must live directly in the `resources/views/vendor/` application space.
+Because the framework is optimized for API speed, double-colon namespaces (e.g., `package::view`) are not registered automatically for packages; they only resolve after a hint path has been added via `\app('view')->addNamespace()`. All package views must live directly in the `resources/views/vendor/` application space.
 
 If you install a package that includes views, you must manually copy them to `resources/views/vendor/{package}`. Once copied, convert the file paths to dot-notation relative to the `resources/views/` directory:
 
@@ -298,7 +298,7 @@ We'll use the view factory's `composer` method to register the view composer. Fr
     }
 
 > [!WARNING]  
-> Remember, if you create a new service provider to contain your view composer registrations, you will need to add the service provider to the `providers` array in the `config/app.php` configuration file.
+> Remember, if you create a new service provider to contain your view composer registrations, you will need to register the service provider in your `bootstrap/app.php` file, via `$app->register()` or by passing it to `$app->boot()`.
 
 Now that we have registered the composer, the `compose` method of the `App\View\Composers\ProfileComposer` class will be executed each time the `profile` view is being rendered. Let's take a look at an example of the composer class:
 

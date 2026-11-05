@@ -200,7 +200,7 @@ Storable array callables seamlessly integrate with Framework's batching and chai
 
     use App\Services\ImageProcessor;
 
-    \app('bus')->batch([
+    \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch([
         [ImageProcessor::class, 'optimize', ['path' => 'photo1.jpg']],
         [ImageProcessor::class, 'optimize', ['path' => 'photo2.jpg']],
     ])->dispatch();
@@ -211,7 +211,7 @@ Storable array callables seamlessly integrate with Framework's batching and chai
 #### Job Chaining Exceptions
 
 > [!WARNING]
-> **\app('bus')->chain() Shortcut Is Blocked:** Global execution via the `\app('bus')->chain()` helper shortcut is disabled completely and will throw a `RuntimeException` to avoid massive payload bloating, security issues, and breaks under strict message constraints.
+> **\app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->chain() Shortcut Is Blocked:** Global execution via the `\app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->chain()` helper shortcut is disabled completely and will throw a `RuntimeException` to avoid massive payload bloating, security issues, and breaks under strict message constraints.
 
 When chaining jobs onto an Array Callable, you cannot chain a standard instantiated Job object or Command. You must chain other Array Callables.
 
@@ -376,7 +376,9 @@ To prevent jobs from overlapping and corrupting data (e.g., preventing two worke
  
             if (!$lock->get()) {
                 // Another worker is processing this user. Release back to the queue for 5 seconds.
-                return $job->release(5);
+                $job->release(5);
+
+                return;
             }
 
             try {
@@ -407,7 +409,9 @@ If your background task interacts with a third-party API that becomes unstable, 
                 $attempts = $job->attempts();
                 
                 if ($attempts >= 5) {
-                    return $job->fail($e); // Fail permanently after 5 tries
+                    $job->fail($e); // Fail permanently after 5 tries
+
+                    return;
                 }
 
                 $job->release($attempts * 60);
@@ -463,8 +467,10 @@ Job classes are very simple, normally containing only a `handle` method that is 
 
     use App\Models\Podcast;
     use App\Services\AudioProcessor;
+    use MacropaySolutions\Kernel\Bus\InstanceDispatchable;
     use MacropaySolutions\Kernel\Bus\Queueable;
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
+    use MacropaySolutions\Kernel\Contracts\Queue\StorableCallable;
     use MacropaySolutions\Kernel\Queue\InteractsWithQueue;
 
     class ProcessPodcast implements ShouldQueue, StorableCallable
@@ -504,9 +510,15 @@ If you would like to take total control over how the container injects dependenc
     use App\Services\AudioProcessor;
     use MacropaySolutions\Kernel\Contracts\Foundation\Application;
 
-    $this->app->bindMethod([ProcessPodcast::class, 'handle'], function (ProcessPodcast $job, Application $app) {
-        return $job->handle($app->make(AudioProcessor::class));
-    });
+    $this->app->bindMethod([ProcessPodcast::class, 'handle'], [ProcessPodcastMethodBinder::class, 'handle']);
+
+    class ProcessPodcastMethodBinder
+    {
+        public static function handle(ProcessPodcast $job, Application $app): mixed
+        {
+            return $job->handle($app->make(AudioProcessor::class));
+        }
+    }
 
 > [!WARNING]  
 > Binary data, such as raw image contents, should be passed through the `base64_encode` function before being passed to a queued job. Otherwise, the job may not properly serialize to JSON when being placed on the queue.
@@ -606,7 +618,7 @@ Behind the scenes, when a `ShouldBeUnique` job is dispatched, Framework attempts
     }
 
 > [!NOTE]  
-> If you only need to limit the concurrent processing of a job, use the [`WithoutOverlapping`](/queues#preventing-job-overlaps) instead.
+> If you only need to limit the concurrent processing of a job, use [cache atomic locks](/queues#preventing-job-overlaps) instead.
 
 <a name="encrypted-jobs"></a>
 ### Encrypted Jobs
@@ -644,7 +656,7 @@ You may dispatch tasks using the `\dispatch` global helper method. The arguments
          */
         public function store(Request $request): RedirectResponse
         {
-            $podcast = Podcast::create(/* ... */);
+            $podcast = Podcast::query()->create(/* ... */);
 
             // ...
 
@@ -661,7 +673,7 @@ If you would like to specify that a job should not be immediately available for 
 
     \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
         [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
-    )->delay(now()->addMinutes(10))->dispatch();
+    )->delay(\appDate()->now()->addMinutes(10))->dispatch();
 
 > [!WARNING]  
 > The Amazon SQS queue service has a maximum delay time of 15 minutes.
@@ -682,7 +694,7 @@ If you would like to dispatch a job immediately (synchronously), you may use the
 
     use App\Jobs\ProcessPodcast;
 
-    \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create([ProcessPodcast::class, 'handle'])->dispatchSync();
+    \app(\MacropaySolutions\Kernel\Contracts\Bus\Dispatcher::class)->dispatchSync([ProcessPodcast::class, 'handle']);
 
 
 <a name="jobs-and-database-transactions"></a>
@@ -729,7 +741,7 @@ Likewise, if the `after_commit` configuration option is set to `true`, you may i
 ### Job Chaining
 
 > [!WARNING]
-> **\app('bus')->chain() Is Unsupported:** The `\app('bus')->chain()` method does not work and will throw a `RuntimeException`. Passing instantiated job objects inside an array forces the framework to recursively serialize downstream tasks inside each other. This bloats message payloads, creates PHP Object Injection (POI) attack surfaces, and will instantly cause failures on cloud message queues like AWS SQS due to their strict 1 MB payload limits.
+> **\app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->chain() Is Unsupported:** The `\app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->chain()` method does not work and will throw a `RuntimeException`. Passing instantiated job objects inside an array forces the framework to recursively serialize downstream tasks inside each other. This bloats message payloads, creates PHP Object Injection (POI) attack surfaces, and will instantly cause failures on cloud message queues like AWS SQS due to their strict 1 MB payload limits.
 
 Job chaining allows you to specify a list of queued tasks that should be run in sequence after the primary task has executed successfully. If one task in the sequence fails, the rest of the tasks will not be run.
 
@@ -756,19 +768,19 @@ Chaining must be configured using safe, primitive Storable Array Callables. You 
 <a name="chain-connection-queue"></a>
 #### Chain Connection and Queue
 
-If you would like to specify the connection and queue that should be used for the chained jobs, you may use the `onConnection` and `onQueue` methods. These methods specify the queue connection and queue name that should be used unless the queued job is explicitly assigned a different connection / queue:
+If you would like to specify the connection and queue that should be used for the chained jobs, you may use the `allOnConnection` and `allOnQueue` methods. These methods specify the queue connection and queue name that should be used unless the queued job is explicitly assigned a different connection / queue:
 
     $job = \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create([ProcessPodcast::class, 'handle', ['podcastId' => 1]]);
 
     $job->chain([
         [OptimizePodcast::class, 'handle', ['podcastId' => 1]],
         [ReleasePodcast::class, 'handle', ['podcastId' => 1]],
-    ])->dispatch()->onConnection('redis')->onQueue('podcasts');
+    ])->allOnConnection('redis')->allOnQueue('podcasts')->dispatch();
 
 <a name="chain-failures"></a>
 #### Chain Failures
 
-When chaining jobs, you may use the `catch` method to specify an Array Callable that should be invoked if a job within the chain fails:
+When chaining jobs, you may use the `catch` method to specify an Array Callable that should be invoked if the first job of the chain fails:
 
     use App\Services\OptimizePodcast;
     use App\Services\ProcessPodcast;
@@ -852,19 +864,18 @@ When a job is dispatched to an SQS queue, the framework resolves the **Message G
 5. **Queue Name Fallback (Lowest Priority):** On FIFO queues, if no Message Group ID is explicitly provided, the framework falls back to using the queue name as the group ID.
 
 The framework resolves the **Message Deduplication ID** in the following order of precedence:
-1. **Fluent `->withDeduplicationId()` Call (Highest Priority):** Specified directly on the dispatch call.
-2. **Public `$deduplicationId` Property or `deduplicationId()` Method:** Defined on object-based jobs.
+1. **Public `$deduplicationId` Property (Highest Priority):** Set via `withDeduplicationId()` on the job object or on a `CallQueuedCallable` (from the `Queueable` trait).
+2. **`deduplicationId()` Method:** Defined on object-based jobs.
 3. **Static `deduplicationId(array $args)` Method:** Defined on the target class for Storable Array Callables.
 4. **UUID Fallback (Lowest Priority):** Generates an ordered UUID (`Str::orderedUuid()`), treating every dispatch as unique.
 
 <a name="fifo-storable-array-callables"></a>
 ##### Storable Array Callables (Queued Listeners & Direct Dispatches)
 
-When dispatching array callables or storable jobs, you may specify the Message Group ID and Message Deduplication ID fluently using `onGroup` and `withDeduplicationId`:
+When dispatching array callables or storable jobs, you may specify the Message Group ID fluently using `onGroup`:
 
     \dispatch([JobExample::class, 'handle', ['payload' => $payload]])
-        ->onGroup('customer-' . $payload['customer_id'])
-        ->withDeduplicationId('order-dedup-' . $payload['order_id']);
+        ->onGroup('customer-' . $payload['customer_id']);
 
 
     <?php
@@ -942,6 +953,9 @@ When dispatching instantiated objects (such as `ShouldQueue` Notifications, Mail
 <a name="max-job-attempts-and-timeout"></a>
 ### Specifying Max Job Attempts / Timeout Values
 
+> [!NOTE]
+> The job settings described below are copied from the job when it is dispatched, so they must be **public**. Only public `$tries`, `$timeout`, `$maxExceptions`, `$backoff`, `$retryUntil` and `$failOnTimeout` properties and public `tries`, `backoff`, `retryUntil` and `failed` methods are used. A `protected` or `private` property or method (for example `protected $tries = 5;`) is silently ignored.
+
 <a name="max-attempts"></a>
 #### Max Attempts
 
@@ -991,7 +1005,7 @@ As an alternative to defining how many times a job may be attempted before it fa
      */
     public function retryUntil(): DateTime
     {
-        return now()->addMinutes(10);
+        return \appDate()->now()->addMinutes(10);
     }
 
 > [!NOTE]  
@@ -1041,7 +1055,7 @@ In this example, the job is released for ten seconds if the application is unabl
 <a name="timeout"></a>
 #### Timeout
 
-Often, you know roughly how long you expect your queued jobs to take. For this reason, Framework allows you to specify a "timeout" value. By default, the timeout value is 60 seconds. If a job is processing for longer than the number of seconds specified by the timeout value, the worker processing the job will exit with an error. Typically, the worker will be restarted automatically by a [process manager configured on your server](#supervisor-configuration).
+Often, you know roughly how long you expect your queued jobs to take. For this reason, Framework allows you to specify a "timeout" value. By default, the timeout value is 300 seconds. If a job is processing for longer than the number of seconds specified by the timeout value, the worker processing the job will exit with an error. Typically, the worker will be restarted automatically by a [process manager configured on your server](#supervisor-configuration).
 
 The maximum number of seconds that jobs can run may be specified using the `--timeout` switch on the Run command line:
 
@@ -1108,7 +1122,7 @@ By default, the `release` method will release the job back onto the queue for im
 
     $this->release(10);
 
-    $this->release(now()->addSeconds(10));
+    $this->release(\appDate()->now()->addSeconds(10));
 
 <a name="manually-failing-a-job"></a>
 #### Manually Failing a Job
@@ -1187,7 +1201,7 @@ To dispatch a batch of jobs, you should use the `batch` method offered by the bu
     use App\Jobs\ImportCsv;
     use App\Services\BatchCallbacks;
 
-    $batch = \app('bus')->batch([
+    $batch = \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch([
         [ImportCsv::class, 'handle', ['start' => 1, 'end' => 100]],
         [ImportCsv::class, 'handle', ['start' => 101, 'end' => 200]],
     ])->before([BatchCallbacks::class, 'onBefore'])
@@ -1209,7 +1223,7 @@ The batch's ID, which may be accessed via the `$batch->id` property, may be used
 
 To assign an arbitrary name to a batch, you may call the `name` method while defining the batch:
 
-    $batch = \app('bus')->batch([
+    $batch = \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch([
         // ...
     ])->name('Import CSV')->dispatch();
 
@@ -1218,7 +1232,7 @@ To assign an arbitrary name to a batch, you may call the `name` method while def
 
 If you would like to specify the connection and queue that should be used for the batched jobs, you may use the `onConnection` and `onQueue` methods. All batched jobs must execute within the same connection and queue:
 
-    $batch = \app('bus')->batch([
+    $batch = \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch([
         // ...
     ])->then([BatchCallbacks::class, 'onSuccess'])
     ->onConnection('redis')->onQueue('imports')->dispatch();
@@ -1231,7 +1245,7 @@ You may define a set of chained jobs within a batch by placing the chained array
     use App\Jobs\ReleasePodcast;
     use App\Jobs\SendPodcastReleaseNotification;
 
-    \app('bus')->batch([
+    \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch([
         [
             [ReleasePodcast::class, 'handle', ['id' => 1]],
             [SendPodcastReleaseNotification::class, 'handle', ['id' => 1]],
@@ -1247,7 +1261,7 @@ You may define a set of chained jobs within a batch by placing the chained array
 
 Sometimes it may be useful to add additional jobs to a batch from within a batched job. This pattern can be useful when you need to batch thousands of jobs which may take too long to dispatch during a web request. So, instead, you may wish to dispatch an initial batch of "loader" jobs that hydrate the batch with even more jobs:
 
-    $batch = \app('bus')->batch([
+    $batch = \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch([
         // ...
     ])->then([BatchCallbacks::class, 'onSuccess'])->name('Import Contacts')->dispatch();
 
@@ -1320,7 +1334,9 @@ Sometimes you may need to cancel a given batch's execution. This can be accompli
     public function handle(): void
     {
         if ($this->user->exceedsImportLimit()) {
-            return $this->batch()->cancel();
+            $this->batch()->cancel();
+
+            return;
         }
 
         if ($this->batch()->cancelled()) {
@@ -1391,7 +1407,7 @@ When a batched job fails, the `catch` callback (if assigned) will be invoked. Th
 
 When a job within a batch fails, Framework will automatically mark the batch as "cancelled". If you wish, you may disable this behavior so that a job failure does not automatically mark the batch as cancelled. This may be accomplished by calling the `allowFailures` method while dispatching the batch:
 
-    $batch = \app('bus')->batch([
+    $batch = \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch([
         // ...
     ])->then([BatchCallbacks::class, 'onSuccess'])->allowFailures()->dispatch();
 
@@ -1577,7 +1593,7 @@ In your `config/queue.php` configuration file, each queue connection defines a `
 <a name="worker-timeouts"></a>
 #### Worker Timeouts
 
-The `queue:work` Run command exposes a `--timeout` option. By default, the `--timeout` value is 60 seconds. If a job is processing for longer than the number of seconds specified by the timeout value, the worker processing the job will exit with an error. Typically, the worker will be restarted automatically by a process manager configured on your server:
+The `queue:work` Run command exposes a `--timeout` option. By default, the `--timeout` value is 300 seconds. If a job is processing for longer than the number of seconds specified by the timeout value, the worker processing the job will exit with an error. Typically, the worker will be restarted automatically by a process manager configured on your server:
 
     php run-warm queue:work --timeout=60
 
@@ -1611,7 +1627,7 @@ For more information on Supervisor, consult the [Supervisor documentation](http:
 
 Sometimes your queued jobs will fail. Don't worry, things don't always go as planned! Framework includes a convenient way to [specify the maximum number of times a job should be attempted](#max-job-attempts-and-timeout). After an asynchronous job has exceeded this number of attempts, it will be inserted into the `failed_jobs` database table. [Synchronously dispatched jobs](/queues#synchronous-dispatching) that fail are not stored in this table and their exceptions are immediately handled by the application.
 
-A migration to create the `failed_jobs` table is typically already present in new Framework applications. However, if your application does not contain a migration for this table, you may use the `queue:failed-table` command to create the migration:
+A migration to create the `failed_jobs` table is not present in new Framework applications. If your application does not contain a migration for this table, you may use the `queue:failed-table` command to create the migration:
 
     php run queue:failed-table
 
@@ -1667,8 +1683,10 @@ When a particular job fails, you may want to send an alert to your users or reve
 
     use App\Models\Podcast;
     use App\Services\AudioProcessor;
+    use MacropaySolutions\Kernel\Bus\InstanceDispatchable;
     use MacropaySolutions\Kernel\Bus\Queueable;
     use MacropaySolutions\Kernel\Contracts\Queue\ShouldQueue;
+    use MacropaySolutions\Kernel\Contracts\Queue\StorableCallable;
     use MacropaySolutions\Kernel\Queue\InteractsWithQueue;
     use Throwable;
 
@@ -1810,6 +1828,7 @@ If you would like to register an event listener that will be invoked when a job 
 
     namespace App\Providers;
 
+    use MacropaySolutions\Kernel\Queue\Events\JobFailed;
     use MacropaySolutions\Kernel\Support\ServiceProvider;
 
     class AppServiceProvider extends ServiceProvider
@@ -1941,18 +1960,17 @@ If you only need to fake specific jobs while allowing your other jobs to execute
 <a name="testing-job-chains"></a>
 ### Testing Job Chains
 
-To test job chains, you will need to utilize the bus service's faking capabilities. The bus service's `assertChained` method may be used to assert that a [chain of jobs](/queues#job-chaining) was dispatched. The `assertChained` method accepts an array of chained jobs as its first argument:
+To test job chains, you will need to utilize the queue fake. The queue fake's `assertPushedWithChain` method may be used to assert that a [chain of jobs](/queues#job-chaining) was dispatched. The `assertPushedWithChain` method accepts the first job as its first argument and an array of chained jobs as its second argument:
     use App\Jobs\RecordShipment;
     use App\Jobs\ShipOrder;
     use App\Jobs\UpdateInventory;
 
-    $fake = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\BusFake(\app('bus'));
-    \app()->instance('bus', $fake);
+    $fake = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\QueueFake(\app(), [], \app('queue'));
+    \app()->instance('queue', $fake);
 
     // ...
 
-    $fake->assertChained([
-        ShipOrder::class,
+    $fake->assertPushedWithChain(ShipOrder::class, [
         RecordShipment::class,
         UpdateInventory::class
     ]);
@@ -1960,39 +1978,16 @@ To test job chains, you will need to utilize the bus service's faking capabiliti
 As you can see in the example above, the array of chained jobs may be an array of the job's class names. However, if you need to assert against specific parameters, you must provide an array of Storable Array Callables:
 
     // Asserting Storable Array Callables...
-    $fake->assertChained([
-        [ShipOrderService::class, 'handle', ['orderId' => 1]],
+    $fake->assertPushedWithChain([ShipOrderService::class, 'handle', ['orderId' => 1]], [
         [RecordShipmentService::class, 'handle', ['orderId' => 1]],
         [UpdateInventoryService::class, 'handle', ['orderId' => 1]],
     ]);
 
-You may use the `assertDispatchedWithoutChain` method to assert that a job was pushed without a chain of jobs:
+You may use the `assertPushedWithoutChain` method to assert that a job was pushed without a chain of jobs:
 
-    $fake->assertDispatchedWithoutChain(ShipOrder::class);
+    $fake->assertPushedWithoutChain(ShipOrder::class);
 
 ### Testing Job Batches
-
-The `assertBatched` method may be used to assert that a batch of jobs was dispatched. The closure given to the `assertBatched` method receives an instance of `MacropaySolutions\Kernel\Bus\PendingBatch`, which may be used to inspect the jobs within the batch:
-
-    use MacropaySolutions\Kernel\Bus\PendingBatch;
-
-    $fake = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\BusFake(\app('bus'));
-    \app()->instance('bus', $fake);
-
-    // ...
-
-    $fake->assertBatched(function (PendingBatch $batch) {
-        return $batch->name == 'import-csv' &&
-               $batch->jobs->count() === 10;
-    });
-
-You may use the `assertBatchCount` method to assert that a given number of batches were dispatched:
-
-    $fake->assertBatchCount(3);
-
-You may use `assertNothingBatched` to assert that no batches were dispatched:
-
-    $fake->assertNothingBatched();
 
 <a name="testing-job-batch-interaction"></a>
 #### Testing Job / Batch Interaction
