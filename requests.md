@@ -30,6 +30,7 @@ Obtain the current HTTP request instance via dependency injection by type-hintin
     namespace App\Http\Controllers;
 
     use MacropaySolutions\Kernel\Http\Request;
+    use MacropaySolutions\Kernel\Http\Response;
 
     class UserController extends \MacropaySolutions\Framework\Routing\Controller
     {
@@ -105,7 +106,7 @@ Retrieve a request header using the `header` method. If absent, it returns `null
         // Header exists
     }
 
-Extract bearer tokens directly from the `Authorization` header. If the header is missing, it returns an empty string:
+Extract bearer tokens directly from the `Authorization` header. If the header is missing, it returns `null`:
 
     $token = $request->bearerToken();
 
@@ -140,7 +141,7 @@ Analyze the `Accept` header format using built-in helper wrappers:
 To utilize PSR-7 standard interfaces for incoming HTTP messages, install the necessary bridging components:
 
     composer require symfony/psr-http-message-bridge
-    composer require zendframework/zend-diactoros
+    composer require nyholm/psr7
 
 Type-hint the compliant PSR-7 interface directly on your controller definitions:
 
@@ -334,14 +335,14 @@ When running applications behind network load balancers terminating TLS certific
 
     use MacropaySolutions\Kernel\Http\Request;
 
-    class TrustProxies
+    class TrustProxies extends \MacropaySolutions\Kernel\Http\Middleware\TrustProxies
     {
-        protected array $proxies = [
+        protected $proxies = [
             '192.168.1.1',
             '192.168.1.2',
         ];
 
-        protected int $headers = Request::HEADER_X_FORWARDED_FOR | 
+        protected $headers = Request::HEADER_X_FORWARDED_FOR | 
             Request::HEADER_X_FORWARDED_HOST | 
             Request::HEADER_X_FORWARDED_PORT | 
             Request::HEADER_X_FORWARDED_PROTO;
@@ -360,7 +361,7 @@ To defend applications from HTTP Host header injection vulnerabilities, configur
 
     namespace App\Http\Middleware;
 
-    class TrustHosts
+    class TrustHosts extends \MacropaySolutions\Kernel\Http\Middleware\TrustHosts
     {
         public function hosts(): array
         {

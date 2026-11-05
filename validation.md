@@ -22,6 +22,7 @@ context: basics
   - [Customizing the Error Messages](#customizing-the-error-messages)
   - [Preparing Input for Validation](#preparing-input-for-validation)
 - [Manually Creating Validators](#manually-creating-validators)
+  - [Manually Flashing Errors and Input](#manually-flashing-errors-and-input)
   - [Automatic Exception Throwing](#automatic-exception-throwing)
   - [Named Error Bags](#named-error-bags)
   - [Customizing the Error Messages](#manual-customizing-the-error-messages)
@@ -46,7 +47,7 @@ context: basics
 <a name="introduction"></a>
 ## Introduction
 
-Framework provides several different approaches to validate your application's incoming data. By default, Framework's base controller class uses a `ProvidesConvenienceMethods` trait which provides a convenient `$this->validate` method to validate incoming HTTP requests with a variety of powerful validation rules. It is most common to use the `validate` method available on all incoming HTTP requests. However, we will discuss other approaches to validation as well.
+Framework provides several different approaches to validate your application's incoming data. By default, Framework's base controller class uses a `ProvidesConvenienceMethods` trait which provides a convenient `$this->validate` method to validate incoming HTTP requests with a variety of powerful validation rules. It is most common to use the `validate` method provided by the base controller. However, we will discuss other approaches to validation as well.
 
 Framework includes a wide variety of convenient validation rules that you may apply to data, even providing the ability to validate if values are unique in a given database table. We'll cover each of these validation rules in detail so that you are familiar with all of Framework's validation features.
 
@@ -63,10 +64,8 @@ To learn about Framework's powerful validation features, let's look at a complet
 
 First, let's assume we have the following routes defined in our `routes/web.php` file:
 
-    use App\Http\Controllers\PostController;
-
-    $router->get('/post/create', [PostController::class, 'create']);
-    $router->post('/post', [PostController::class, 'store']);
+    $router->get('/post/create', 'PostController@create');
+    $router->post('/post', 'PostController@store');
 
 The `GET` route will display a form for the user to create a new blog post, while the `POST` route will store the new blog post in the database.
 
@@ -102,14 +101,14 @@ Next, let's take a look at a simple controller that handles incoming requests to
 
             $post = /** ... */
 
-            return to_route('post.show', ['post' => $post->id]);
+            return redirect()->route('post.show', ['post' => $post->id]);
         }
     }
 
 <a name="quick-writing-the-validation-logic"></a>
 ### Writing the Validation Logic
 
-Now we are ready to fill in our `store` method with the logic to validate the new blog post. To do this, we will use the `validate` method provided by the `MacropaySolutions\Kernel\Http\Request` object. If the validation rules pass, your code will keep executing normally; however, if validation fails, a `MacropaySolutions\Kernel\Validation\ValidationException` exception will be thrown and the proper error response will automatically be sent back to the user.
+Now we are ready to fill in our `store` method with the logic to validate the new blog post. To do this, we will use the `validate` method provided by the base `Controller` (through its `ProvidesConvenienceMethods` trait). If the validation rules pass, your code will keep executing normally; however, if validation fails, a `MacropaySolutions\Kernel\Validation\ValidationException` exception will be thrown and the proper error response will automatically be sent back to the user.
 
 Should validation fail, a [JSON response containing the validation error messages](#validation-error-response-format) will be automatically returned with a 422 HTTP status code, as Framework is stateless by default and does not perform automatic session-backed redirections.
 
@@ -120,7 +119,7 @@ To get a better understanding of the `validate` method, let's jump back into the
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validate($request, [
             'title' => 'required|unique:posts|max:255',
             'body' => 'required',
         ]);
@@ -134,14 +133,7 @@ As you can see, the validation rules are passed into the `validate` method. Don'
 
 Alternatively, validation rules may be specified as arrays of rules instead of a single `|` delimited string:
 
-    $validatedData = $request->validate([
-        'title' => ['required', 'unique:posts', 'max:255'],
-        'body' => ['required'],
-    ]);
-
-In addition, you may use the `validateWithBag` method to validate a request and store any error messages within a [named error bag](#named-error-bags):
-
-    $validatedData = $request->validateWithBag('post', [
+    $validatedData = $this->validate($request, [
         'title' => ['required', 'unique:posts', 'max:255'],
         'body' => ['required'],
     ]);
@@ -157,7 +149,7 @@ Of course, you are free to manually create validator instances using the `valida
 
 Sometimes you may wish to stop running validation rules on an attribute after the first validation failure. To do so, assign the `bail` rule to the attribute:
 
-    $request->validate([
+    $this->validate($request, [
         'title' => 'bail|required|unique:posts|max:255',
         'body' => 'required',
     ]);
@@ -176,7 +168,7 @@ In this example, if the `unique` rule on the `title` attribute fails, the `max` 
 
 If the incoming HTTP request contains "nested" field data, you may specify these fields in your validation rules using "dot" syntax:
 
-    $request->validate([
+    $this->validate($request, [
         'title' => 'required|unique:posts|max:255',
         'author.name' => 'required',
         'author.description' => 'required',
@@ -184,7 +176,7 @@ If the incoming HTTP request contains "nested" field data, you may specify these
 
 On the other hand, if your field name contains a literal period, you can explicitly prevent this from being interpreted as "dot" syntax by escaping the period with a backslash:
 
-    $request->validate([
+    $this->validate($request, [
         'title' => 'required|unique:posts|max:255',
         'v1\.0' => 'required',
     ]);
@@ -193,6 +185,8 @@ On the other hand, if your field name contains a literal period, you can explici
 ### Displaying the Validation Errors
 
 Because Framework is primarily designed for stateless API workflows the `$errors` view variable is not available in your views.
+
+If you have enabled session support and render HTML forms, you may flash the errors and the input to the session yourself and pass the errors to your views explicitly. See [Manually Flashing Errors and Input](#manually-flashing-errors-and-input).
 
 Should validation fail, the `$this->validate` helper will automatically throw a `MacropaySolutions\Kernel\Validation\ValidationException`. The framework's exception handler will catch this and automatically generate a `422 Unprocessable Entity` HTTP response containing a [JSON representation of the validation errors](#validation-error-response-format).
 
@@ -213,9 +207,9 @@ In addition, you may copy this file to another language directory to translate t
 <a name="a-note-on-optional-fields"></a>
 ### A Note on Optional Fields
 
-By default, Framework includes the `TrimStrings` and `ConvertEmptyStringsToNull` middleware in your application's global middleware stack. These middleware are listed in the stack by the `App\Http\Kernel` class. Because of this, you will often need to mark your "optional" request fields as `nullable` if you do not want the validator to consider `null` values as invalid. For example:
+Framework includes the `TrimStrings` and `ConvertEmptyStringsToNull` middleware, which you may list in the global `$middleware` stack of your `App\Application` class. When they are listed, you will often need to mark your "optional" request fields as `nullable` if you do not want the validator to consider `null` values as invalid. For example:
 
-    $request->validate([
+    $this->validate($request, [
         'title' => 'required|unique:posts|max:255',
         'body' => 'required',
         'publish_at' => 'nullable|date',
@@ -232,22 +226,19 @@ Below, you can review an example of the JSON response format for validation erro
 
 ```json
 {
-  "message": "The team name must be a string. (and 4 more errors)",
-  "errors": {
-    "team_name": [
-      "The team name must be a string.",
-      "The team name must be at least 1 characters."
-    ],
-    "authorization.role": [
-      "The selected authorization.role is invalid."
-    ],
-    "users.0.email": [
-      "The users.0.email field is required."
-    ],
-    "users.2.email": [
-      "The users.2.email must be a valid email address."
-    ]
-  }
+  "team_name": [
+    "The team name must be a string.",
+    "The team name must be at least 1 characters."
+  ],
+  "authorization.role": [
+    "The selected authorization.role is invalid."
+  ],
+  "users.0.email": [
+    "The users.0.email field is required."
+  ],
+  "users.2.email": [
+    "The users.2.email must be a valid email address."
+  ]
 }
 ```
 
@@ -305,9 +296,6 @@ So, how are the validation rules evaluated? All you need to do is type-hint the 
     }
 
 If validation fails, a `MacropaySolutions\Kernel\Validation\ValidationException` is thrown, which results in an HTTP response with a 422 status code containing a [JSON representation of the validation errors](#validation-error-response-format). Automatic redirection and session flashing are not performed by default.
-
-> [!NOTE]  
-> Need to add real-time form request validation to your Inertia powered Framework frontend? Check out [Framework Precognition](/precognition).
 
 <a name="form-request-autowiring"></a>
 #### Form Request Autowiring
@@ -442,6 +430,8 @@ Or, if you would like to redirect users to a named route, you may define a `$red
      */
     protected $redirectRoute = 'dashboard';
 
+The redirect is only performed when the session has been started for the request and the request does not expect JSON; otherwise, the 422 JSON response is returned. When redirecting, the request input (except the `current_password`, `password`, `password_confirmation` and `token` fields) and the validation errors (in the form request's `$errorBag`) are flashed to the session. To display them, [pass the errors to your view](#manually-flashing-errors-and-input).
+
 <a name="authorizing-form-requests"></a>
 ### Authorizing Form Requests
 
@@ -462,10 +452,6 @@ The form request class also contains an `authorize` method. Within this method, 
 Since all form requests extend the base Framework request class, we may use the `user` method to access the currently authenticated user. Also, note the call to the `route` method in the example above. This method grants you access to the URI parameters defined on the route being called, such as the `{comment}` parameter in the example below:
 
     $router->post('/comment/{comment}');
-
-Therefore, if your application is taking advantage of [route model binding](/routing#route-model-binding), your code may be made even more succinct by accessing the resolved model as a property of the request:
-
-    return $this->user()->can('update', $this->comment);
 
 If the `authorize` method returns `false`, an HTTP response with a 403 status code will automatically be returned and your controller method will not execute.
 
@@ -547,7 +533,7 @@ Likewise, if you need to normalize any request data after validation is complete
 <a name="manually-creating-validators"></a>
 ## Manually Creating Validators
 
-If you do not want to use the `validate` method on the request, you may create a validator instance manually using the `validator()` helper to retrieve the validation factory. The `make` method generates a new validator instance:
+If you do not want to use the `validate` method of the controller, you may create a validator instance manually using the `validator()` helper to retrieve the validation factory. The `make` method generates a new validator instance:
 
     <?php
 
@@ -589,7 +575,66 @@ If you do not want to use the `validate` method on the request, you may create a
 
 The first argument passed to the `make` method is the data under validation. The second argument is an array of the validation rules that should be applied to the data.
 
-After determining whether the request validation failed, you may use the `withErrors` method to flash the error messages to the session. When using this method, the `$errors` variable will automatically be shared with your views after redirection, allowing you to easily display them back to the user. The `withErrors` method accepts a validator, a `MessageBag`, or a PHP `array`.
+After determining whether the request validation failed, you may use the `withErrors` method to flash the error messages to the session. The `withErrors` method accepts a validator, a `MessageBag`, or a PHP `array`.
+
+<a name="manually-flashing-errors-and-input"></a>
+#### Manually Flashing Errors and Input
+
+Flashing requires the session opt-in: the `\MacropaySolutions\Kernel\Session\Middleware\StartSession` middleware must be assigned to the route. Without a started session, `withErrors`, `withInput` and `with` cannot flash anything.
+
+Flashed errors are stored as a `MacropaySolutions\Kernel\Support\ViewErrorBag` object. Because the session never hydrates objects (the default `php` serialization unserializes with `allowed_classes => false`, so they come back as `__PHP_Incomplete_Class`), flashed errors only survive to the next request when the session uses `json` serialization, which converts the error bag to arrays and back. Set the `serialization` option in your `config/session.php` file:
+
+    'serialization' => 'json',
+
+Flashed input is a plain array, so `withInput` and `old` work with both serialization types.
+
+The simplest way is to chain `withErrors` and `withInput` on a redirect. The `withInput` method flashes the whole request input when called without arguments, so pass the input yourself when it contains secrets:
+
+    if ($validator->fails()) {
+        return redirect('post/create')
+            ->withErrors($validator)
+            ->withInput($request->except(['password', 'password_confirmation']));
+    }
+
+You may also flash them without a redirect, using the session and the request directly:
+
+    use MacropaySolutions\Kernel\Support\ViewErrorBag;
+
+    $request->session()->flash('errors', (new ViewErrorBag())->put('default', $validator->errors()));
+
+    $request->flashExcept(['password', 'password_confirmation']);
+
+The `$errors` variable is **not** shared with your views automatically. On the next request, read the flashed errors from the session and pass them to the view yourself. Pass an empty `ViewErrorBag` as the default so that `@error` and `$errors` also work when there are no errors:
+
+    use MacropaySolutions\Kernel\Support\ViewErrorBag;
+
+    public function create(Request $request)
+    {
+        return view('post.create')->with(
+            'errors',
+            $request->session()->get('errors', new ViewErrorBag())
+        );
+    }
+
+Alternatively, the view's `withErrors` method builds the `$errors` variable from a validator, a `MessageBag` or an array, without using the session:
+
+    return view('post.create')->withErrors($validator);
+
+Within the view, the flashed input is available through the `old` helper, and the errors through `$errors`. Methods of the default error bag are reached via `fwd()`, named bags via their name:
+
+```template
+<input type="text" name="title" value="{{ old('title') }}">
+
+@error('title')
+    <div class="alert alert-danger">{{ $message }}</div>
+@enderror
+
+@if ($errors->any())
+    {{ $errors->fwd()->first('title') }}
+@endif
+
+{{ $errors->login->first('email') }}
+```
 
 #### Stopping on First Validation Failure
 
@@ -602,7 +647,7 @@ The `stopOnFirstFailure` method will inform the validator that it should stop va
 <a name="automatic-exception-throwing"></a>
 ### Automatic Exception Throwing
 
-If you would like to create a validator instance manually but still take advantage of the automatic exception throwing offered by the HTTP request's `validate` method, you may call the `validate` method on an existing validator instance. If validation fails, a `ValidationException` is thrown and a [JSON response will be returned](#validation-error-response-format):
+If you would like to create a validator instance manually but still take advantage of the automatic exception throwing offered by the controller's `validate` method, you may call the `validate` method on an existing validator instance. If validation fails, a `ValidationException` is thrown and a [JSON response will be returned](#validation-error-response-format):
 
     validator()->make($request->all(), [
         'title' => 'required|unique:posts|max:255',
@@ -623,7 +668,7 @@ If you have multiple forms on a single page, you may wish to name the `MessageBa
 
     return redirect('register')->withErrors($validator, 'login');
 
-You may then access the named `MessageBag` instance from the `$errors` variable:
+You may then access the named `MessageBag` instance from the `$errors` variable, once you have [passed it to your view](#manually-flashing-errors-and-input):
 
 ```template
 {{ $errors->login->first('email') }}
@@ -739,7 +784,7 @@ If you would like to retrieve the validated data as a [collection](/collections)
 <a name="working-with-error-messages"></a>
 ## Working With Error Messages
 
-After calling the `errors` method on a `Validator` instance, you will receive an `MacropaySolutions\Kernel\Support\MessageBag` instance, which has a variety of convenient methods for working with error messages. The `$errors` variable that is automatically made available to all views is also an instance of the `MessageBag` class.
+After calling the `errors` method on a `Validator` instance, you will receive an `MacropaySolutions\Kernel\Support\MessageBag` instance, which has a variety of convenient methods for working with error messages.
 
 <a name="retrieving-the-first-error-message-for-a-field"></a>
 #### Retrieving the First Error Message for a Field
@@ -1246,7 +1291,7 @@ The `Enum` rule is a class based rule that validates whether the field under val
     use App\Enums\ServerStatus;
     use MacropaySolutions\Kernel\Validation\Rule;
 
-    $request->validate([
+    $this->validate($request, [
         'status' => [Rule::enum(ServerStatus::class)],
     ]);
 
@@ -2029,6 +2074,7 @@ Likewise, you may use the `*` character when specifying [custom validation messa
 
 Sometimes you may need to access the value for a given nested array element when assigning validation rules to the attribute. You may accomplish this using the `Rule::forEach` method. The `forEach` method accepts a closure that will be invoked for each iteration of the array attribute under validation and will receive the attribute's value and explicit, fully-expanded attribute name. The closure should return an array of rules to assign to the array element:
 
+    use App\Models\Company;
     use App\Rules\HasPermission;
     use MacropaySolutions\Kernel\Validation\Rule;
 
@@ -2257,7 +2303,7 @@ Once the rule has been defined, you may attach it to a validator by passing an i
 
     use App\Rules\Uppercase;
 
-    $request->validate([
+    $this->validate($request, [
         'name' => ['required', 'string', new Uppercase],
     ]);
 

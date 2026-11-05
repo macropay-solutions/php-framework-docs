@@ -54,9 +54,9 @@ SQLite databases are contained within a single file on your filesystem. You can 
     DB_CONNECTION=sqlite
     DB_DATABASE=/absolute/path/to/database.sqlite
 
-To enable foreign key constraints for SQLite connections, you should set the `DB_FOREIGN_KEYS` environment variable to `true`:
+To enable foreign key constraints for SQLite connections, you should set the `foreign_key_constraints` option of your `sqlite` connection configuration to `true`:
 
-    DB_FOREIGN_KEYS=true
+    'foreign_key_constraints' => true,
 
 <a name="mssql-configuration"></a>
 #### Microsoft SQL Server Configuration
@@ -72,7 +72,7 @@ Some managed database providers provide a single database "URL" that contains al
 
     mysql://root:password@127.0.0.1/forge?charset=UTF-8
 
-For convenience, PHP-Framework supports these URLs as an alternative to configuring your database with multiple configuration options. If the `url` (or corresponding `DATABASE_URL` environment variable) configuration option is present, it will be used to extract the database connection and credential information.
+For convenience, PHP-Framework supports these URLs as an alternative to configuring your database with multiple configuration options. If the `url` configuration option is present, it will be used to extract the database connection and credential information.
 
 <a name="read-and-write-connections"></a>
 ### Read and Write Connections
@@ -221,10 +221,11 @@ To run a basic SELECT query, you may use the `select` method on the database com
     namespace App\Http\Controllers;
 
     use MacropaySolutions\Framework\Routing\Controller;
+    use MacropaySolutions\Kernel\Http\JsonResponse;
 
     class UserController extends Controller
     {
-        public function index(): Response
+        public function index(): JsonResponse
         {
             $users = \app('db')->select('select * from users where active = ?', [1]);
             
@@ -249,7 +250,7 @@ Sometimes your database query may result in a single, scalar value. You may retr
 If your application calls stored procedures that return multiple result sets, you may use the `selectResultSets` method:
 
     [$options, $notifications] = app('db')->selectResultSets(
-        "CALL get_user_options_and_notifications(?)", $request->user()->id
+        "CALL get_user_options_and_notifications(?)", [$request->user()->id]
     );
 
 <a name="using-named-bindings"></a>
@@ -395,7 +396,7 @@ For further information on how to create database tables and run migrations, che
 <a name="connecting-to-the-database-cli"></a>
 ## Connecting to the Database CLI
 
-If you would like to connect to your database's CLI, you may use the `db` command:
+If you would like to connect to your database's CLI, you may use the `db` command (it is not registered by default; add `MacropaySolutions\Kernel\Database\Console\DbCommand` to the `$commands` property of your `App\Console\Kernel`):
 
     php run db
 
@@ -413,7 +414,7 @@ Using the `db:show` and `db:table` commands, you can get valuable insight into y
 <a name="monitoring-your-databases"></a>
 ## Monitoring Your Databases
 
-Using the `db:monitor` command, you can instruct PHP-Framework to dispatch an `MacropaySolutions\Kernel\Database\Events\DatabaseBusy` event if your database is managing more than a specified number of open connections.
+Using the `db:monitor` command, you can instruct PHP-Framework to dispatch an `MacropaySolutions\Kernel\Database\Events\DatabaseBusy` event if your database is managing more than a specified number of open connections. The command is not registered by default; add `MacropaySolutions\Kernel\Database\Console\MonitorCommand` to the `$commands` property of your `App\Console\Kernel`.
 
     php run db:monitor --databases=mysql,pgsql --max=100
 
@@ -433,7 +434,7 @@ To reset your database after each of your tests so that data from a previous tes
 
     namespace Tests\Feature;
 
-    use MacropaySolutions\KernelDev\Testing\RefreshDatabase;
+    use MacropaySolutions\KernelDev\Foundation\Testing\RefreshDatabase;
     use Tests\TestCase;
 
     class ExampleTest extends TestCase

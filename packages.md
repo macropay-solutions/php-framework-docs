@@ -114,7 +114,7 @@ While service providers must be manually registered, PHP-Framework does support 
 }
 ```
 
-When users deploy their application and run `php run autowiring:cache`, the framework will read these paths and cache the reflection data for all specified constructors and methods. See `app.autowirings` config for more details.
+When users deploy their application and run `php run autowiring:cache`, the framework will read these paths and cache the reflection data for all specified constructors and methods. See `app.autowiring` config for more details.
 
 ## Resources
 
@@ -176,7 +176,7 @@ If consumers do not use the asset publisher plugin, instruct them in your `READM
 
 ### Views & Language Files
 
-Because `loadViewsFrom()`, `loadTranslationsFrom()`, and double-colon namespace syntax (`namespace::view`) do **NOT** exist in PHP-Framework, view templates and language files must reside in the application space.
+Because `loadViewsFrom()` and `loadTranslationsFrom()` do **NOT** exist in PHP-Framework, view templates and language files must reside in the application space.
 
 Instruct consumers to publish these via `publish-assets`:
 

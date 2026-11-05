@@ -101,7 +101,7 @@ Framework includes a variety of functions for manipulating string values. Many o
 [Str::take](#method-take)
 [Str::title](#method-title-case)
 [Str::toBase64](#method-str-to-base64)
-[Str::toHtmlString](#method-str-to-html-string)
+[Str::of()->toHtmlString](#method-str-to-html-string)
 [Str::ucfirst](#method-str-ucfirst)
 [Str::ucsplit](#method-str-ucsplit)
 [Str::upper](#method-str-upper)
@@ -112,7 +112,7 @@ Framework includes a variety of functions for manipulating string values. Many o
 [Str::wordWrap](#method-str-word-wrap)
 [Str::words](#method-str-words)
 [Str::wrap](#method-str-wrap)
-[Str:of](#method-str-of)
+[Str::of](#method-str-of)
 [trans](#method-trans)
 [trans_choice](#method-trans-choice)
 
@@ -229,7 +229,7 @@ Framework includes a variety of functions for manipulating string values. Many o
 ## Strings
 
 <a name="method-__"></a>
-#### `__()` {.collection-method}
+#### `__()`
 
 The `__` function translates the given translation string or translation key using your [language files](/localization):
 
@@ -240,7 +240,7 @@ The `__` function translates the given translation string or translation key usi
 If the specified translation string or key does not exist, the `__` function will return the given value. So, using the example above, the `__` function would return `messages.welcome` if that translation key does not exist.
 
 <a name="method-class-basename"></a>
-#### `class_basename()` {.collection-method}
+#### `class_basename()`
 
 The `class_basename` function returns the class name of the given class with the class's namespace removed:
 
@@ -249,7 +249,7 @@ The `class_basename` function returns the class name of the given class with the
     // Baz
 
 <a name="method-e"></a>
-#### `e()` {.collection-method}
+#### `e()`
 
 The `e` function runs PHP's `htmlspecialchars` function with the `double_encode` option set to `true` by default:
 
@@ -258,7 +258,7 @@ The `e` function runs PHP's `htmlspecialchars` function with the `double_encode`
     // &lt;html&gt;foo&lt;/html&gt;
 
 <a name="method-preg-replace-array"></a>
-#### `preg_replace_array()` {.collection-method}
+#### `preg_replace_array()`
 
 The `preg_replace_array` function replaces a given pattern in the string sequentially using an array:
 
@@ -269,7 +269,7 @@ The `preg_replace_array` function replaces a given pattern in the string sequent
     // The event will take place between 8:30 and 9:00
 
 <a name="method-str-after"></a>
-#### `Str::after()` {.collection-method}
+#### `Str::after()`
 
 The `Str::after` method returns everything after the given value in a string. The entire string will be returned if the value does not exist within the string:
 
@@ -280,7 +280,7 @@ The `Str::after` method returns everything after the given value in a string. Th
     // ' my name'
 
 <a name="method-str-after-last"></a>
-#### `Str::afterLast()` {.collection-method}
+#### `Str::afterLast()`
 
 The `Str::afterLast` method returns everything after the last occurrence of the given value in a string. The entire string will be returned if the value does not exist within the string:
 
@@ -291,7 +291,7 @@ The `Str::afterLast` method returns everything after the last occurrence of the 
     // 'Controller'
 
 <a name="method-str-apa"></a>
-#### `Str::apa()` {.collection-method}
+#### `Str::apa()`
 
 The `Str::apa` method converts the given string to title case following the [APA guidelines](https://apastyle.apa.org/style-grammar-guidelines/capitalization/title-case):
 
@@ -302,7 +302,7 @@ The `Str::apa` method converts the given string to title case following the [APA
     // 'Creating a Project'
 
 <a name="method-str-ascii"></a>
-#### `Str::ascii()` {.collection-method}
+#### `Str::ascii()`
 
 The `Str::ascii` method will attempt to transliterate the string into an ASCII value:
 
@@ -313,7 +313,7 @@ The `Str::ascii` method will attempt to transliterate the string into an ASCII v
     // 'u'
 
 <a name="method-str-before"></a>
-#### `Str::before()` {.collection-method}
+#### `Str::before()`
 
 The `Str::before` method returns everything before the given value in a string:
 
@@ -324,7 +324,7 @@ The `Str::before` method returns everything before the given value in a string:
     // 'This is '
 
 <a name="method-str-before-last"></a>
-#### `Str::beforeLast()` {.collection-method}
+#### `Str::beforeLast()`
 
 The `Str::beforeLast` method returns everything before the last occurrence of the given value in a string:
 
@@ -335,7 +335,7 @@ The `Str::beforeLast` method returns everything before the last occurrence of th
     // 'This '
 
 <a name="method-str-between"></a>
-#### `Str::between()` {.collection-method}
+#### `Str::between()`
 
 The `Str::between` method returns the portion of a string between two values:
 
@@ -346,7 +346,7 @@ The `Str::between` method returns the portion of a string between two values:
     // ' is my '
 
 <a name="method-str-between-first"></a>
-#### `Str::betweenFirst()` {.collection-method}
+#### `Str::betweenFirst()`
 
 The `Str::betweenFirst` method returns the smallest possible portion of a string between two values:
 
@@ -357,7 +357,7 @@ The `Str::betweenFirst` method returns the smallest possible portion of a string
     // 'a'
 
 <a name="method-camel-case"></a>
-#### `Str::camel()` {.collection-method}
+#### `Str::camel()`
 
 The `Str::camel` method converts the given string to `camelCase`:
 
@@ -368,7 +368,7 @@ The `Str::camel` method converts the given string to `camelCase`:
     // 'fooBar'
 
 <a name="method-char-at"></a>
-#### `Str::charAt()` {.collection-method}
+#### `Str::charAt()`
 
 The `Str::charAt` method returns the character at the specified index. If the index is out of bounds, `false` is returned:
 
@@ -379,7 +379,7 @@ The `Str::charAt` method returns the character at the specified index. If the in
     // 's'
 
 <a name="method-str-contains"></a>
-#### `Str::contains()` {.collection-method}
+#### `Str::contains()`
 
 The `Str::contains` method determines if the given string contains the given value. This method is case sensitive:
 
@@ -398,7 +398,7 @@ You may also pass an array of values to determine if the given string contains a
     // true
 
 <a name="method-str-contains-all"></a>
-#### `Str::containsAll()` {.collection-method}
+#### `Str::containsAll()`
 
 The `Str::containsAll` method determines if the given string contains all the values in a given array:
 
@@ -409,7 +409,7 @@ The `Str::containsAll` method determines if the given string contains all the va
     // true
 
 <a name="method-ends-with"></a>
-#### `Str::endsWith()` {.collection-method}
+#### `Str::endsWith()`
 
 The `Str::endsWith` method determines if the given string ends with the given value:
 
@@ -433,7 +433,7 @@ You may also pass an array of values to determine if the given string ends with 
     // false
 
 <a name="method-excerpt"></a>
-#### `Str::excerpt()` {.collection-method}
+#### `Str::excerpt()`
 
 The `Str::excerpt` method extracts an excerpt from a given string that matches the first instance of a phrase within that string:
 
@@ -459,7 +459,7 @@ In addition, you may use the `omission` option to define the string that will be
     // '(...) my name'
 
 <a name="method-str-finish"></a>
-#### `Str::finish()` {.collection-method}
+#### `Str::finish()`
 
 The `Str::finish` method adds a single instance of the given value to a string if it does not already end with that value:
 
@@ -474,7 +474,7 @@ The `Str::finish` method adds a single instance of the given value to a string i
     // this/string/
 
 <a name="method-str-headline"></a>
-#### `Str::headline()` {.collection-method}
+#### `Str::headline()`
 
 The `Str::headline` method will convert strings delimited by casing, hyphens, or underscores into a space delimited string with each word's first letter capitalized:
 
@@ -489,7 +489,7 @@ The `Str::headline` method will convert strings delimited by casing, hyphens, or
     // Email Notification Sent
 
 <a name="method-str-inline-markdown"></a>
-#### `Str::inlineMarkdown()` {.collection-method}
+#### `Str::inlineMarkdown()`
 
 The `Str::inlineMarkdown` method converts GitHub flavored Markdown into inline HTML using [CommonMark](https://commonmark.thephpleague.com/). However, unlike the `markdown` method, it does not wrap all generated HTML in a block-level element:
 
@@ -513,7 +513,7 @@ By default, Markdown supports raw HTML, which will expose Cross-Site Scripting (
     // Inject: alert(&quot;Hello XSS!&quot;);
 
 <a name="method-str-is"></a>
-#### `Str::is()` {.collection-method}
+#### `Str::is()`
 
 The `Str::is` method determines if a given string matches a given pattern. Asterisks may be used as wildcard values:
 
@@ -528,7 +528,7 @@ The `Str::is` method determines if a given string matches a given pattern. Aster
     // false
 
 <a name="method-str-is-ascii"></a>
-#### `Str::isAscii()` {.collection-method}
+#### `Str::isAscii()`
 
 The `Str::isAscii` method determines if a given string is 7 bit ASCII:
 
@@ -543,7 +543,7 @@ The `Str::isAscii` method determines if a given string is 7 bit ASCII:
     // false
 
 <a name="method-str-is-json"></a>
-#### `Str::isJson()` {.collection-method}
+#### `Str::isJson()`
 
 The `Str::isJson` method determines if the given string is valid JSON:
 
@@ -562,7 +562,7 @@ The `Str::isJson` method determines if the given string is valid JSON:
     // false
 
 <a name="method-str-is-url"></a>
-#### `Str::isUrl()` {.collection-method}
+#### `Str::isUrl()`
 
 The `Str::isUrl` method determines if the given string is a valid URL:
 
@@ -581,7 +581,7 @@ The `isUrl` method considers a wide range of protocols as valid. However, you ma
     $isUrl = Str::isUrl('http://example.com', ['http', 'https']);
 
 <a name="method-str-is-ulid"></a>
-#### `Str::isUlid()` {.collection-method}
+#### `Str::isUlid()`
 
 The `Str::isUlid` method determines if the given string is a valid ULID:
 
@@ -596,7 +596,7 @@ The `Str::isUlid` method determines if the given string is a valid ULID:
     // false
 
 <a name="method-str-is-uuid"></a>
-#### `Str::isUuid()` {.collection-method}
+#### `Str::isUuid()`
 
 The `Str::isUuid` method determines if the given string is a valid UUID:
 
@@ -611,7 +611,7 @@ The `Str::isUuid` method determines if the given string is a valid UUID:
     // false
 
 <a name="method-kebab-case"></a>
-#### `Str::kebab()` {.collection-method}
+#### `Str::kebab()`
 
 The `Str::kebab` method converts the given string to `kebab-case`:
 
@@ -622,7 +622,7 @@ The `Str::kebab` method converts the given string to `kebab-case`:
     // foo-bar
 
 <a name="method-str-lcfirst"></a>
-#### `Str::lcfirst()` {.collection-method}
+#### `Str::lcfirst()`
 
 The `Str::lcfirst` method returns the given string with the first character lowercased:
 
@@ -633,7 +633,7 @@ The `Str::lcfirst` method returns the given string with the first character lowe
     // foo Bar
 
 <a name="method-str-length"></a>
-#### `Str::length()` {.collection-method}
+#### `Str::length()`
 
 The `Str::length` method returns the length of the given string:
 
@@ -641,10 +641,10 @@ The `Str::length` method returns the length of the given string:
 
     $length = Str::length('Framework');
 
-    // 7
+    // 9
 
 <a name="method-str-limit"></a>
-#### `Str::limit()` {.collection-method}
+#### `Str::limit()`
 
 The `Str::limit` method truncates the given string to the specified length:
 
@@ -663,7 +663,7 @@ You may pass a third argument to the method to change the string that will be ap
     // The quick brown fox (...)
 
 <a name="method-str-lower"></a>
-#### `Str::lower()` {.collection-method}
+#### `Str::lower()`
 
 The `Str::lower` method converts the given string to lowercase:
 
@@ -674,7 +674,7 @@ The `Str::lower` method converts the given string to lowercase:
     // framework
 
 <a name="method-str-markdown"></a>
-#### `Str::markdown()` {.collection-method}
+#### `Str::markdown()`
 
 The `Str::markdown` method converts GitHub flavored Markdown into HTML using [CommonMark](https://commonmark.thephpleague.com/):
 
@@ -704,7 +704,7 @@ By default, Markdown supports raw HTML, which will expose Cross-Site Scripting (
     // <p>Inject: alert(&quot;Hello XSS!&quot;);</p>
 
 <a name="method-str-mask"></a>
-#### `Str::mask()` {.collection-method}
+#### `Str::mask()`
 
 The `Str::mask` method masks a portion of a string with a repeated character, and may be used to obfuscate segments of strings such as email addresses and phone numbers:
 
@@ -712,16 +712,16 @@ The `Str::mask` method masks a portion of a string with a repeated character, an
 
     $string = Str::mask('surname@example.com', '*', 3);
 
-    // sur***************
+    // sur****************
 
 If needed, you provide a negative number as the third argument to the `mask` method, which will instruct the method to begin masking at the given distance from the end of the string:
 
     $string = Str::mask('surname@example.com', '*', -15, 3);
 
-    // sur***@example.com
+    // surn***@example.com
 
 <a name="method-str-ordered-uuid"></a>
-#### `Str::orderedUuid()` {.collection-method}
+#### `Str::orderedUuid()`
 
 The `Str::orderedUuid` method generates a "timestamp first" UUID that may be efficiently stored in an indexed database column. Each UUID that is generated using this method will be sorted after UUIDs previously generated using the method:
 
@@ -730,7 +730,7 @@ The `Str::orderedUuid` method generates a "timestamp first" UUID that may be eff
     return (string) Str::orderedUuid();
 
 <a name="method-str-padboth"></a>
-#### `Str::padBoth()` {.collection-method}
+#### `Str::padBoth()`
 
 The `Str::padBoth` method wraps PHP's `str_pad` function, padding both sides of a string with another string until the final string reaches a desired length:
 
@@ -745,7 +745,7 @@ The `Str::padBoth` method wraps PHP's `str_pad` function, padding both sides of 
     // '  James   '
 
 <a name="method-str-padleft"></a>
-#### `Str::padLeft()` {.collection-method}
+#### `Str::padLeft()`
 
 The `Str::padLeft` method wraps PHP's `str_pad` function, padding the left side of a string with another string until the final string reaches a desired length:
 
@@ -760,7 +760,7 @@ The `Str::padLeft` method wraps PHP's `str_pad` function, padding the left side 
     // '     James'
 
 <a name="method-str-padright"></a>
-#### `Str::padRight()` {.collection-method}
+#### `Str::padRight()`
 
 The `Str::padRight` method wraps PHP's `str_pad` function, padding the right side of a string with another string until the final string reaches a desired length:
 
@@ -775,9 +775,9 @@ The `Str::padRight` method wraps PHP's `str_pad` function, padding the right sid
     // 'James     '
 
 <a name="method-str-password"></a>
-#### `Str::password()` {.collection-method}
+#### `Str::password()`
 
-The `Str::password` method may be used to generate a secure, random password of a given length. The password will consist of a combination of letters, numbers, symbols, and spaces. By default, passwords are 32 characters long:
+The `Str::password` method may be used to generate a secure, random password of a given length. The password will consist of a combination of letters, numbers, and symbols. By default, passwords are 32 characters long:
 
     use MacropaySolutions\Kernel\Support\Str;
 
@@ -790,7 +790,7 @@ The `Str::password` method may be used to generate a secure, random password of 
     // 'qwuar>#V|i]N'
 
 <a name="method-str-plural"></a>
-#### `Str::plural()` {.collection-method}
+#### `Str::plural()`
 
 The `Str::plural` method converts a singular word string to its plural form. This function supports [any of the languages support by Framework's pluralizer](/localization#pluralization-language):
 
@@ -817,7 +817,7 @@ You may provide an integer as a second argument to the function to retrieve the 
     // child
 
 <a name="method-str-plural-studly"></a>
-#### `Str::pluralStudly()` {.collection-method}
+#### `Str::pluralStudly()`
 
 The `Str::pluralStudly` method converts a singular word string formatted in studly caps case to its plural form. This function supports [any of the languages support by Framework's pluralizer](/localization#pluralization-language):
 
@@ -844,7 +844,7 @@ You may provide an integer as a second argument to the function to retrieve the 
     // VerifiedHuman
 
 <a name="method-str-position"></a>
-#### `Str::position()` {.collection-method}
+#### `Str::position()`
 
 The `Str::position` method returns the position of the first occurrence of a substring in a string. If the substring does not exist in the given string, `false` is returned:
 
@@ -859,7 +859,7 @@ The `Str::position` method returns the position of the first occurrence of a sub
     // 7
 
 <a name="method-str-random"></a>
-#### `Str::random()` {.collection-method}
+#### `Str::random()`
 
 The `Str::random` method generates a random string of the specified length. This function uses PHP's `random_bytes` function:
 
@@ -878,7 +878,7 @@ To instruct the `random` method to return to generating random strings normally,
     Str::createRandomStringsNormally();
 
 <a name="method-str-remove"></a>
-#### `Str::remove()` {.collection-method}
+#### `Str::remove()`
 
 The `Str::remove` method removes the given value or array of values from the string:
 
@@ -893,7 +893,7 @@ The `Str::remove` method removes the given value or array of values from the str
 You may also pass `false` as a third argument to the `remove` method to ignore case when removing strings.
 
 <a name="method-str-repeat"></a>
-#### `Str::repeat()` {.collection-method}
+#### `Str::repeat()`
 
 The `Str::repeat` method repeats the given string:
 
@@ -908,7 +908,7 @@ $repeat = Str::repeat($string, 5);
 ```
 
 <a name="method-str-replace"></a>
-#### `Str::replace()` {.collection-method}
+#### `Str::replace()`
 
 The `Str::replace` method replaces a given string within the string:
 
@@ -925,7 +925,7 @@ The `replace` method also accepts a `caseSensitive` argument. By default, the `r
     Str::replace('Framework', 'Framework', caseSensitive: false);
 
 <a name="method-str-replace-array"></a>
-#### `Str::replaceArray()` {.collection-method}
+#### `Str::replaceArray()`
 
 The `Str::replaceArray` method replaces a given value in the string sequentially using an array:
 
@@ -938,7 +938,7 @@ The `Str::replaceArray` method replaces a given value in the string sequentially
     // The event will take place between 8:30 and 9:00
 
 <a name="method-str-replace-first"></a>
-#### `Str::replaceFirst()` {.collection-method}
+#### `Str::replaceFirst()`
 
 The `Str::replaceFirst` method replaces the first occurrence of a given value in a string:
 
@@ -949,7 +949,7 @@ The `Str::replaceFirst` method replaces the first occurrence of a given value in
     // a quick brown fox jumps over the lazy dog
 
 <a name="method-str-replace-last"></a>
-#### `Str::replaceLast()` {.collection-method}
+#### `Str::replaceLast()`
 
 The `Str::replaceLast` method replaces the last occurrence of a given value in a string:
 
@@ -960,7 +960,7 @@ The `Str::replaceLast` method replaces the last occurrence of a given value in a
     // the quick brown fox jumps over a lazy dog
 
 <a name="method-str-replace-matches"></a>
-#### `Str::replaceMatches()` {.collection-method}
+#### `Str::replaceMatches()`
 
 The `Str::replaceMatches` method replaces all portions of a string matching a pattern with the given replacement string:
 
@@ -970,7 +970,7 @@ The `Str::replaceMatches` method replaces all portions of a string matching a pa
         pattern: '/[^A-Za-z0-9]++/',
         replace: '',
         subject: '(+1) 501-555-1000'
-    )
+    );
 
     // '15015551000'
 
@@ -985,7 +985,7 @@ The `replaceMatches` method also accepts a closure that will be invoked with eac
     // '[1][2][3]'
 
 <a name="method-str-replace-start"></a>
-#### `Str::replaceStart()` {.collection-method}
+#### `Str::replaceStart()`
 
 The `Str::replaceStart` method replaces the first occurrence of the given value only if the value appears at the start of the string:
 
@@ -1000,7 +1000,7 @@ The `Str::replaceStart` method replaces the first occurrence of the given value 
     // Hello World
 
 <a name="method-str-replace-end"></a>
-#### `Str::replaceEnd()` {.collection-method}
+#### `Str::replaceEnd()`
 
 The `Str::replaceEnd` method replaces the last occurrence of the given value only if the value appears at the end of the string:
 
@@ -1015,7 +1015,7 @@ The `Str::replaceEnd` method replaces the last occurrence of the given value onl
     // Hello World
 
 <a name="method-str-reverse"></a>
-#### `Str::reverse()` {.collection-method}
+#### `Str::reverse()`
 
 The `Str::reverse` method reverses the given string:
 
@@ -1026,7 +1026,7 @@ The `Str::reverse` method reverses the given string:
     // dlroW olleH
 
 <a name="method-str-singular"></a>
-#### `Str::singular()` {.collection-method}
+#### `Str::singular()`
 
 The `Str::singular` method converts a string to its singular form. This function supports [any of the languages support by Framework's pluralizer](/localization#pluralization-language):
 
@@ -1041,7 +1041,7 @@ The `Str::singular` method converts a string to its singular form. This function
     // child
 
 <a name="method-str-slug"></a>
-#### `Str::slug()` {.collection-method}
+#### `Str::slug()`
 
 The `Str::slug` method generates a URL friendly "slug" from the given string:
 
@@ -1052,7 +1052,7 @@ The `Str::slug` method generates a URL friendly "slug" from the given string:
     // framework-5-framework
 
 <a name="method-snake-case"></a>
-#### `Str::snake()` {.collection-method}
+#### `Str::snake()`
 
 The `Str::snake` method converts the given string to `snake_case`:
 
@@ -1067,7 +1067,7 @@ The `Str::snake` method converts the given string to `snake_case`:
     // foo-bar
 
 <a name="method-str-squish"></a>
-#### `Str::squish()` {.collection-method}
+#### `Str::squish()`
 
 The `Str::squish` method removes all extraneous white space from a string, including extraneous white space between words:
 
@@ -1078,7 +1078,7 @@ The `Str::squish` method removes all extraneous white space from a string, inclu
     //  framework framework
 
 <a name="method-str-start"></a>
-#### `Str::start()` {.collection-method}
+#### `Str::start()`
 
 The `Str::start` method adds a single instance of the given value to a string if it does not already start with that value:
 
@@ -1093,7 +1093,7 @@ The `Str::start` method adds a single instance of the given value to a string if
     // /this/string
 
 <a name="method-starts-with"></a>
-#### `Str::startsWith()` {.collection-method}
+#### `Str::startsWith()`
 
 The `Str::startsWith` method determines if the given string begins with the given value:
 
@@ -1110,7 +1110,7 @@ If an array of possible values is passed, the `startsWith` method will return `t
     // true
 
 <a name="method-studly-case"></a>
-#### `Str::studly()` {.collection-method}
+#### `Str::studly()`
 
 The `Str::studly` method converts the given string to `StudlyCase`:
 
@@ -1121,18 +1121,18 @@ The `Str::studly` method converts the given string to `StudlyCase`:
     // FooBar
 
 <a name="method-str-substr"></a>
-#### `Str::substr()` {.collection-method}
+#### `Str::substr()`
 
 The `Str::substr` method returns the portion of string specified by the start and length parameters:
 
     use MacropaySolutions\Kernel\Support\Str;
 
-    $converted = Str::substr('The Framework Framework', 4, 7);
+    $converted = Str::substr('The Framework Framework', 4, 9);
 
     // Framework
 
 <a name="method-str-substrcount"></a>
-#### `Str::substrCount()` {.collection-method}
+#### `Str::substrCount()`
 
 The `Str::substrCount` method returns the number of occurrences of a given value in the given string:
 
@@ -1143,7 +1143,7 @@ The `Str::substrCount` method returns the number of occurrences of a given value
     // 2
 
 <a name="method-str-substrreplace"></a>
-#### `Str::substrReplace()` {.collection-method}
+#### `Str::substrReplace()`
 
 The `Str::substrReplace` method replaces text within a portion of a string, starting at the position specified by the third argument and replacing the number of characters specified by the fourth argument. Passing `0` to the method's fourth argument will insert the string at the specified position without replacing any of the existing characters in the string:
 
@@ -1156,7 +1156,7 @@ The `Str::substrReplace` method replaces text within a portion of a string, star
     // 13:00
 
 <a name="method-str-swap"></a>
-#### `Str::swap()` {.collection-method}
+#### `Str::swap()`
 
 The `Str::swap` method replaces multiple values in the given string using PHP's `strtr` function:
 
@@ -1170,7 +1170,7 @@ The `Str::swap` method replaces multiple values in the given string using PHP's 
     // Burritos are fantastic!
 
 <a name="method-take"></a>
-#### `Str::take()` {.collection-method}
+#### `Str::take()`
 
 The `Str::take` method returns a specified number of characters from the beginning of a string:
 
@@ -1181,7 +1181,7 @@ The `Str::take` method returns a specified number of characters from the beginni
     // Build
 
 <a name="method-title-case"></a>
-#### `Str::title()` {.collection-method}
+#### `Str::title()`
 
 The `Str::title` method converts the given string to `Title Case`:
 
@@ -1192,7 +1192,7 @@ The `Str::title` method converts the given string to `Title Case`:
     // A Nice Title Uses The Correct Case
 
 <a name="method-str-to-base64"></a>
-#### `Str::toBase64()` {.collection-method}
+#### `Str::toBase64()`
 
 The `Str::toBase64` method converts the given string to Base64:
 
@@ -1203,16 +1203,16 @@ The `Str::toBase64` method converts the given string to Base64:
     // RnJhbWV3b3Jr
 
 <a name="method-str-to-html-string"></a>
-#### `Str::toHtmlString()` {.collection-method}
+#### `Str::of()->toHtmlString()`
 
-The `Str::toHtmlString` method converts the string instance to an instance of `MacropaySolutions\Kernel\Support\HtmlString`, which may be displayed in View templates:
+The `Stringable::toHtmlString` method converts the string instance to an instance of `MacropaySolutions\Kernel\Support\HtmlString`, which may be displayed in View templates:
 
     use MacropaySolutions\Kernel\Support\Str;
 
     $htmlString = Str::of('Nuno Maduro')->toHtmlString();
 
 <a name="method-str-ucfirst"></a>
-#### `Str::ucfirst()` {.collection-method}
+#### `Str::ucfirst()`
 
 The `Str::ucfirst` method returns the given string with the first character capitalized:
 
@@ -1223,7 +1223,7 @@ The `Str::ucfirst` method returns the given string with the first character capi
     // Foo bar
 
 <a name="method-str-ucsplit"></a>
-#### `Str::ucsplit()` {.collection-method}
+#### `Str::ucsplit()`
 
 The `Str::ucsplit` method splits the given string into an array by uppercase characters:
 
@@ -1234,7 +1234,7 @@ The `Str::ucsplit` method splits the given string into an array by uppercase cha
     // [0 => 'Foo', 1 => 'Bar']
 
 <a name="method-str-upper"></a>
-#### `Str::upper()` {.collection-method}
+#### `Str::upper()`
 
 The `Str::upper` method converts the given string to uppercase:
 
@@ -1245,7 +1245,7 @@ The `Str::upper` method converts the given string to uppercase:
     // FRAMEWORK
 
 <a name="method-str-ulid"></a>
-#### `Str::ulid()` {.collection-method}
+#### `Str::ulid()`
 
 The `Str::ulid` method generates a ULID, which is a compact, time-ordered unique identifier:
 
@@ -1277,7 +1277,7 @@ To instruct the `ulid` method to return to generating ULIDs normally, you may in
     Str::createUlidsNormally();
 
 <a name="method-str-unwrap"></a>
-#### `Str::unwrap()` {.collection-method}
+#### `Str::unwrap()`
 
 The `Str::unwrap` method removes the specified strings from the beginning and end of a given string:
 
@@ -1292,7 +1292,7 @@ The `Str::unwrap` method removes the specified strings from the beginning and en
     // framework: "Framework"
 
 <a name="method-str-uuid"></a>
-#### `Str::uuid()` {.collection-method}
+#### `Str::uuid()`
 
 The `Str::uuid` method generates a UUID (version 4):
 
@@ -1313,7 +1313,7 @@ To instruct the `uuid` method to return to generating UUIDs normally, you may in
     Str::createUuidsNormally();
 
 <a name="method-str-word-count"></a>
-#### `Str::wordCount()` {.collection-method}
+#### `Str::wordCount()`
 
 The `Str::wordCount` method returns the number of words that a string contains:
 
@@ -1324,13 +1324,13 @@ Str::wordCount('Hello, world!'); // 2
 ```
 
 <a name="method-str-word-wrap"></a>
-#### `Str::wordWrap()` {.collection-method}
+#### `Str::wordWrap()`
 
 The `Str::wordWrap` method wraps a string to a given number of characters:
 
     use MacropaySolutions\Kernel\Support\Str;
 
-    $text = "The quick brown fox jumped over the lazy dog."
+    $text = "The quick brown fox jumped over the lazy dog.";
 
     Str::wordWrap($text, characters: 20, break: "<br />\n");
 
@@ -1341,7 +1341,7 @@ The `Str::wordWrap` method wraps a string to a given number of characters:
     */
 
 <a name="method-str-words"></a>
-#### `Str::words()` {.collection-method}
+#### `Str::words()`
 
 The `Str::words` method limits the number of words in a string. An additional string may be passed to this method via its third argument to specify which string should be appended to the end of the truncated string:
 
@@ -1352,7 +1352,7 @@ The `Str::words` method limits the number of words in a string. An additional st
     // Perfectly balanced, as >>>
 
 <a name="method-str-wrap"></a>
-#### `Str::wrap()` {.collection-method}
+#### `Str::wrap()`
 
 The `Str::wrap` method wraps the given string with an additional string or pair of strings:
 
@@ -1367,7 +1367,7 @@ The `Str::wrap` method wraps the given string with an additional string or pair 
     // This is Framework!
 
 <a name="method-str-of"></a>
-#### `Str::of()` {.collection-method}
+#### `Str::of()`
 
 The `Str::of()` method returns a new `MacropaySolutions\Kernel\Support\Stringable` instance of the given string:
 
@@ -1376,7 +1376,7 @@ The `Str::of()` method returns a new `MacropaySolutions\Kernel\Support\Stringabl
     // 'Surname Name'
 
 <a name="method-trans"></a>
-#### `trans()` {.collection-method}
+#### `trans()`
 
 The `trans` function translates the given translation key using your [language files](/localization):
 
@@ -1385,7 +1385,7 @@ The `trans` function translates the given translation key using your [language f
 If the specified translation key does not exist, the `trans` function will return the given key. So, using the example above, the `trans` function would return `messages.welcome` if the translation key does not exist.
 
 <a name="method-trans-choice"></a>
-#### `trans_choice()` {.collection-method}
+#### `trans_choice()`
 
 The `trans_choice` function translates the given translation key with inflection:
 
@@ -1399,7 +1399,7 @@ If the specified translation key does not exist, the `trans_choice` function wil
 Fluent strings provide a more fluent, object-oriented interface for working with string values, allowing you to chain multiple string operations together using a more readable syntax compared to traditional string operations.
 
 <a name="method-fluent-str-after"></a>
-#### `after` {.collection-method}
+#### `after`
 
 The `after` method returns everything after the given value in a string. The entire string will be returned if the value does not exist within the string:
 
@@ -1410,7 +1410,7 @@ The `after` method returns everything after the given value in a string. The ent
     // ' my name'
 
 <a name="method-fluent-str-after-last"></a>
-#### `afterLast` {.collection-method}
+#### `afterLast`
 
 The `afterLast` method returns everything after the last occurrence of the given value in a string. The entire string will be returned if the value does not exist within the string:
 
@@ -1421,7 +1421,7 @@ The `afterLast` method returns everything after the last occurrence of the given
     // 'Controller'
 
 <a name="method-fluent-str-apa"></a>
-#### `apa` {.collection-method}
+#### `apa`
 
 The `apa` method converts the given string to title case following the [APA guidelines](https://apastyle.apa.org/style-grammar-guidelines/capitalization/title-case):
 
@@ -1432,7 +1432,7 @@ The `apa` method converts the given string to title case following the [APA guid
     // A Nice Title Uses the Correct Case
 
 <a name="method-fluent-str-append"></a>
-#### `append` {.collection-method}
+#### `append`
 
 The `append` method appends the given values to the string:
 
@@ -1443,7 +1443,7 @@ The `append` method appends the given values to the string:
     // 'Surname Name'
 
 <a name="method-fluent-str-ascii"></a>
-#### `ascii` {.collection-method}
+#### `ascii`
 
 The `ascii` method will attempt to transliterate the string into an ASCII value:
 
@@ -1454,7 +1454,7 @@ The `ascii` method will attempt to transliterate the string into an ASCII value:
     // 'u'
 
 <a name="method-fluent-str-basename"></a>
-#### `basename` {.collection-method}
+#### `basename`
 
 The `basename` method will return the trailing name component of the given string:
 
@@ -1473,7 +1473,7 @@ If needed, you may provide an "extension" that will be removed from the trailing
     // 'baz'
 
 <a name="method-fluent-str-before"></a>
-#### `before` {.collection-method}
+#### `before`
 
 The `before` method returns everything before the given value in a string:
 
@@ -1484,7 +1484,7 @@ The `before` method returns everything before the given value in a string:
     // 'This is '
 
 <a name="method-fluent-str-before-last"></a>
-#### `beforeLast` {.collection-method}
+#### `beforeLast`
 
 The `beforeLast` method returns everything before the last occurrence of the given value in a string:
 
@@ -1495,7 +1495,7 @@ The `beforeLast` method returns everything before the last occurrence of the giv
     // 'This '
 
 <a name="method-fluent-str-between"></a>
-#### `between` {.collection-method}
+#### `between`
 
 The `between` method returns the portion of a string between two values:
 
@@ -1506,7 +1506,7 @@ The `between` method returns the portion of a string between two values:
     // ' is my '
 
 <a name="method-fluent-str-between-first"></a>
-#### `betweenFirst` {.collection-method}
+#### `betweenFirst`
 
 The `betweenFirst` method returns the smallest possible portion of a string between two values:
 
@@ -1517,7 +1517,7 @@ The `betweenFirst` method returns the smallest possible portion of a string betw
     // 'a'
 
 <a name="method-fluent-str-camel"></a>
-#### `camel` {.collection-method}
+#### `camel`
 
 The `camel` method converts the given string to `camelCase`:
 
@@ -1528,7 +1528,7 @@ The `camel` method converts the given string to `camelCase`:
     // 'fooBar'
 
 <a name="method-fluent-str-char-at"></a>
-#### `charAt` {.collection-method}
+#### `charAt`
 
 The `charAt` method returns the character at the specified index. If the index is out of bounds, `false` is returned:
 
@@ -1539,7 +1539,7 @@ The `charAt` method returns the character at the specified index. If the index i
     // 's'
 
 <a name="method-fluent-str-class-basename"></a>
-#### `classBasename` {.collection-method}
+#### `classBasename`
 
 The `classBasename` method returns the class name of the given class with the class's namespace removed:
 
@@ -1550,7 +1550,7 @@ The `classBasename` method returns the class name of the given class with the cl
     // 'Baz'
 
 <a name="method-fluent-str-contains"></a>
-#### `contains` {.collection-method}
+#### `contains`
 
 The `contains` method determines if the given string contains the given value. This method is case sensitive:
 
@@ -1569,7 +1569,7 @@ You may also pass an array of values to determine if the given string contains a
     // true
 
 <a name="method-fluent-str-contains-all"></a>
-#### `containsAll` {.collection-method}
+#### `containsAll`
 
 The `containsAll` method determines if the given string contains all the values in the given array:
 
@@ -1580,7 +1580,7 @@ The `containsAll` method determines if the given string contains all the values 
     // true
 
 <a name="method-fluent-str-dirname"></a>
-#### `dirname` {.collection-method}
+#### `dirname`
 
 The `dirname` method returns the parent directory portion of the given string:
 
@@ -1599,7 +1599,7 @@ If necessary, you may specify how many directory levels you wish to trim from th
     // '/foo'
 
 <a name="method-fluent-str-excerpt"></a>
-#### `excerpt` {.collection-method}
+#### `excerpt`
 
 The `excerpt` method extracts an excerpt from the string that matches the first instance of a phrase within that string:
 
@@ -1625,7 +1625,7 @@ In addition, you may use the `omission` option to change the string that will be
     // '(...) my name'
 
 <a name="method-fluent-str-ends-with"></a>
-#### `endsWith` {.collection-method}
+#### `endsWith`
 
 The `endsWith` method determines if the given string ends with the given value:
 
@@ -1648,7 +1648,7 @@ You may also pass an array of values to determine if the given string ends with 
     // false
 
 <a name="method-fluent-str-exactly"></a>
-#### `exactly` {.collection-method}
+#### `exactly`
 
 The `exactly` method determines if the given string is an exact match with another string:
 
@@ -1659,7 +1659,7 @@ The `exactly` method determines if the given string is an exact match with anoth
     // true
 
 <a name="method-fluent-str-explode"></a>
-#### `explode` {.collection-method}
+#### `explode`
 
 The `explode` method splits the string by the given delimiter and returns a collection containing each section of the split string:
 
@@ -1670,7 +1670,7 @@ The `explode` method splits the string by the given delimiter and returns a coll
     // collect(['foo', 'bar', 'baz'])
 
 <a name="method-fluent-str-finish"></a>
-#### `finish` {.collection-method}
+#### `finish`
 
 The `finish` method adds a single instance of the given value to a string if it does not already end with that value:
 
@@ -1685,7 +1685,7 @@ The `finish` method adds a single instance of the given value to a string if it 
     // this/string/
 
 <a name="method-fluent-str-headline"></a>
-#### `headline` {.collection-method}
+#### `headline`
 
 The `headline` method will convert strings delimited by casing, hyphens, or underscores into a space delimited string with each word's first letter capitalized:
 
@@ -1700,7 +1700,7 @@ The `headline` method will convert strings delimited by casing, hyphens, or unde
     // Email Notification Sent
 
 <a name="method-fluent-str-inline-markdown"></a>
-#### `inlineMarkdown` {.collection-method}
+#### `inlineMarkdown`
 
 The `inlineMarkdown` method converts GitHub flavored Markdown into inline HTML using [CommonMark](https://commonmark.thephpleague.com/). However, unlike the `markdown` method, it does not wrap all generated HTML in a block-level element:
 
@@ -1724,7 +1724,7 @@ By default, Markdown supports raw HTML, which will expose Cross-Site Scripting (
     // Inject: alert(&quot;Hello XSS!&quot;);
 
 <a name="method-fluent-str-is"></a>
-#### `is` {.collection-method}
+#### `is`
 
 The `is` method determines if a given string matches a given pattern. Asterisks may be used as wildcard values
 
@@ -1739,7 +1739,7 @@ The `is` method determines if a given string matches a given pattern. Asterisks 
     // false
 
 <a name="method-fluent-str-is-ascii"></a>
-#### `isAscii` {.collection-method}
+#### `isAscii`
 
 The `isAscii` method determines if a given string is an ASCII string:
 
@@ -1754,7 +1754,7 @@ The `isAscii` method determines if a given string is an ASCII string:
     // false
 
 <a name="method-fluent-str-is-empty"></a>
-#### `isEmpty` {.collection-method}
+#### `isEmpty`
 
 The `isEmpty` method determines if the given string is empty:
 
@@ -1769,7 +1769,7 @@ The `isEmpty` method determines if the given string is empty:
     // false
 
 <a name="method-fluent-str-is-not-empty"></a>
-#### `isNotEmpty` {.collection-method}
+#### `isNotEmpty`
 
 The `isNotEmpty` method determines if the given string is not empty:
 
@@ -1785,7 +1785,7 @@ The `isNotEmpty` method determines if the given string is not empty:
     // true
 
 <a name="method-fluent-str-is-json"></a>
-#### `isJson` {.collection-method}
+#### `isJson`
 
 The `isJson` method determines if a given string is valid JSON:
 
@@ -1804,7 +1804,7 @@ The `isJson` method determines if a given string is valid JSON:
     // false
 
 <a name="method-fluent-str-is-ulid"></a>
-#### `isUlid` {.collection-method}
+#### `isUlid`
 
 The `isUlid` method determines if a given string is a ULID:
 
@@ -1819,7 +1819,7 @@ The `isUlid` method determines if a given string is a ULID:
     // false
 
 <a name="method-fluent-str-is-url"></a>
-#### `isUrl` {.collection-method}
+#### `isUrl`
 
 The `isUrl` method determines if a given string is a URL:
 
@@ -1833,12 +1833,8 @@ The `isUrl` method determines if a given string is a URL:
 
     // false
 
-The `isUrl` method considers a wide range of protocols as valid. However, you may specify the protocols that should be considered valid by providing them to the `isUrl` method:
-
-    $result = Str::of('http://example.com')->isUrl(['http', 'https']);
-
 <a name="method-fluent-str-is-uuid"></a>
-#### `isUuid` {.collection-method}
+#### `isUuid`
 
 The `isUuid` method determines if a given string is a UUID:
 
@@ -1853,7 +1849,7 @@ The `isUuid` method determines if a given string is a UUID:
     // false
 
 <a name="method-fluent-str-kebab"></a>
-#### `kebab` {.collection-method}
+#### `kebab`
 
 The `kebab` method converts the given string to `kebab-case`:
 
@@ -1864,7 +1860,7 @@ The `kebab` method converts the given string to `kebab-case`:
     // foo-bar
 
 <a name="method-fluent-str-lcfirst"></a>
-#### `lcfirst` {.collection-method}
+#### `lcfirst`
 
 The `lcfirst` method returns the given string with the first character lowercased:
 
@@ -1876,7 +1872,7 @@ The `lcfirst` method returns the given string with the first character lowercase
 
 
 <a name="method-fluent-str-length"></a>
-#### `length` {.collection-method}
+#### `length`
 
 The `length` method returns the length of the given string:
 
@@ -1884,10 +1880,10 @@ The `length` method returns the length of the given string:
 
     $length = Str::of('Framework')->length();
 
-    // 7
+    // 9
 
 <a name="method-fluent-str-limit"></a>
-#### `limit` {.collection-method}
+#### `limit`
 
 The `limit` method truncates the given string to the specified length:
 
@@ -1906,7 +1902,7 @@ You may also pass a second argument to change the string that will be appended t
     // The quick brown fox (...)
 
 <a name="method-fluent-str-lower"></a>
-#### `lower` {.collection-method}
+#### `lower`
 
 The `lower` method converts the given string to lowercase:
 
@@ -1917,7 +1913,7 @@ The `lower` method converts the given string to lowercase:
     // 'framework'
 
 <a name="method-fluent-str-ltrim"></a>
-#### `ltrim` {.collection-method}
+#### `ltrim`
 
 The `ltrim` method trims the left side of the string:
 
@@ -1932,7 +1928,7 @@ The `ltrim` method trims the left side of the string:
     // 'Framework/'
 
 <a name="method-fluent-str-markdown"></a>
-#### `markdown` {.collection-method}
+#### `markdown`
 
 The `markdown` method converts GitHub flavored Markdown into HTML:
 
@@ -1962,7 +1958,7 @@ By default, Markdown supports raw HTML, which will expose Cross-Site Scripting (
     // <p>Inject: alert(&quot;Hello XSS!&quot;);</p>
 
 <a name="method-fluent-str-mask"></a>
-#### `mask` {.collection-method}
+#### `mask`
 
 The `mask` method masks a portion of a string with a repeated character, and may be used to obfuscate segments of strings such as email addresses and phone numbers:
 
@@ -1970,20 +1966,20 @@ The `mask` method masks a portion of a string with a repeated character, and may
 
     $string = Str::of('surname@example.com')->mask('*', 3);
 
-    // sur***************
+    // sur****************
 
 If needed, you may provide negative numbers as the third or fourth argument to the `mask` method, which will instruct the method to begin masking at the given distance from the end of the string:
 
     $string = Str::of('surname@example.com')->mask('*', -15, 3);
 
-    // sur***@example.com
+    // surn***@example.com
 
     $string = Str::of('surname@example.com')->mask('*', 4, -4);
 
-    // tayl**********.com
+    // surn***********.com
 
 <a name="method-fluent-str-match"></a>
-#### `match` {.collection-method}
+#### `match`
 
 The `match` method will return the portion of a string that matches a given regular expression pattern:
 
@@ -1998,7 +1994,7 @@ The `match` method will return the portion of a string that matches a given regu
     // 'bar'
 
 <a name="method-fluent-str-match-all"></a>
-#### `matchAll` {.collection-method}
+#### `matchAll`
 
 The `matchAll` method will return a collection containing the portions of a string that match a given regular expression pattern:
 
@@ -2019,7 +2015,7 @@ If you specify a matching group within the expression, Framework will return a c
 If no matches are found, an empty collection will be returned.
 
 <a name="method-fluent-str-is-match"></a>
-#### `isMatch` {.collection-method}
+#### `isMatch`
 
 The `isMatch` method will return `true` if the string matches a given regular expression:
 
@@ -2034,7 +2030,7 @@ The `isMatch` method will return `true` if the string matches a given regular ex
     // false
 
 <a name="method-fluent-str-new-line"></a>
-#### `newLine` {.collection-method}
+#### `newLine`
 
 The `newLine` method appends an "end of line" character to a string:
 
@@ -2046,7 +2042,7 @@ The `newLine` method appends an "end of line" character to a string:
     //  Framework'
 
 <a name="method-fluent-str-padboth"></a>
-#### `padBoth` {.collection-method}
+#### `padBoth`
 
 The `padBoth` method wraps PHP's `str_pad` function, padding both sides of a string with another string until the final string reaches the desired length:
 
@@ -2061,7 +2057,7 @@ The `padBoth` method wraps PHP's `str_pad` function, padding both sides of a str
     // '  James   '
 
 <a name="method-fluent-str-padleft"></a>
-#### `padLeft` {.collection-method}
+#### `padLeft`
 
 The `padLeft` method wraps PHP's `str_pad` function, padding the left side of a string with another string until the final string reaches the desired length:
 
@@ -2076,7 +2072,7 @@ The `padLeft` method wraps PHP's `str_pad` function, padding the left side of a 
     // '     James'
 
 <a name="method-fluent-str-padright"></a>
-#### `padRight` {.collection-method}
+#### `padRight`
 
 The `padRight` method wraps PHP's `str_pad` function, padding the right side of a string with another string until the final string reaches the desired length:
 
@@ -2091,7 +2087,7 @@ The `padRight` method wraps PHP's `str_pad` function, padding the right side of 
     // 'James     '
 
 <a name="method-fluent-str-pipe"></a>
-#### `pipe` {.collection-method}
+#### `pipe`
 
 The `pipe` method allows you to transform the string by passing its current value to the given callable:
 
@@ -2100,7 +2096,7 @@ The `pipe` method allows you to transform the string by passing its current valu
 
     $hash = Str::of('Framework')->pipe('md5')->prepend('Checksum: ');
 
-    // 'Checksum: a5c95b86291ea299fcbe64458ed12702'
+    // 'Checksum: 07782c22a88d1e82a09910124a9225a2'
 
     $closure = Str::of('foo')->pipe(function (Stringable $str) {
         return 'bar';
@@ -2109,7 +2105,7 @@ The `pipe` method allows you to transform the string by passing its current valu
     // 'bar'
 
 <a name="method-fluent-str-plural"></a>
-#### `plural` {.collection-method}
+#### `plural`
 
 The `plural` method converts a singular word string to its plural form. This function supports [any of the languages support by Framework's pluralizer](/localization#pluralization-language):
 
@@ -2136,7 +2132,7 @@ You may provide an integer as a second argument to the function to retrieve the 
     // child
 
 <a name="method-fluent-str-position"></a>
-#### `position` {.collection-method}
+#### `position`
 
 The `position` method returns the position of the first occurrence of a substring in a string. If the substring does not exist within the string, `false` is returned:
 
@@ -2151,7 +2147,7 @@ The `position` method returns the position of the first occurrence of a substrin
     // 7
 
 <a name="method-fluent-str-prepend"></a>
-#### `prepend` {.collection-method}
+#### `prepend`
 
 The `prepend` method prepends the given values onto the string:
 
@@ -2162,7 +2158,7 @@ The `prepend` method prepends the given values onto the string:
     // Framework Framework
 
 <a name="method-fluent-str-remove"></a>
-#### `remove` {.collection-method}
+#### `remove`
 
 The `remove` method removes the given value or array of values from the string:
 
@@ -2175,7 +2171,7 @@ The `remove` method removes the given value or array of values from the string:
 You may also pass `false` as a second parameter to ignore case when removing strings.
 
 <a name="method-fluent-str-repeat"></a>
-#### `repeat` {.collection-method}
+#### `repeat`
 
 The `repeat` method repeats the given string:
 
@@ -2188,7 +2184,7 @@ $repeated = Str::of('a')->repeat(5);
 ```
 
 <a name="method-fluent-str-replace"></a>
-#### `replace` {.collection-method}
+#### `replace`
 
 The `replace` method replaces a given string within the string:
 
@@ -2205,7 +2201,7 @@ The `replace` method also accepts a `caseSensitive` argument. By default, the `r
     );
 
 <a name="method-fluent-str-replace-array"></a>
-#### `replaceArray` {.collection-method}
+#### `replaceArray`
 
 The `replaceArray` method replaces a given value in the string sequentially using an array:
 
@@ -2218,7 +2214,7 @@ The `replaceArray` method replaces a given value in the string sequentially usin
     // The event will take place between 8:30 and 9:00
 
 <a name="method-fluent-str-replace-first"></a>
-#### `replaceFirst` {.collection-method}
+#### `replaceFirst`
 
 The `replaceFirst` method replaces the first occurrence of a given value in a string:
 
@@ -2229,7 +2225,7 @@ The `replaceFirst` method replaces the first occurrence of a given value in a st
     // a quick brown fox jumps over the lazy dog
 
 <a name="method-fluent-str-replace-last"></a>
-#### `replaceLast` {.collection-method}
+#### `replaceLast`
 
 The `replaceLast` method replaces the last occurrence of a given value in a string:
 
@@ -2240,13 +2236,13 @@ The `replaceLast` method replaces the last occurrence of a given value in a stri
     // the quick brown fox jumps over a lazy dog
 
 <a name="method-fluent-str-replace-matches"></a>
-#### `replaceMatches` {.collection-method}
+#### `replaceMatches`
 
 The `replaceMatches` method replaces all portions of a string matching a pattern with the given replacement string:
 
     use MacropaySolutions\Kernel\Support\Str;
 
-    $replaced = Str::of('(+1) 501-555-1000')->replaceMatches('/[^A-Za-z0-9]++/', '')
+    $replaced = Str::of('(+1) 501-555-1000')->replaceMatches('/[^A-Za-z0-9]++/', '');
 
     // '15015551000'
 
@@ -2261,7 +2257,7 @@ The `replaceMatches` method also accepts a closure that will be invoked with eac
     // '[1][2][3]'
 
 <a name="method-fluent-str-replace-start"></a>
-#### `replaceStart` {.collection-method}
+#### `replaceStart`
 
 The `replaceStart` method replaces the first occurrence of the given value only if the value appears at the start of the string:
 
@@ -2276,7 +2272,7 @@ The `replaceStart` method replaces the first occurrence of the given value only 
     // Hello World
 
 <a name="method-fluent-str-replace-end"></a>
-#### `replaceEnd` {.collection-method}
+#### `replaceEnd`
 
 The `replaceEnd` method replaces the last occurrence of the given value only if the value appears at the end of the string:
 
@@ -2291,7 +2287,7 @@ The `replaceEnd` method replaces the last occurrence of the given value only if 
     // Hello World
 
 <a name="method-fluent-str-rtrim"></a>
-#### `rtrim` {.collection-method}
+#### `rtrim`
 
 The `rtrim` method trims the right side of the given string:
 
@@ -2306,7 +2302,7 @@ The `rtrim` method trims the right side of the given string:
     // '/Framework'
 
 <a name="method-fluent-str-scan"></a>
-#### `scan` {.collection-method}
+#### `scan`
 
 The `scan` method parses input from a string into a collection according to a format supported by the [`sscanf` PHP function](https://www.php.net/manual/en/function.sscanf.php):
 
@@ -2317,7 +2313,7 @@ The `scan` method parses input from a string into a collection according to a fo
     // collect(['filename', 'jpg'])
 
 <a name="method-fluent-str-singular"></a>
-#### `singular` {.collection-method}
+#### `singular`
 
 The `singular` method converts a string to its singular form. This function supports [any of the languages support by Framework's pluralizer](/localization#pluralization-language):
 
@@ -2332,7 +2328,7 @@ The `singular` method converts a string to its singular form. This function supp
     // child
 
 <a name="method-fluent-str-slug"></a>
-#### `slug` {.collection-method}
+#### `slug`
 
 The `slug` method generates a URL friendly "slug" from the given string:
 
@@ -2343,7 +2339,7 @@ The `slug` method generates a URL friendly "slug" from the given string:
     // framework-framework
 
 <a name="method-fluent-str-snake"></a>
-#### `snake` {.collection-method}
+#### `snake`
 
 The `snake` method converts the given string to `snake_case`:
 
@@ -2354,7 +2350,7 @@ The `snake` method converts the given string to `snake_case`:
     // foo_bar
 
 <a name="method-fluent-str-split"></a>
-#### `split` {.collection-method}
+#### `split`
 
 The `split` method splits a string into a collection using a regular expression:
 
@@ -2365,7 +2361,7 @@ The `split` method splits a string into a collection using a regular expression:
     // collect(["one", "two", "three"])
 
 <a name="method-fluent-str-squish"></a>
-#### `squish` {.collection-method}
+#### `squish`
 
 The `squish` method removes all extraneous white space from a string, including extraneous white space between words:
 
@@ -2376,7 +2372,7 @@ The `squish` method removes all extraneous white space from a string, including 
     //  framework framework
 
 <a name="method-fluent-str-start"></a>
-#### `start` {.collection-method}
+#### `start`
 
 The `start` method adds a single instance of the given value to a string if it does not already start with that value:
 
@@ -2391,7 +2387,7 @@ The `start` method adds a single instance of the given value to a string if it d
     // /this/string
 
 <a name="method-fluent-str-starts-with"></a>
-#### `startsWith` {.collection-method}
+#### `startsWith`
 
 The `startsWith` method determines if the given string begins with the given value:
 
@@ -2402,7 +2398,7 @@ The `startsWith` method determines if the given string begins with the given val
     // true
 
 <a name="method-fluent-str-strip-tags"></a>
-#### `stripTags` {.collection-method}
+#### `stripTags`
 
 The `stripTags` method removes all HTML and PHP tags from a string:
 
@@ -2417,7 +2413,7 @@ The `stripTags` method removes all HTML and PHP tags from a string:
     // Surname <b>Name</b>
 
 <a name="method-fluent-str-studly"></a>
-#### `studly` {.collection-method}
+#### `studly`
 
 The `studly` method converts the given string to `StudlyCase`:
 
@@ -2428,22 +2424,22 @@ The `studly` method converts the given string to `StudlyCase`:
     // FooBar
 
 <a name="method-fluent-str-substr"></a>
-#### `substr` {.collection-method}
+#### `substr`
 
 The `substr` method returns the portion of the string specified by the given start and length parameters:
 
     use MacropaySolutions\Kernel\Support\Str;
 
-    $string = Str::of('Framework Framework')->substr(8);
+    $string = Str::of('Framework Framework')->substr(10);
 
     // Framework
 
-    $string = Str::of('Framework Framework')->substr(8, 5);
+    $string = Str::of('Framework Framework')->substr(10, 5);
 
     // Frame
 
 <a name="method-fluent-str-substrreplace"></a>
-#### `substrReplace` {.collection-method}
+#### `substrReplace`
 
 The `substrReplace` method replaces text within a portion of a string, starting at the position specified by the second argument and replacing the number of characters specified by the third argument. Passing `0` to the method's third argument will insert the string at the specified position without replacing any of the existing characters in the string:
 
@@ -2458,7 +2454,7 @@ The `substrReplace` method replaces text within a portion of a string, starting 
     // The Framework Framework
 
 <a name="method-fluent-str-swap"></a>
-#### `swap` {.collection-method}
+#### `swap`
 
 The `swap` method replaces multiple values in the string using PHP's `strtr` function:
 
@@ -2473,7 +2469,7 @@ The `swap` method replaces multiple values in the string using PHP's `strtr` fun
     // Burritos are fantastic!
 
 <a name="method-fluent-str-take"></a>
-#### `take` {.collection-method}
+#### `take`
 
 The `take` method returns a specified number of characters from the beginning of the string:
 
@@ -2484,7 +2480,7 @@ The `take` method returns a specified number of characters from the beginning of
     // Build
 
 <a name="method-fluent-str-tap"></a>
-#### `tap` {.collection-method}
+#### `tap`
 
 The `tap` method passes the string to the given closure, allowing you to examine and interact with the string while not affecting the string itself. The original string is returned by the `tap` method regardless of what is returned by the closure:
 
@@ -2501,7 +2497,7 @@ The `tap` method passes the string to the given closure, allowing you to examine
     // FRAMEWORK FRAMEWORK
 
 <a name="method-fluent-str-test"></a>
-#### `test` {.collection-method}
+#### `test`
 
 The `test` method determines if a string matches the given regular expression pattern:
 
@@ -2512,7 +2508,7 @@ The `test` method determines if a string matches the given regular expression pa
     // true
 
 <a name="method-fluent-str-title"></a>
-#### `title` {.collection-method}
+#### `title`
 
 The `title` method converts the given string to `Title Case`:
 
@@ -2523,7 +2519,7 @@ The `title` method converts the given string to `Title Case`:
     // A Nice Title Uses The Correct Case
 
 <a name="method-fluent-str-to-base64"></a>
-#### `toBase64()` {.collection-method}
+#### `toBase64()`
 
 The `toBase64` method converts the given string to Base64:
 
@@ -2531,10 +2527,10 @@ The `toBase64` method converts the given string to Base64:
 
     $base64 = Str::of('Framework')->toBase64();
 
-    // TGFyYXZlbA==
+    // RnJhbWV3b3Jr
 
 <a name="method-fluent-str-trim"></a>
-#### `trim` {.collection-method}
+#### `trim`
 
 The `trim` method trims the given string:
 
@@ -2549,7 +2545,7 @@ The `trim` method trims the given string:
     // 'Framework'
 
 <a name="method-fluent-str-ucfirst"></a>
-#### `ucfirst` {.collection-method}
+#### `ucfirst`
 
 The `ucfirst` method returns the given string with the first character capitalized:
 
@@ -2560,7 +2556,7 @@ The `ucfirst` method returns the given string with the first character capitaliz
     // Foo bar
 
 <a name="method-fluent-str-ucsplit"></a>
-#### `ucsplit` {.collection-method}
+#### `ucsplit`
 
 The `ucsplit` method splits the given string into a collection by uppercase characters:
 
@@ -2571,7 +2567,7 @@ The `ucsplit` method splits the given string into a collection by uppercase char
     // collect(['Foo', 'Bar'])
 
 <a name="method-fluent-str-unwrap"></a>
-#### `unwrap` {.collection-method}
+#### `unwrap`
 
 The `unwrap` method removes the specified strings from the beginning and end of a given string:
 
@@ -2586,7 +2582,7 @@ The `unwrap` method removes the specified strings from the beginning and end of 
     // framework: "Framework"
 
 <a name="method-fluent-str-upper"></a>
-#### `upper` {.collection-method}
+#### `upper`
 
 The `upper` method converts the given string to uppercase:
 
@@ -2597,7 +2593,7 @@ The `upper` method converts the given string to uppercase:
     // FRAMEWORK
 
 <a name="method-fluent-str-when"></a>
-#### `when` {.collection-method}
+#### `when`
 
 The `when` method invokes the given closure if a given condition is `true`. The closure will receive the fluent string instance:
 
@@ -2614,7 +2610,7 @@ The `when` method invokes the given closure if a given condition is `true`. The 
 If necessary, you may pass another closure as the third parameter to the `when` method. This closure will execute if the condition parameter evaluates to `false`.
 
 <a name="method-fluent-str-when-contains"></a>
-#### `whenContains` {.collection-method}
+#### `whenContains`
 
 The `whenContains` method invokes the given closure if the string contains the given value. The closure will receive the fluent string instance:
 
@@ -2643,7 +2639,7 @@ You may also pass an array of values to determine if the given string contains a
     // Tony Stark
 
 <a name="method-fluent-str-when-contains-all"></a>
-#### `whenContainsAll` {.collection-method}
+#### `whenContainsAll`
 
 The `whenContainsAll` method invokes the given closure if the string contains all the given sub-strings. The closure will receive the fluent string instance:
 
@@ -2660,7 +2656,7 @@ The `whenContainsAll` method invokes the given closure if the string contains al
 If necessary, you may pass another closure as the third parameter to the `when` method. This closure will execute if the condition parameter evaluates to `false`.
 
 <a name="method-fluent-str-when-empty"></a>
-#### `whenEmpty` {.collection-method}
+#### `whenEmpty`
 
 The `whenEmpty` method invokes the given closure if the string is empty. If the closure returns a value, that value will also be returned by the `whenEmpty` method. If the closure does not return a value, the fluent string instance will be returned:
 
@@ -2671,10 +2667,10 @@ The `whenEmpty` method invokes the given closure if the string is empty. If the 
         return $string->trim()->prepend('Framework');
     });
 
-    // 'Framework'
+    // '  '
 
 <a name="method-fluent-str-when-not-empty"></a>
-#### `whenNotEmpty` {.collection-method}
+#### `whenNotEmpty`
 
 The `whenNotEmpty` method invokes the given closure if the string is not empty. If the closure returns a value, that value will also be returned by the `whenNotEmpty` method. If the closure does not return a value, the fluent string instance will be returned:
 
@@ -2688,7 +2684,7 @@ The `whenNotEmpty` method invokes the given closure if the string is not empty. 
     // 'Framework Framework'
 
 <a name="method-fluent-str-when-starts-with"></a>
-#### `whenStartsWith` {.collection-method}
+#### `whenStartsWith`
 
 The `whenStartsWith` method invokes the given closure if the string starts with the given sub-string. The closure will receive the fluent string instance:
 
@@ -2702,7 +2698,7 @@ The `whenStartsWith` method invokes the given closure if the string starts with 
     // 'Disney World'
 
 <a name="method-fluent-str-when-ends-with"></a>
-#### `whenEndsWith` {.collection-method}
+#### `whenEndsWith`
 
 The `whenEndsWith` method invokes the given closure if the string ends with the given sub-string. The closure will receive the fluent string instance:
 
@@ -2716,7 +2712,7 @@ The `whenEndsWith` method invokes the given closure if the string ends with the 
     // 'Disney World'
 
 <a name="method-fluent-str-when-exactly"></a>
-#### `whenExactly` {.collection-method}
+#### `whenExactly`
 
 The `whenExactly` method invokes the given closure if the string exactly matches the given string. The closure will receive the fluent string instance:
 
@@ -2730,7 +2726,7 @@ The `whenExactly` method invokes the given closure if the string exactly matches
     // 'Framework'
 
 <a name="method-fluent-str-when-not-exactly"></a>
-#### `whenNotExactly` {.collection-method}
+#### `whenNotExactly`
 
 The `whenNotExactly` method invokes the given closure if the string does not exactly match the given string. The closure will receive the fluent string instance:
 
@@ -2741,10 +2737,10 @@ The `whenNotExactly` method invokes the given closure if the string does not exa
         return $string->title();
     });
 
-    // 'Framework'
+    // 'framework'
 
 <a name="method-fluent-str-when-is"></a>
-#### `whenIs` {.collection-method}
+#### `whenIs`
 
 The `whenIs` method invokes the given closure if the string matches a given pattern. Asterisks may be used as wildcard values. The closure will receive the fluent string instance:
 
@@ -2758,7 +2754,7 @@ The `whenIs` method invokes the given closure if the string matches a given patt
     // 'foo/bar/baz'
 
 <a name="method-fluent-str-when-is-ascii"></a>
-#### `whenIsAscii` {.collection-method}
+#### `whenIsAscii`
 
 The `whenIsAscii` method invokes the given closure if the string is 7 bit ASCII. The closure will receive the fluent string instance:
 
@@ -2772,11 +2768,12 @@ The `whenIsAscii` method invokes the given closure if the string is 7 bit ASCII.
     // 'Framework'
 
 <a name="method-fluent-str-when-is-ulid"></a>
-#### `whenIsUlid` {.collection-method}
+#### `whenIsUlid`
 
 The `whenIsUlid` method invokes the given closure if the string is a valid ULID. The closure will receive the fluent string instance:
 
     use MacropaySolutions\Kernel\Support\Str;
+    use MacropaySolutions\Kernel\Support\Stringable;
 
     $string = Str::of('01gd6r360bp37zj17nxb55yv40')->whenIsUlid(function (Stringable $string) {
         return $string->substr(0, 8);
@@ -2785,7 +2782,7 @@ The `whenIsUlid` method invokes the given closure if the string is a valid ULID.
     // '01gd6r36'
 
 <a name="method-fluent-str-when-is-uuid"></a>
-#### `whenIsUuid` {.collection-method}
+#### `whenIsUuid`
 
 The `whenIsUuid` method invokes the given closure if the string is a valid UUID. The closure will receive the fluent string instance:
 
@@ -2799,7 +2796,7 @@ The `whenIsUuid` method invokes the given closure if the string is a valid UUID.
     // 'a0a2a2d2'
 
 <a name="method-fluent-str-when-test"></a>
-#### `whenTest` {.collection-method}
+#### `whenTest`
 
 The `whenTest` method invokes the given closure if the string matches the given regular expression. The closure will receive the fluent string instance:
 
@@ -2813,7 +2810,7 @@ The `whenTest` method invokes the given closure if the string matches the given 
     // 'Framework Framework'
 
 <a name="method-fluent-str-word-count"></a>
-#### `wordCount` {.collection-method}
+#### `wordCount`
 
 The `wordCount` method returns the number of words that a string contains:
 
@@ -2824,7 +2821,7 @@ Str::of('Hello, world!')->wordCount(); // 2
 ```
 
 <a name="method-fluent-str-words"></a>
-#### `words` {.collection-method}
+#### `words`
 
 The `words` method limits the number of words in a string. If necessary, you may specify an additional string that will be appended to the truncated string:
 

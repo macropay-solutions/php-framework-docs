@@ -37,7 +37,7 @@ When mocking an object that is going to be injected into your application via Fr
         );
     }
 
-In order to make this more convenient, you may use the `mock` method that is provided by Framework's base test case class. For example, the following example is equivalent to the example above:
+In order to make this more convenient, you may use the `mock` method that is provided by the `MacropaySolutions\KernelDev\Foundation\Testing\Concerns\InteractsWithContainer` trait (used by `MacropaySolutions\KernelDev\Foundation\Testing\TestCase`, which also provides the `instance` method used above; the default `Tests\TestCase` extends `MacropaySolutions\KernelDev\Framework\Testing\TestCase`, which does not use this trait). For example, the following example is equivalent to the example above:
 
     use App\Service;
     use Mockery\MockInterface;
@@ -55,7 +55,7 @@ You may use the `partialMock` method when you only need to mock a few methods of
         $mock->shouldReceive('process')->once();
     });
 
-Similarly, if you want to [spy](http://docs.mockery.io/en/latest/reference/spies.html) on an object, Framework's base test case class offers a `spy` method as a convenient wrapper around the `Mockery::spy` method. Spies are similar to mocks; however, spies record any interaction between the spy and the code being tested, allowing you to make assertions after the code is executed:
+Similarly, if you want to [spy](http://docs.mockery.io/en/latest/reference/spies.html) on an object, the `InteractsWithContainer` trait offers a `spy` method as a convenient wrapper around the `Mockery::spy` method. Spies are similar to mocks; however, spies record any interaction between the spy and the code being tested, allowing you to make assertions after the code is executed:
 
     use App\Service;
 
@@ -126,7 +126,7 @@ If you would like to [spy](http://docs.mockery.io/en/latest/reference/spies.html
         $spy = \Mockery::spy();
         app()->instance('cache', $spy);
 
-        $response = $this->get('/');
+        $response = $this->call('GET', '/');
 
         $response->assertStatus(200);
 
@@ -136,7 +136,7 @@ If you would like to [spy](http://docs.mockery.io/en/latest/reference/spies.html
 <a name="interacting-with-time"></a>
 ## Interacting With Time
 
-When testing, you may occasionally need to modify the time returned by helpers such as `now` or `MacropaySolutions\Kernel\Support\Carbon::now()`. Thankfully, Framework's base feature test class includes helpers that allow you to manipulate the current time:
+When testing, you may occasionally need to modify the time returned by helpers such as `appDate()->now()` or `MacropaySolutions\Kernel\Support\Carbon::now()`. Thankfully, the `MacropaySolutions\KernelDev\Foundation\Testing\Concerns\InteractsWithTime` trait (used by `MacropaySolutions\KernelDev\Foundation\Testing\TestCase`) includes helpers that allow you to manipulate the current time:
 
     use MacropaySolutions\Kernel\Support\Carbon;
 
@@ -155,7 +155,7 @@ When testing, you may occasionally need to modify the time returned by helpers s
         $this->travel(-5)->hours();
 
         // Travel to an explicit time...
-        $this->travelTo(now()->subHours(6));
+        $this->travelTo(Carbon::now()->subHours(6));
 
         // Return back to the present time...
         $this->travelBack();
@@ -167,7 +167,7 @@ You may also provide a closure to the various time travel methods. The closure w
         // Test something five days into the future...
     });
     
-    $this->travelTo(now()->subDays(10), function () {
+    $this->travelTo(Carbon::now()->subDays(10), function () {
         // Test something during a given moment...
     });
 
@@ -183,7 +183,7 @@ The `freezeTime` method may be used to freeze the current time. Similarly, the `
     // Freeze time at the current second and resume normal time after executing closure...
     $this->freezeSecond(function (Carbon $time) {
         // ...
-    })
+    });
 
 As you would expect, all the methods discussed above are primarily useful for testing time sensitive application behavior, such as locking inactive posts on a discussion forum:
 

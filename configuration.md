@@ -62,11 +62,6 @@ If you are developing with a team, you may wish to continue including a `.env.ex
 
 Your `.env` file should not be committed to your application's source control, since each developer / server using your application could require a different environment configuration. Furthermore, this would be a security risk in the event an intruder gains access to your source control repository, since any sensitive credentials would get exposed.
 
-<a name="additional-environment-files"></a>
-#### Additional Environment Files
-
-Before loading your application's environment variables, Framework determines if an `APP_ENV` environment variable has been externally provided or if the `--env` CLI argument has been specified. If so, Framework will attempt to load an `.env.[APP_ENV]` file if it exists. If it does not exist, the default `.env` file will be loaded.
-
 <a name="environment-variable-types"></a>
 ### Environment Variable Types
 
@@ -94,7 +89,7 @@ APP_NAME="My Application"
 
 All the variables listed in the `.env` file will be loaded into the `$_ENV` PHP super-global when your application receives a request. However, you may use the `env` function to retrieve values from these variables in your configuration files. In fact, if you review the Framework configuration files, you will notice many of the options are already using this function:
 
-    'debug' => env('APP_DEBUG', false),
+    'debug' => (bool)env('APP_DEBUG', false),
 
 The second value passed to the `env` function is the "default value". This value will be returned if no environment variable exists for the given key.
 

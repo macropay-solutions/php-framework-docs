@@ -37,7 +37,7 @@ class HomeController extends Controller
 You can register the route pointing to this controller method:
 
 ```php
-$router->get('/', [HomeController::class, 'index']);
+$router->get('/', 'HomeController@index');
 ```
 
 The returned string will automatically be converted into an HTTP response by the framework.
@@ -331,7 +331,7 @@ Example of a hardened JS parser for JSON Lines:
 Redirect responses are instances of the `MacropaySolutions\Kernel\Http\RedirectResponse` class, and contain the proper headers needed to redirect the user to another URL. The simplest method to generate a `RedirectResponse` is to use the global `redirect` helper method within a controller action:
 
 ```php
-$router->get('dashboard', [DashboardController::class, 'index']);
+$router->get('dashboard', 'DashboardController@index');
 ```
 
 ```php
@@ -351,7 +351,7 @@ class DashboardController extends Controller
 <a name="redirecting-named-routes"></a>
 #### Redirecting To Named Routes
 
-When you call the `redirect` helper function with no parameters, an instance of `MacropaySolutions\Kernel\Routing\Redirector` is returned, allowing you to call any method on the `Redirector` instance. For example, to generate a `RedirectResponse` to a named route, you may use the `route` method:
+When you call the `redirect` helper function with no parameters, an instance of `MacropaySolutions\Framework\Http\Redirector` is returned, allowing you to call any method on the `Redirector` instance. For example, to generate a `RedirectResponse` to a named route, you may use the `route` method:
 
 ```php
 return redirect()->route('login');
@@ -363,10 +363,4 @@ If your route has parameters, you may pass them as the second argument to the `r
 // For a route with the following URI: profile/{id}
 
 return redirect()->route('profile', ['id' => 1]);
-```
-
-If you are redirecting to a route with an "ID" parameter that is being populated from an Obvious model, you may simply pass the model itself. The ID will be extracted automatically:
-
-```php
-return redirect()->route('profile', [$user]);
 ```

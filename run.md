@@ -161,7 +161,7 @@ use DateInterval;
  */
 public function isolationLockExpiresAt(): DateTimeInterface|DateInterval
 {
-    return now()->addMinutes(5);
+    return \appDate()->now()->addMinutes(5);
 }
 ```
 
@@ -517,7 +517,7 @@ The `table` method makes it easy to correctly format multiple rows / columns of 
 
     $this->table(
         ['Name', 'Email'],
-        User::query()->all(['name', 'email'])->toArray()
+        User::query()->get(['name', 'email'])->toArray()
     );
 
 <a name="progress-bars"></a>
@@ -527,13 +527,13 @@ For long running tasks, it can be helpful to show a progress bar that informs us
 
     use App\Models\User;
 
-    $users = $this->withProgressBar(User::query()->all(), function (User $user) {
+    $users = $this->withProgressBar(User::query()->get(), function (User $user) {
         $this->performTask($user);
     });
 
 Sometimes, you may need more manual control over how a progress bar is advanced. First, define the total number of steps the process will iterate through. Then, advance the progress bar after processing each item:
 
-    $users = App\Models\User::query()->all();
+    $users = App\Models\User::query()->get();
 
     $bar = $this->output->createProgressBar(count($users));
 
@@ -702,6 +702,16 @@ These are the built-in commands depending on the composer flag `--no-dev`:
   'commands:clear' => 'command.commands.clear',
   'macro:cache' => 'command.macro.cache',
   'macro:clear' => 'command.macro.clear',
+  'merge-cached-files:cache' => 'command.merge-cached-files.cache',
+  'merge-cached-files:clear' => 'command.merge-cached-files.clear',
+  'queue:clear' => 'command.queue.clear',
+  'queue:failed' => 'command.queue.failed',
+  'queue:flush' => 'command.queue.flush',
+  'queue:forget' => 'command.queue.forget',
+  'queue:listen' => 'command.queue.listen',
+  'queue:retry' => 'command.queue.retry',
+  'queue:work' => 'command.queue.work',
+  'queue:fail-job' => 'command.queue.fail',
   'db:seed' => 'command.seed',
   'schedule:finish' => 'command.schedule.finish',
   'schedule:run' => 'MacropaySolutions\Kernel\\Console\\Scheduling\\ScheduleRunCommand',
@@ -716,11 +726,11 @@ These are the built-in commands depending on the composer flag `--no-dev`:
   'about' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\AboutCommand',
   'channel:list' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ChannelListCommand',
   'make:channel' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ChannelMakeCommand',
+  'make:component' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ComponentMakeCommand',
   'config:show' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ConfigShowCommand',
   'make:command' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ConsoleMakeCommand',
-  'make:controller' => 'MacropaySolutions\\KernelDev\\Routing\\Console\\ControllerMakeCommand',
-  'docs' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\DocsCommand',
   'env:encrypt' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\EnvironmentEncryptCommand',
+  'event:generate' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\EventGenerateCommand',
   'event:list' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\EventListCommand',
   'make:event' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\EventMakeCommand',
   'make:exception' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ExceptionMakeCommand',
@@ -730,30 +740,27 @@ These are the built-in commands depending on the composer flag `--no-dev`:
   'lang:publish' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\LangPublishCommand',
   'make:listener' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ListenerMakeCommand',
   'make:mail' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\MailMakeCommand',
-  'make:middleware' => 'MacropaySolutions\\KernelDev\\Routing\\Console\\MiddlewareMakeCommand',
-  'make:model' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ModelMakeCommand',
   'make:notification' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\NotificationMakeCommand',
-  'notifications:table' => 'MacropaySolutions\\KernelDev\\Notifications\\Console\\NotificationTableCommand',
   'make:observer' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ObserverMakeCommand',
   'make:policy' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\PolicyMakeCommand',
   'make:provider' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ProviderMakeCommand',
   'make:request' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\RequestMakeCommand',
-  'make:resource' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ResourceMakeCommand',
+  'route:list' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\RouteListCommand',
   'make:rule' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\RuleMakeCommand',
+  'bootstrap-cache:clear' => 'MacropaySolutions\\KernelDev\\Console\\ClearAllCachedCommands',
   'schedule:list' => 'MacropaySolutions\\KernelDev\\Console\\Scheduling\\ScheduleListCommand',
   'schedule:test' => 'MacropaySolutions\\KernelDev\\Console\\Scheduling\\ScheduleTestCommand',
   'make:scope' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ScopeMakeCommand',
-  'serve' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ServeCommand',
   'session:table' => 'MacropaySolutions\\KernelDev\\Session\\Console\\SessionTableCommand',
   'db:show' => 'MacropaySolutions\\KernelDev\\Database\\Console\\ShowCommand',
   'model:show' => 'MacropaySolutions\\KernelDev\\Database\\Console\\ShowModelCommand',
   'db:table' => 'MacropaySolutions\\KernelDev\\Database\\Console\\TableCommand',
   'make:test' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\TestMakeCommand',
   'make:view' => 'MacropaySolutions\\KernelDev\\Foundation\\Console\\ViewMakeCommand',
-  'config:cache' => 'App\\Console\\Commands\\ConfigCacheCommand',
-  'config:clear' => 'App\\Console\\Commands\\ConfigClearCommand',
-  'route:cache' => 'App\\Console\\Commands\\RouteCacheCommand',
-  'route:clear' => 'App\\Console\\Commands\\RouteClearCommand',
+  'config:cache' => 'command.config.cache',
+  'config:clear' => 'command.config.clear',
+  'route:cache' => 'command.route.cache',
+  'route:clear' => 'command.route.clear',
 );
 ```
 ```php
@@ -776,13 +783,23 @@ These are the built-in commands depending on the composer flag `--no-dev`:
   'commands:clear' => 'command.commands.clear',
   'macro:cache' => 'command.macro.cache',
   'macro:clear' => 'command.macro.clear',
+  'merge-cached-files:cache' => 'command.merge-cached-files.cache',
+  'merge-cached-files:clear' => 'command.merge-cached-files.clear',
+  'queue:clear' => 'command.queue.clear',
+  'queue:failed' => 'command.queue.failed',
+  'queue:flush' => 'command.queue.flush',
+  'queue:forget' => 'command.queue.forget',
+  'queue:listen' => 'command.queue.listen',
+  'queue:retry' => 'command.queue.retry',
+  'queue:work' => 'command.queue.work',
+  'queue:fail-job' => 'command.queue.fail',
   'schedule:finish' => 'command.schedule.finish',
   'schedule:run' => 'MacropaySolutions\Kernel\\Console\\Scheduling\\ScheduleRunCommand',
   'schedule:work' => 'command.schedule.work',
-  'config:cache' => 'App\\Console\\Commands\\ConfigCacheCommand',
-  'config:clear' => 'App\\Console\\Commands\\ConfigClearCommand',
-  'route:cache' => 'App\\Console\\Commands\\RouteCacheCommand',
-  'route:clear' => 'App\\Console\\Commands\\RouteClearCommand',
+  'config:cache' => 'command.config.cache',
+  'config:clear' => 'command.config.clear',
+  'route:cache' => 'command.route.cache',
+  'route:clear' => 'command.route.clear',
 );
 
 ```
@@ -795,4 +812,4 @@ These are the built-in commands depending on the composer flag `--no-dev`:
     FreshCommand   \MacropaySolutions\Kernel\Database\Console\Migrations
     ResetCommand   \MacropaySolutions\Kernel\Database\Console\Migrations
     RefreshCommand   \MacropaySolutions\Kernel\Database\Console\Migrations
-    SeedCommand   \MacropaySolutions\Kernel\Database\Console\Seeds
+    SeedCommand   \MacropaySolutions\KernelDev\Database\Console\Seeds

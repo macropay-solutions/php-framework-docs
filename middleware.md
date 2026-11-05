@@ -23,7 +23,7 @@ HTTP middleware provide a convenient mechanism for inspecting, filtering, and in
 Of course, additional middleware can be written to perform a variety of tasks tailored specifically for performance-optimized, stateless JSON APIs. A CORS middleware might be responsible for adding the proper headers to all responses leaving your application, while a metrics middleware might log request duration and memory footprint for application telemetry.
 
 > [!NOTE]  
-> Automated global view or session variables (such as legacy cookie or session layers) are completely disabled by default to optimize memory allocation. To utilize state-dependent middleware, you must actively complete the explicit component opt-in flow inside your `composer.json` and `App\Application.php` binding layers.
+> Automated global view or session variables (such as legacy cookie or session layers) are completely disabled by default to optimize memory allocation. To utilize state-dependent middleware, you must actively complete the explicit component opt-in flow inside your `App\Application.php` binding layers.
 
 All custom middleware must be stored within the `app/Http/Middleware` directory.
 
@@ -117,7 +117,7 @@ If you want a middleware to run during every single HTTP request sent to your ap
 
 To run the request filter globally **before** the high-performance routing engine attempts to find a matching path, append the class to the `$middleware` array property:
 
-    protected $middleware = [
+    protected array $middleware = [
         \App\Http\Middleware\EnsureTokenIsValid::class,
     ];
 
@@ -144,14 +144,14 @@ Once the middleware shorthand has been declared, you can assign it using the `mi
 
     $router->get('admin/profile', [
         'middleware' => 'auth',
-        'uses' => 'App\Http\Controllers\AdminProfileController@show',
+        'uses' => '\App\Http\Controllers\AdminProfileController@show',
     ]);
 
 You may pass an array of aliases to assign multiple middleware steps to a single route:
 
     $router->get('dashboard', [
         'middleware' => ['first', 'second'],
-        'uses' => 'App\Http\Controllers\DashboardController::class@index',
+        'uses' => '\App\Http\Controllers\DashboardController@index',
     ]);
 
 > [!NOTE]  
@@ -191,13 +191,13 @@ Middleware parameters are assigned when mapping your route definitions by separa
 
     $router->put('post/{id}', [
         'middleware' => 'role:editor,publisher',
-        'uses' => 'App\Http\Controllers\PostController@update',
+        'uses' => '\App\Http\Controllers\PostController@update',
     ]);
 
 <a name="terminable-middleware"></a>
 ## Terminable Middleware
 
-Sometimes a middleware may need to complete resource cleanup or background work after the raw HTTP response payload has already been dispatched to the client's browser. For instance, the framework's internal session manager logs stateless payload data to storage *after* the request transmission finishes.
+Sometimes a middleware may need to complete resource cleanup or background work after the raw HTTP response payload has already been dispatched to the client's browser.
 
 To achieve this behavior, define your middleware as "terminable" by adding a public `terminate` method directly to the class structure:
 
@@ -225,7 +225,7 @@ To achieve this behavior, define your middleware as "terminable" by adding a pub
         }
     }
 
-The `terminate` method must accept both a `MacropaySolutions\Kernel\Http\Request` and a `Symfony\Component\HttpFoundation\Response` instance. Once implemented, register the terminable middleware as a global or route-specific entry point inside your configuration loops.
+The `terminate` method must accept both a `MacropaySolutions\Kernel\Http\Request` and a `Symfony\Component\HttpFoundation\Response` instance. Once implemented, register the terminable middleware as a global entry point inside your configuration loops.
 
 When calling the `terminate` method on your middleware, Framework will resolve a fresh instance of the middleware from the [service container](/container). If you would like to use the same middleware instance when the `handle` and `terminate` methods are called, register the middleware with the container using the container's `singleton` method.
 

@@ -15,7 +15,6 @@ context: cache
   - [Storing Items in the Cache](#storing-items-in-the-cache)
   - [Removing Items From the Cache](#removing-items-from-the-cache)
   - [Extending Items TTL in the Cache](#extending-items-ttl-in-the-cache)
-  - [The Cache Helper](#the-cache-helper)
 - [Cache Tags](#cache-tags)
   - [Storing Tagged Cache Items](#storing-tagged-cache-items)
   - [Accessing Tagged Cache Items](#accessing-tagged-cache-items)
@@ -79,10 +78,12 @@ Using the Memcached driver requires the [Memcached PECL package](https://pecl.ph
 If needed, you may set the `host` option to a UNIX socket path. If you do this, the `port` option should be set to `0`:
 
     'memcached' => [
-        [
-            'host' => '/var/run/memcached/memcached.sock',
-            'port' => 0,
-            'weight' => 100
+        'servers' => [
+            [
+                'host' => '/var/run/memcached/memcached.sock',
+                'port' => 0,
+                'weight' => 100
+            ],
         ],
     ],
 
@@ -168,7 +169,7 @@ The `has` method may be used to determine if an item exists in the cache. This m
 The `increment` and `decrement` methods may be used to adjust the value of integer items in the cache. Both of these methods accept an optional second argument indicating the amount by which to increment or decrement the item's value:
 
     // Initialize the value if it does not exist...
-    \app('cache')->add('key', 0, now()->addHours(4));
+    \app('cache')->add('key', 0, \appDate()->now()->addHours(4));
 
     // Increment or decrement the value...
     \app('cache')->increment('key');
@@ -227,7 +228,7 @@ If the storage time is not passed to the `put` method, the item will be stored i
 
 Instead of passing the number of seconds as an integer, you may also pass a `DateTime` instance representing the desired expiration time of the cached item:
 
-    \app('cache')->put('key', 'value', now()->addMinutes(10));
+    \app('cache')->put('key', 'value', \appDate()->now()->addMinutes(10));
 
 <a name="store-if-not-present"></a>
 #### Store if Not Present
@@ -281,25 +282,6 @@ You may adjust the time to live of a cache key without retrieving its underlying
 
 > [!WARNING]  
 > Passing a `0` TTL will explicitly remove the cache key from the store!
-
-<a name="the-cache-helper"></a>
-### The Cache Helper
-
-In addition to resolving from the container, you may also use the global `cache` function to retrieve and store data via the cache. When the `cache` function is called with a single, string argument, it will return the value of the given key:
-
-    $value = cache('key');
-
-If you provide an array of key / value pairs and an expiration time to the function, it will store values in the cache for the specified duration:
-
-    cache(['key' => 'value'], $seconds);
-
-    cache(['key' => 'value'], now()->addMinutes(10));
-
-When the `cache` function is called without any arguments, it returns an instance of the `MacropaySolutions\Kernel\Contracts\Cache\Factory` implementation, allowing you to call other caching methods:
-
-    cache()->remember('users', $seconds, function () {
-        return \app('db')->table('users')->get();
-    });
 
 <a name="cache-tags"></a>
 ## Cache Tags
@@ -456,7 +438,7 @@ Lock can be refreshed or prolonged:
         // loop start
           // custom logic
 
-          if (\round((\microtime(true) - $start) * 1000, 2) > 90) {
+          if (\round(\microtime(true) - $start, 2) > 90) {
              $lock->refresh(100);
           }
         // end loop
@@ -476,12 +458,12 @@ In the example below, we will dispatch a queued job if a lock is successfully ac
     $lock = \app('cache')->lock('processing', 120);
 
     if ($lock->get()) {
-        ProcessPodcast::dispatch($podcast, $lock->owner());
+        \dispatch([ProcessPodcast::class, 'handle', ['podcast' => $podcast, 'owner' => $lock->owner()]]);
     }
 
 Within our application's `ProcessPodcast` job, we can restore and release the lock using the owner token:
 
-    \app('cache')->restoreLock('processing', $this->owner)->release();
+    \app('cache')->restoreLock('processing', $owner)->release();
 
 If you would like to release a lock without respecting its current owner, you may use the `forceRelease` method:
 
@@ -513,6 +495,7 @@ To create our custom cache driver, we first need to implement the `MacropaySolut
         public function forget($key) {}
         public function flush() {}
         public function getPrefix() {}
+        public function touch(string $key, int $seconds): bool {}
     }
 
 We just need to implement each of these methods using a MongoDB connection. For an example of how to implement each of these methods, take a look at the `MacropaySolutions\Kernel\Cache\MemcachedStore` in the [PHP-Kernel source code](https://github.com/macropay-solutions/php-kernel). Once our implementation is complete, we can finish our custom driver registration by extending the cache manager:
@@ -527,7 +510,7 @@ We just need to implement each of these methods using a MongoDB connection. For 
 <a name="registering-the-driver"></a>
 ### Registering the Driver
 
-To register the custom cache driver with Framework, we will use the `extend` method on the cache manager. Since other service providers may attempt to read cached values within their `boot` method, we will register our custom driver within a `booting` callback. By using the `booting` callback, we can ensure that the custom driver is registered just before the `boot` method is called on our application's service providers but after the `register` method is called on all the service providers. We will register our `booting` callback within the `register` method of our application's `App\Providers\AppServiceProvider` class:
+To register the custom cache driver with Framework, we will use the `extend` method on the cache manager. We will register our custom driver within the `register` method of our application's `App\Providers\AppServiceProvider` class:
 
     <?php
 
@@ -543,11 +526,9 @@ To register the custom cache driver with Framework, we will use the `extend` met
          */
         public function register(): void
         {
-            $this->app->booting(function () {
-                 $this->app->make('cache')->extend('mongo', function ($app) {
-                     return $this->app->make('cache')->repository(new MongoStore);
-                 });
-             });
+            $this->app->make('cache')->extend('mongo', function ($app) {
+                return $this->app->make('cache')->repository(new MongoStore);
+            });
         }
 
         /**

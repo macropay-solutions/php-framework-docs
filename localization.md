@@ -21,21 +21,21 @@ context: localization
 ## Introduction
 
 > [!NOTE]  
-> By default, the Framework application skeleton does not include the `lang` directory. If you would like to customize Framework's language files, you may publish them via the `lang:publish` Run command.
+> By default, the Framework application skeleton includes the `resources/lang` directory, which is the directory language files are loaded from. The `lang:publish` Run command publishes Framework's language files to the `lang` directory instead, which is not loaded.
 
 Framework's localization features provide a convenient way to retrieve strings in various languages, allowing you to easily support multiple languages within your application.
 
-Framework provides two ways to manage translation strings. First, language strings may be stored in files within the application's `lang` directory. Within this directory, there may be subdirectories for each language supported by the application. This is the approach Framework uses to manage translation strings for built-in Framework features such as validation error messages:
+Framework provides two ways to manage translation strings. First, language strings may be stored in files within the application's `resources/lang` directory. Within this directory, there may be subdirectories for each language supported by the application. This is the approach Framework uses to manage translation strings for built-in Framework features such as validation error messages:
 
-    /lang
+    /resources/lang
         /en
             messages.php
         /es
             messages.php
 
-Or, translation strings may be defined within JSON files that are placed within the `lang` directory. When taking this approach, each language supported by your application would have a corresponding JSON file within this directory. This approach is recommended for applications that have a large number of translatable strings:
+Or, translation strings may be defined within JSON files that are placed within the `resources/lang` directory. When taking this approach, each language supported by your application would have a corresponding JSON file within this directory. This approach is recommended for applications that have a large number of translatable strings:
 
-    /lang
+    /resources/lang
         en.json
         es.json
 
@@ -44,7 +44,7 @@ We'll discuss each approach to managing translation strings within this document
 <a name="publishing-the-language-files"></a>
 ### Publishing the Language Files
 
-By default, the Framework application skeleton does not include the `lang` directory. If you would like to customize Framework's language files or create your own, you should scaffold the `lang` directory via the `lang:publish` Run command. The `lang:publish` command will create the `lang` directory in your application and publish the default set of language files used by Framework:
+By default, the Framework application skeleton includes the `resources/lang` directory with the default set of language files used by Framework. If you would like to customize Framework's language files or create your own, you should edit the `resources/lang` directory. The `lang:publish` Run command will create the `lang` directory (not `resources/lang`) in your application and publish the default set of language files used by Framework to `lang/en`:
 
 ```shell
 php run lang:publish
@@ -76,9 +76,9 @@ You may configure a "fallback language", which will be used when the active lang
 <a name="determining-the-current-locale"></a>
 #### Determining the Current Locale
 
-You may use the `currentLocale` and `isLocale` methods on the `app` service to determine the current locale or check if the locale is a given value:
+You may use the `getLocale` and `isLocale` methods on the `app` service to determine the current locale or check if the locale is a given value:
 
-    $locale = app()->currentLocale();
+    $locale = app()->getLocale();
 
     if (app()->isLocale('en')) {
         // ...
@@ -110,9 +110,9 @@ You may instruct Framework's "pluralizer", which is used by Obvious and other po
 <a name="using-short-keys"></a>
 ### Using Short Keys
 
-Typically, translation strings are stored in files within the `lang` directory. Within this directory, there should be a subdirectory for each language supported by your application. This is the approach Framework uses to manage translation strings for built-in Framework features such as validation error messages:
+Typically, translation strings are stored in files within the `resources/lang` directory. Within this directory, there should be a subdirectory for each language supported by your application. This is the approach Framework uses to manage translation strings for built-in Framework features such as validation error messages:
 
-    /lang
+    /resources/lang
         /en
             messages.php
         /es
@@ -122,7 +122,7 @@ All language files return an array of keyed strings. For example:
 
     <?php
 
-    // lang/en/messages.php
+    // resources/lang/en/messages.php
 
     return [
         'welcome' => 'Welcome to our application!',
@@ -136,7 +136,7 @@ All language files return an array of keyed strings. For example:
 
 For applications with a large number of translatable strings, defining every string with a "short key" can become confusing when referencing the keys in your views and it is cumbersome to continually invent keys for every translation string supported by your application.
 
-For this reason, Framework also provides support for defining translation strings using the "default" translation of the string as the key. Language files that use translation strings as keys are stored as JSON files in the `lang` directory. For example, if your application has a Spanish translation, you should create a `lang/es.json` file:
+For this reason, Framework also provides support for defining translation strings using the "default" translation of the string as the key. Language files that use translation strings as keys are stored as JSON files in the `resources/lang` directory. For example, if your application has a Spanish translation, you should create a `resources/lang/es.json` file:
 
 ```json
 {
@@ -151,7 +151,7 @@ You should not define translation string keys that conflict with other translati
 <a name="retrieving-translation-strings"></a>
 ## Retrieving Translation Strings
 
-You may retrieve translation strings from your language files using the `__` helper function. If you are using "short keys" to define your translation strings, you should pass the file that contains the key and the key itself to the `__` function using "dot" syntax. For example, let's retrieve the `welcome` translation string from the `lang/en/messages.php` language file:
+You may retrieve translation strings from your language files using the `__` helper function. If you are using "short keys" to define your translation strings, you should pass the file that contains the key and the key itself to the `__` function using "dot" syntax. For example, let's retrieve the `welcome` translation string from the `resources/lang/en/messages.php` language file:
 
     echo __('messages.welcome');
 
@@ -238,6 +238,6 @@ If you would like to display the integer value that was passed to the `trans_cho
 <a name="overriding-package-language-files"></a>
 ## Overriding Package Language Files
 
-Some packages may ship with their own language files. Instead of changing the package's core files to tweak these lines, you may override them by placing files in the `lang/vendor/{package}/{locale}` directory.
+Some packages may ship with their own language files. Instead of changing the package's core files to tweak these lines, you may override them by placing files in the `resources/lang/vendor/{package}/{locale}` directory.
 
-So, for example, if you need to override the English translation strings in `messages.php` for a package named `skyrim/hearthfire`, you should place a language file at: `lang/vendor/hearthfire/en/messages.php`. Within this file, you should only define the translation strings you wish to override. Any translation strings you don't override will still be loaded from the package's original language files.
+So, for example, if you need to override the English translation strings in `messages.php` for a package named `skyrim/hearthfire`, you should place a language file at: `resources/lang/vendor/hearthfire/en/messages.php`. Within this file, you should only define the translation strings you wish to override. Any translation strings you don't override will still be loaded from the package's original language files.

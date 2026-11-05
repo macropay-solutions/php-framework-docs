@@ -47,25 +47,20 @@ Sending email doesn't have to be complicated. Framework provides a clean, simple
 <a name="explicit-mail-opt-in-flow"></a>
 ### Explicit Mail Opt-In Flow
 
-Because PHP-Framework is tailored explicitly for high-performance, stateless JSON APIs, the mail delivery subsystems are completely disabled and excluded from the application classmap by default to save memory and minimize boot overhead. To send emails, you must actively toggle the mail engine on within your application structure:
+Because PHP-Framework is tailored explicitly for high-performance, stateless JSON APIs, the mail delivery subsystems are completely disabled by default to save memory and minimize boot overhead. To send emails, you must actively toggle the mail engine on within your application structure:
 
-1. **Composer Realignment**: Open your `composer.json` file and remove the mail exclusion string from the `exclude-from-classmap` collection:
-
-        "vendor/macropay-solutions/php-kernel/kernel/Mail/"
-
-2. **Container Activation**: Open `App\Application.php` and uncomment the explicit mailer bindings inside your `$availableBindings` map:
+1. **Container Activation**: Open `App\Application.php` and uncomment the explicit mailer bindings inside your `$availableBindings` map:
 
         'mailer' => 'registerMailBindings',
         'mail.manager' => 'registerMailBindings',
         \MacropaySolutions\Kernel\Mail\Markdown::class => 'registerMailBindings',
 
-3. **Core Alias Activation**: While inside `App\Application.php`, scroll down to the `registerContainerAliases` method and uncomment the corresponding mail abstractions inside both the `$abstractAliases` and `$aliases` arrays.
+2. **Core Alias Activation**: While inside `App\Application.php`, uncomment the corresponding mail abstractions inside both the `$abstractAliases` and `$aliases` arrays.
 
 Once these configurations are active, execute:
 
 ```shell
 composer require symfony/mailer
-composer dump-autoload
 ```
 
 > **Note:** The default email component templates are automatically published into your application space at `resources/views/vendor/mail/` by Composer upon installing or updating `macropay-solutions/php-kernel`.
@@ -93,7 +88,7 @@ The following foundational configuration environment variables must be declared 
 <a name="driver-prerequisites"></a>
 ### Driver / Transport Prerequisites
 
-The API based drivers such as Mailgun, Postmark, and MailerSend are often simpler and faster than sending mail via SMTP servers. Whenever possible, we recommend that you use one of these drivers.
+The API based drivers such as Mailgun and Postmark are often simpler and faster than sending mail via SMTP servers. Whenever possible, we recommend that you use one of these drivers.
 
 <a name="mailgun-driver"></a>
 #### Mailgun Driver
@@ -170,7 +165,7 @@ To utilize AWS [temporary credentials](https://docs.aws.amazon.com/IAM/latest/Us
         'token' => env('AWS_SESSION_TOKEN'),
     ],
 
-If you would like to define [additional options](https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sesv2-2019-09-27.html#sendemail) that Framework should pass to the AWS SDK's `SendEmail` method when sending an email, you may define an `options` array within your `ses` configuration:
+If you would like to define [additional options](https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sesv2-2019-09-27.html#sendemail) that Framework should pass to the AWS SDK's `SendRawEmail` method when sending an email, you may define an `options` array within your `ses` configuration:
 
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
@@ -178,7 +173,7 @@ If you would like to define [additional options](https://docs.aws.amazon.com/aws
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
         'options' => [
             'ConfigurationSetName' => 'MyConfigurationSet',
-            'EmailTags' => [
+            'Tags' => [
                 ['Name' => 'foo', 'Value' => 'bar'],
             ],
         ],
@@ -813,7 +808,7 @@ You are free to set "to", "cc", and "bcc" recipients by chaining their respectiv
 
 By default, Framework will send email using the mailer configured as the `default` mailer in your application's `mail` configuration file. However, you may use the `mailer` method on the mail manager container to send a message using a specific mailer configuration:
 
-    \app('mailer')->mailer('postmark')
+    \app('mail.manager')->mailer('postmark')
         ->to($request->user()->email)
         ->send(new OrderShipped($order));
 
@@ -824,7 +819,7 @@ Since sending email messages can negatively impact the response time of your app
 
 #### Via Storable Array Callables
 
-PHP-Framework operates with strict security parameters that aggressively block instantiated objects from entering your queue layers to eliminate payload injection attack vectors. Traditional mailable execution via pushing the mailable instance to `->queue()` is not supported.
+PHP-Framework operates with strict security parameters that aggressively block instantiated objects from entering your queue layers to eliminate payload injection attack vectors. Pushing the mailable instance to `->queue()` does not serialize the object; it is converted into an object-free `SendQueuedMailable` payload that keeps only its public properties.
 
 The recommended, high-performance option is passing a structured **Storable Array Callable** with primitive identifiers. This bypasses object serialization overhead entirely, minimizing payload footprint on services like Redis or Amazon SQS while maximizing background worker throughput.
 
@@ -882,7 +877,7 @@ When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCo
 > [!CAUTION]  
 > **The Protected / Private Property Loss Trap:** The queue transport layer relies entirely on `get_object_vars()` and `json_encode()` to flatten queued Mailables into 100% object-free JSON payloads. As a result, **all `protected` and `private` instance properties are permanently stripped during serialization**.
 >
-> **The Recommended Fix:** To pass primitive data cleanly without exposing it as public properties (or leaking it to View templates), **pass your primitive arguments directly to your execution methods** (`handle()`, `content()`, `envelope()`, or `build()`) or use Storable Array Callables. The container and queue engine will hydrate parameters dynamically at execution time.
+> **The Recommended Fix:** To pass primitive data cleanly without exposing it as public properties (or leaking it to View templates), **pass your primitive arguments directly to your execution methods** (`build()`) or use Storable Array Callables. The container and queue engine will hydrate parameters dynamically at execution time.
 
 > [!WARNING]  
 > **The Primitive Property Rule (Silent Data Loss):** Because the transport layer uses `json_encode()`, passing an Object (that is not a `QueueableCollection` or `QueueableEntity`) as a public property to your Mailable will **not** throw an exception on dispatch. Instead, it will be silently flattened into JSON. When the worker receives it, it will be decoded as a plain PHP associative array. If your Mailable methods expect an actual instance, the worker will crash. You **must** pass primitive data (like an `$orderId`) and fetch the database records inside your `envelope()` or `build()` methods.
@@ -950,7 +945,7 @@ Framework allows you to send mailables in a locale other than the request's curr
 
 To accomplish this, the mail engine offers a `locale` method to set the desired language. The application will change into this locale when the mailable's template is being evaluated and then revert back to the previous locale when evaluation is complete:
 
-    \app('mailer')->locale('es')->to($userEmail)->send(
+    \app('mailer')->to($userEmail)->locale('es')->send(
         new OrderShipped($order)
     );
 
@@ -975,7 +970,7 @@ Sometimes, applications store each user's preferred locale. By implementing the 
 
 Once you have implemented the interface, Framework will automatically use the preferred locale when sending mailables and notifications to the model. Therefore, there is no need to call the `locale` method when using this interface:
 
-    \app('mailer')->to($request->user()->email)->send(new OrderShipped($order));
+    \app('mailer')->to($request->user())->send(new OrderShipped($order));
 
 <a name="testing"></a>
 ## Testing
@@ -1051,7 +1046,7 @@ When validating email dispatch routines, assert directly against the queue servi
 
 If you are queueing mailables for delivery in the background, use `assertQueued` instead of `assertSent`:
 
-    $fakeMail = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\MailFake(\app('mailer'));
+    $fakeMail = new \MacropaySolutions\KernelDev\Support\Testing\Fakes\MailFake(\app('mail.manager'));
     \app()->instance('mailer', $fakeMail);
 
     $fakeMail->assertQueued(OrderShipped::class);
@@ -1215,7 +1210,7 @@ Once you've defined your custom transport, you may register it via the `extend` 
      */
     public function boot(): void
     {
-        \app('mailer')->extend('mailchimp', function (array $config = []) {
+        \app('mail.manager')->extend('mailchimp', function (array $config = []) {
             return new MailchimpTransport(/* ... */);
         });
     }
@@ -1252,7 +1247,7 @@ Next, you may use the mail manager's `extend` method to register the transport w
      */
     public function boot(): void
     {
-        \app('mailer')->extend('brevo', function () {
+        \app('mail.manager')->extend('brevo', function () {
             return (new BrevoTransportFactory)->create(
                 new Dsn(
                     'brevo+api',

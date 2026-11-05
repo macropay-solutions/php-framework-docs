@@ -110,9 +110,9 @@ If your application is utilizing a cluster of Redis servers, you should define t
 
     ],
 
-By default, clusters will perform client-side sharding across your nodes, allowing you to pool nodes and create a large amount of available RAM. However, client-side sharding does not handle failover; therefore, it is primarily suited for transient cached data that is available from another primary data store.
+With the `predis` client and `options.cluster` not set to `redis`, clusters will perform client-side sharding across your nodes, allowing you to pool nodes and create a large amount of available RAM. However, client-side sharding does not handle failover; therefore, it is primarily suited for transient cached data that is available from another primary data store.
 
-If you would like to use native Redis clustering instead of client-side sharding, you may specify this by setting the `options.cluster` configuration value to `redis` within your application's `config/database.php` configuration file:
+If you would like to use native Redis clustering instead of client-side sharding, you may specify this by setting the `options.cluster` configuration value to `redis` within your application's `config/database.php` configuration file (this is the default value; the `phpredis` client always uses native Redis clustering):
 
     'redis' => [
 
@@ -193,9 +193,9 @@ The PhpRedis extension may also be configured to use a variety of serializers an
         // Rest of Redis configuration...
     ],
 
-Currently supported serializers include: `\app('redis')->SERIALIZER_NONE` (default), `\app('redis')->SERIALIZER_PHP`, `\app('redis')->SERIALIZER_JSON`, `\app('redis')->SERIALIZER_IGBINARY`, and `\app('redis')->SERIALIZER_MSGPACK`.
+Currently supported serializers include: `Redis::SERIALIZER_NONE` (default), `Redis::SERIALIZER_PHP`, `Redis::SERIALIZER_JSON`, `Redis::SERIALIZER_IGBINARY`, and `Redis::SERIALIZER_MSGPACK`.
 
-Supported compression algorithms include: `\app('redis')->COMPRESSION_NONE` (default), `\app('redis')->COMPRESSION_LZF`, `\app('redis')->COMPRESSION_ZSTD`, and `\app('redis')->COMPRESSION_LZ4`.
+Supported compression algorithms include: `Redis::COMPRESSION_NONE` (default), `Redis::COMPRESSION_LZF`, `Redis::COMPRESSION_ZSTD`, and `Redis::COMPRESSION_LZ4`.
 
 <a name="interacting-with-redis"></a>
 ## Interacting With Redis
@@ -337,13 +337,9 @@ First, let's setup a channel listener using the `subscribe` method. We'll place 
 Now we may publish messages to the channel using the `publish` method:
 
 
-    $router->get('/publish', function () {
-        // ...
-
-        \app('redis')->publish('test-channel', json_encode([
-            'name' => 'Adam Wathan'
-        ]));
-    });
+    \app('redis')->publish('test-channel', json_encode([
+        'name' => 'Adam Wathan'
+    ]));
 
 <a name="wildcard-subscriptions"></a>
 #### Wildcard Subscriptions

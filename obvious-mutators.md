@@ -142,7 +142,7 @@ To demonstrate attribute casting, let's cast the `role_id` attribute to an integ
          *
          * @var array
          */
-        protected $casts = [
+        protected array $casts = [
             'role_id' => 'int',
         ];
     }
@@ -176,7 +176,7 @@ Obvious also allows you to cast your attribute values to PHP [Enums](https://www
      *
      * @var array
      */
-    protected $casts = [
+    protected array $casts = [
         'status' => ServerStatus::class,
     ];
 

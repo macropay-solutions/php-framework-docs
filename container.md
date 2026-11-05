@@ -283,7 +283,7 @@ The fastest way to bypass contextual lookup is by defining your array callables 
     ): \App\Http\Controllers\PhotoController
     {
         return new \App\Http\Controllers\PhotoController(
-            $container->resolve(\App\Services\Filesystem\LocalFilesystem::class, $parameters, false)
+            $container->make(\App\Services\Filesystem\LocalFilesystem::class, $parameters)
         );
     }
 
@@ -292,7 +292,7 @@ The fastest way to bypass contextual lookup is by defining your array callables 
         array $parameters = []
     ): \App\Http\Controllers\VideoController {
         return new \App\Http\Controllers\VideoController(
-            $container->resolve(\App\Services\Filesystem\S3Filesystem::class, $parameters, false)
+            $container->make(\App\Services\Filesystem\S3Filesystem::class, $parameters)
         );
     }
 
@@ -507,7 +507,7 @@ If you would like to have the Framework container instance itself injected into 
 > [!NOTE]
 >You can use the `di` helper **exclusively with list parameters** when resolving from the container if you want to make sure it will not introduce issues if called before the application is fully booted.
 
-Because most of the macroable classes are resolved from the container in PHP-Kernel, there are some corner cases like `MacropaySolutions\Kernel\Console\Scheduling\Schedule` which, if resolved from the container, would generate a circular dependency that leads to a segmentation fault or memory exhaustion in `\MacropaySolutions\Kernel\Foundation\Console\Kernel::defineConsoleSchedule`.
+Because most of the macroable classes are resolved from the container in PHP-Kernel, there are some corner cases like `MacropaySolutions\Kernel\Console\Scheduling\Schedule` which, if resolved from the container, would generate a circular dependency that leads to a segmentation fault or memory exhaustion in `\MacropaySolutions\Framework\Console\Kernel::defineConsoleSchedule`.
 This can happen also to developers leading to lost debug time.
 
 To shorten the detection of such cases, we introduced a check, configurable via `app.circular_dependency_memory_limit`:
@@ -582,7 +582,7 @@ While the service container implements PHP's `ArrayAccess` interface for legacy 
 > 
 > In addition to completely breaking IDE autocompletion, static analysis (PHPStan), and `.phpstorm.meta.php` return type mappings, `ArrayAccess` incurs VM execution overhead (`FETCH_DIM_R` dispatch). OPcache cannot inline dynamic `offsetGet()` interface calls, and PHP 8+ JIT cannot optimize C-level method lookup tables compared to direct method invocation.
 > 
-> For absolute type safety, maximum OPcache efficiency, and JIT optimizations, **always** use explicit container methods (`make()`, `get()`, `instance()`, `set()`, `forgetInstance()`), constructor injection, or `app()` / `di()` helpers.
+> For absolute type safety, maximum OPcache efficiency, and JIT optimizations, **always** use explicit container methods (`make()`, `get()`, `instance()`, `forgetInstance()`), constructor injection, or `app()` / `di()` helpers.
 > 
 > This is valid for ANY class that implements ArrayAccess.
 
@@ -628,9 +628,6 @@ The container supports multiple string-based callable formats. It can parse `@` 
     // Class and method delimited by '@'
     $result = \app()->call('App\UserReport@generate');
 
-    // Class and method delimited by '::'
-    $result = \app()->call('App\UserReport::generate');
-
     // Invokable class (Container resolves the class and automatically calls __invoke)
     $result = \app()->call(\App\UserReport::class);
 
@@ -667,7 +664,7 @@ The `beforeResolving` method fires right before the container begins looking up 
     }
 #### Resolving
 
-The `resolving` method fires immediately after the object has been successfully instantiated but before any extender decorators are applied. It passes the fully constructed instance and the container:
+The `resolving` method fires immediately after the object has been successfully instantiated and after any extender decorators are applied. It passes the fully constructed instance and the container:
 
     use App\Services\Transistor;
 
@@ -730,12 +727,12 @@ If the container has aliases configured (e.g., `'request' => Request::class`), t
 While direct assignment is used for core bootstrapping, developers and runtime processes must use the `$this->instance()` method when injecting or overriding objects dynamically:
 
     // Injecting a mock during testing or runtime
-    $this->app->instance(\MacropaySolutions\Kernel\Cache\CacheManager::class, $mockCache);
+    $this->app->instance('cache', $mockCache);
 
 To guarantee container state integrity and prevent split-state bugs, `instance()`, `bind()`, and `alias()` enforce strict target rules:
 
-1. **Alias Protection (`LogicException`):** Passing an alias key (e.g., `'\MacropaySolutions\Kernel\Cache\CacheManager::class'` or `'request'`) to `bind()`, `instance()`, or `alias()` is strictly prohibited. If an alias key is passed, the container throws a `LogicException` instructing you to target the root FQCN directly.
-2. **Rebound Events:** If the root target object being replaced was already resolved previously by other services, `instance()` fires a `rebound` event. This notifies all singleton services that hold the old instance to update their internal state with the new one.
+1. **Alias Protection (`LogicException`):** Passing an alias key (e.g., `'\MacropaySolutions\Kernel\Cache\CacheManager::class'` or `'request'`) to `bind()` or `instance()` is strictly prohibited. If an alias key is passed, the container throws a `LogicException` instructing you to target the root FQCN directly.
+2. **Rebound Events:** If the root target object being replaced was already bound previously, `instance()` fires a `rebound` event. This notifies all singleton services that hold the old instance to update their internal state with the new one.
 
 > [!CRITICAL]  
 > **Always Target Root FQCNs**  
@@ -748,12 +745,12 @@ To guarantee container state integrity and prevent split-state bugs, `instance()
 <a name="psr-11"></a>
 ## PSR-11
 
-Framework's service container implements the [PSR-11](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-11-container.md) interface. Therefore, you may type-hint the PSR-11 container interface to obtain an instance of the container:
+Framework's service container implements the [PSR-11](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-11-container.md) interface. Therefore, you may type-hint the `MacropaySolutions\Kernel\Contracts\Container\Container` contract (which extends the PSR-11 container interface) to obtain an instance of the container:
 
     namespace App\Http\Controllers;
 
     use App\Services\Transistor;
-    use Psr\Container\ContainerInterface;
+    use MacropaySolutions\Kernel\Contracts\Container\Container as ContainerInterface;
 
     class AudioController
     {

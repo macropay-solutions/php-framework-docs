@@ -47,7 +47,7 @@ When targeting standard HTML views or routes that handle CSRF verification, regi
     \MacropaySolutions\Kernel\Cookie\Middleware\EncryptCookies::class,
     \MacropaySolutions\Kernel\Cookie\Middleware\AddQueuedCookiesToResponse::class,
     \MacropaySolutions\Kernel\Session\Middleware\StartSession::class,
-    \MacropaySolutions\Session\Middleware\VerifyCsrfToken::class,
+    \MacropaySolutions\Kernel\Session\Middleware\VerifyCsrfToken::class,
 
 <a name="configuration"></a>
 ### Configuration
@@ -205,6 +205,8 @@ To determine if an item is not present in the session, you may use the `missing`
 
 > [!WARNING]  
 > **Session Object Serialization:** Session deserialization no longer hydrates application objects. Serialized objects are returned as `__PHP_Incomplete_Class` instances. Store scalar values, arrays, or entity identifiers instead.
+>
+> The only exception is the flashed validation `errors` (a `ViewErrorBag`): when the `serialization` option in `config/session.php` is set to `json`, the session converts it to arrays on save and rebuilds it on load. With the default `php` serialization, flashed errors are not usable on the next request. See [Manually Flashing Errors and Input](/validation#manually-flashing-errors-and-input).
 
 To store data in the session, you will typically use the request instance's `put` method or the global `session` helper:
 
@@ -368,7 +370,7 @@ Since the purpose of these methods is not readily understandable, let's quickly 
 - The `read` method should return the string version of the session data associated with the given `$sessionId`. There is no need to do any serialization or other encoding when retrieving or storing session data in your driver, as Framework will perform the serialization for you.
 - The `write` method should write the given `$data` string associated with the `$sessionId` to some persistent storage system, such as MongoDB or another storage system of your choice.  Again, you should not perform any serialization - Framework will have already handled that for you.
 - The `destroy` method should remove the data associated with the `$sessionId` from persistent storage.
-- The `gc` method should destroy all session data that is older than the given `$lifetime`, which is a UNIX timestamp. For self-expiring systems like Memcached and Redis, this method may be left empty.
+- The `gc` method should destroy all session data that is older than the given `$lifetime`, which is a number of seconds. For self-expiring systems like Memcached and Redis, this method may be left empty.
 
 </div>
 

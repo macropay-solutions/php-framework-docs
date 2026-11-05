@@ -61,28 +61,9 @@ The `public` disk included in your application's `filesystems` configuration fil
 
 To make these files accessible from the web, you should create a symbolic link from `public/storage` to `storage/app/public`. Utilizing this folder convention will keep your publicly accessible files in one directory that can be easily shared across deployments when using zero down-time deployment systems.
 
-To create the symbolic link, you may use the `storage:link` Run command:
+Once a file has been stored and the symbolic link has been created, you can create a URL to the files using the `asset` method of `app('url')`:
 
-```shell
-php run storage:link
-```
-
-Once a file has been stored and the symbolic link has been created, you can create a URL to the files using the `asset` helper:
-
-    echo asset('storage/file.txt');
-
-You may configure additional symbolic links in your `filesystems` configuration file. Each of the configured links will be created when you run the `storage:link` command:
-
-    'links' => [
-        public_path('storage') => storage_path('app/public'),
-        public_path('images') => storage_path('app/images'),
-    ],
-
-The `storage:unlink` command may be used to destroy your configured symbolic links:
-
-```shell
-php run storage:unlink
-```
+    echo app('url')->asset('storage/file.txt');
 
 <a name="driver-prerequisites"></a>
 ### Driver Prerequisites
@@ -310,48 +291,21 @@ Using the `temporaryUrl` method, you may create temporary URLs to files stored u
 
 
     $url = app('filesystem')->temporaryUrl(
-        'file.jpg', now()->addMinutes(5)
+        'file.jpg', \appDate()->now()->addMinutes(5)
     );
 
 If you need to specify additional [S3 request parameters](https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html#RESTObjectGET-requests), you may pass the array of request parameters as the third argument to the `temporaryUrl` method:
 
     $url = app('filesystem')->temporaryUrl(
         'file.jpg',
-        now()->addMinutes(5),
+        \appDate()->now()->addMinutes(5),
         [
             'ResponseContentType' => 'application/octet-stream',
             'ResponseContentDisposition' => 'attachment; filename=file2.jpg',
         ]
     );
 
-If you need to customize how temporary URLs are created for a specific storage disk, you can use the `buildTemporaryUrlsUsing` method. For example, this can be useful if you have a controller that allows you to download files stored via a disk that doesn't typically support temporary URLs. Usually, this method should be called from the `boot` method of a service provider:
-
-    <?php
-
-    namespace App\Providers;
-
-    use DateTime;
-
-    use MacropaySolutions\Kernel\Support\ServiceProvider;
-
-    class AppServiceProvider extends ServiceProvider
-    {
-        /**
-         * Bootstrap any application services.
-         */
-        public function boot(): void
-        {
-            app('filesystem')->disk('local')->buildTemporaryUrlsUsing(
-                function (string $path, DateTime $expiration, array $options) {
-                    return \app('url')->temporarySignedRoute(
-                        'files.download',
-                        $expiration,
-                        array_merge($options, ['path' => $path])
-                    );
-                }
-            );
-        }
-    }
+If you need to customize how temporary URLs are created for a specific storage disk, you can use the `buildTemporaryUrlsUsing` method. For example, this can be useful if you have a controller that allows you to download files stored via a disk that doesn't typically support temporary URLs. Usually, this method should be called from the `boot` method of a service provider.
 
 <a name="temporary-upload-urls"></a>
 #### Temporary Upload URLs
@@ -364,7 +318,7 @@ If you need to generate a temporary URL that can be used to upload a file direct
 
 
     ['url' => $url, 'headers' => $headers] = app('filesystem')->temporaryUploadUrl(
-        'file.jpg', now()->addMinutes(5)
+        'file.jpg', \appDate()->now()->addMinutes(5)
     );
 
 This method is primarily useful in serverless environments that require the client-side application to directly upload files to a cloud storage system such as Amazon S3.
@@ -648,7 +602,7 @@ Finally, the `deleteDirectory` method may be used to remove a directory and all 
 <a name="testing"></a>
 ## Testing
 
-The `app('filesystem')`'s `fake` method allows you to easily generate a fake disk that, combined with the file generation utilities of the `MacropaySolutions\Kernel\Http\UploadedFile` class, greatly simplifies the testing of file uploads. For example:
+The `app('filesystem')`'s `createLocalDriver` and `set` methods allow you to easily generate a fake disk that, combined with the file generation utilities of the `MacropaySolutions\Kernel\Http\UploadedFile` class, greatly simplifies the testing of file uploads. For example:
 
     <?php
 
@@ -685,8 +639,6 @@ The `app('filesystem')`'s `fake` method allows you to easily generate a fake dis
             app('filesystem')->disk('photos')->assertDirectoryEmpty('/wallpapers');
         }
     }
-
-By default, the `fake` method will delete all files in its temporary directory. If you would like to keep these files, you may use the "persistentFake" method instead. For more information on testing file uploads, you may consult the [HTTP testing documentation's information on file uploads](/http-tests#testing-file-uploads).
 
 > [!WARNING]  
 > The `image` method requires the [GD extension](https://www.php.net/manual/en/book.image.php).

@@ -141,7 +141,8 @@ Framework automatically serializes the job into a standardized, un-serialized JS
           "channels": ["private-orders.1"],
           "payload": {
             "orderId": 1,
-            "status": "shipped"
+            "status": "shipped",
+            "socket": null
           },
           "connections": [null]
         }
@@ -273,8 +274,8 @@ Remember, users must be authorized to listen on private channels. We may define 
     use App\Models\Order;
     use App\Models\User;
 
-    Broadcast::channel('orders.{orderId}', function (User $user, int $orderId) {
-        return $user->id === Order::findOrNew($orderId)->user_id;
+    \app(\MacropaySolutions\Kernel\Contracts\Broadcasting\Factory::class)->channel('orders.{orderId}', function (User $user, int $orderId) {
+        return $user->id === Order::query()->findOrNew($orderId)->user_id;
     });
 
 The `channel` method accepts two arguments: the name of the channel and a callback which returns `true` or `false` indicating whether the user is authorized to listen on the channel.
@@ -284,7 +285,7 @@ All authorization callbacks receive the currently authenticated user as their fi
 <a name="listening-for-event-broadcasts"></a>
 #### Listening for Event Broadcasts
 
-Next, all that remains is to listen for the event in your JavaScript application using your preferred WebSocket client. By default, all the event's public properties will be included on the broadcast event.
+Next, all that remains is to listen for the event in your JavaScript application using your preferred WebSocket client. The array returned by the event's `broadcastWith` method will be included on the broadcast event.
 
 <a name="defining-broadcast-events"></a>
 ## Defining Broadcast Events
@@ -327,6 +328,16 @@ The `ShouldBroadcast` interface requires you to implement a single method: `broa
                 new PrivateChannel('user.' . $this->user->id),
             ];
         }
+
+        /**
+         * Get the data to broadcast.
+         *
+         * @return array<string, mixed>
+         */
+        public function broadcastWith(): array
+        {
+            return ['id' => $this->user->id];
+        }
     }
 
 After implementing the `ShouldBroadcast` interface, you only need to [fire the event](/events) as you normally would. Once the event has been fired, a [queued job](/queues) will automatically broadcast the event using your specified broadcast driver.
@@ -349,19 +360,9 @@ If you customize the broadcast name using the `broadcastAs` method, you should m
 <a name="broadcast-data"></a>
 ### Broadcast Data
 
-When an event is broadcast, all of its `public` properties are automatically serialized and broadcast as the event's payload, allowing you to access any of its public data from your JavaScript application. So, for example, if your event has a single public `$user` property that contains an Obvious model, the event's broadcast payload would be:
+When an event is broadcast, its `public` properties are not automatically serialized: if the event does not define a `broadcastWith` method returning an associative array, a `RuntimeException` is thrown. The returned array is broadcast as the event's payload, together with a `socket` key.
 
-```json
-{
-  "user": {
-    "id": 1,
-    "name": "Name Name"
-    ...
-  }
-}
-```
-
-However, if you wish to have more fine-grained control over your broadcast payload, you may add a `broadcastWith` method to your event. This method should return the array of data that you wish to broadcast as the event payload:
+You must add a `broadcastWith` method to your event. This method should return the array of data that you wish to broadcast as the event payload:
 
     /**
      * Get the data to broadcast.
@@ -457,23 +458,24 @@ Private channels require you to authorize that the currently authenticated user 
 <a name="defining-authorization-routes"></a>
 ### Defining Authorization Routes
 
-Thankfully, Framework makes it easy to define the routes to respond to channel authorization requests. In the `App\Providers\BroadcastServiceProvider` included with your Framework application, you will see a call to the `Broadcast::routes` method. This method will register the `/broadcasting/auth` route to handle authorization requests:
+Thankfully, Framework makes it easy to define the routes to respond to channel authorization requests. Framework does not ship an `App\Providers\BroadcastServiceProvider`, so you should call the broadcast manager's `routes` method from one of your own service providers. This method will register the `/broadcasting/auth` route to handle authorization requests:
 
-    Broadcast::routes();
+    \app(\MacropaySolutions\Kernel\Contracts\Broadcasting\Factory::class)->routes();
 
-The `Broadcast::routes` method will automatically place its routes within the `web` middleware group; however, you may pass an array of route attributes to the method if you would like to customize the assigned attributes:
+The `routes` method will automatically place its routes within the `web` middleware group; however, you may pass an array of route attributes to the method if you would like to customize the assigned attributes:
 
-    Broadcast::routes($attributes);
+    \app(\MacropaySolutions\Kernel\Contracts\Broadcasting\Factory::class)->routes($attributes);
 
 <a name="defining-authorization-callbacks"></a>
 ### Defining Authorization Callbacks
 
-Next, we need to define the logic that will actually determine if the currently authenticated user can listen to a given channel. This is done in the `routes/channels.php` file that is included with your application. In this file, you may use the `Broadcast::channel` method to register channel authorization callbacks:
+Next, we need to define the logic that will actually determine if the currently authenticated user can listen to a given channel. Framework does not ship a `routes/channels.php` file and does not load one automatically; you may create it and `require` it from the same service provider that calls the `routes` method. In this file, you may use the broadcaster's `channel` method to register channel authorization callbacks:
 
+    use App\Models\Order;
     use App\Models\User;
 
-    Broadcast::channel('orders.{orderId}', function (User $user, int $orderId) {
-        return $user->id === Order::findOrNew($orderId)->user_id;
+    \app(\MacropaySolutions\Kernel\Contracts\Broadcasting\Factory::class)->channel('orders.{orderId}', function (User $user, int $orderId) {
+        return $user->id === Order::query()->findOrNew($orderId)->user_id;
     });
 
 The `channel` method accepts two arguments: the name of the channel and a callback which returns `true` or `false` indicating whether the user is authorized to listen on the channel.
@@ -486,27 +488,12 @@ You may view a list of your application's broadcast authorization callbacks usin
 php run channel:list
 ```
 
-<a name="authorization-callback-model-binding"></a>
-#### Authorization Callback Model Binding
-
-Just like HTTP routes, channel routes may also take advantage of implicit and explicit [route model binding](/routing#route-model-binding). For example, instead of receiving a string or numeric order ID, you may request an actual `Order` model instance:
-
-    use App\Models\Order;
-    use App\Models\User;
-
-    Broadcast::channel('orders.{order}', function (User $user, Order $order) {
-        return $user->id === $order->user_id;
-    });
-
-> [!WARNING]  
-> Unlike HTTP route model binding, channel model binding does not support automatic [implicit model binding scoping](/routing#implicit-model-binding-scoping). However, this is rarely a problem because most channels can be scoped based on a single model's unique, primary key.
-
 <a name="authorization-callback-authentication"></a>
 #### Authorization Callback Authentication
 
 Private and presence broadcast channels authenticate the current user via your application's default authentication guard. If the user is not authenticated, channel authorization is automatically denied and the authorization callback is never executed. However, you may assign multiple, custom guards that should authenticate the incoming request if necessary:
 
-    Broadcast::channel('channel', function () {
+    \app(\MacropaySolutions\Kernel\Contracts\Broadcasting\Factory::class)->channel('channel', function () {
         // ...
     }, ['guards' => ['web', 'admin']]);
 
@@ -523,9 +510,9 @@ Next, register your channel in your `routes/channels.php` file:
 
     use App\Broadcasting\OrderChannel;
 
-    Broadcast::channel('orders.{order}', OrderChannel::class);
+    \app(\MacropaySolutions\Kernel\Contracts\Broadcasting\Factory::class)->channel('orders.{order}', OrderChannel::class);
 
-Finally, you may place the authorization logic for your channel in the channel class' `join` method. This `join` method will house the same logic you would have typically placed in your channel authorization closure. You may also take advantage of channel model binding:
+Finally, you may place the authorization logic for your channel in the channel class' `join` method. This `join` method will house the same logic you would have typically placed in your channel authorization closure:
 
     <?php
 
@@ -547,9 +534,9 @@ Finally, you may place the authorization logic for your channel in the channel c
         /**
          * Authenticate the user's access to the channel.
          */
-        public function join(User $user, Order $order): array|bool
+        public function join(User $user, string $order): array|bool
         {
-            return $user->id === $order->user_id;
+            return $user->id === Order::query()->findOrNew($order)->user_id;
         }
     }
 
@@ -643,7 +630,7 @@ The data returned by the authorization callback will be made available to the pr
 
     use App\Models\User;
 
-    Broadcast::channel('chat.{roomId}', function (User $user, int $roomId) {
+    \app(\MacropaySolutions\Kernel\Contracts\Broadcasting\Factory::class)->channel('chat.{roomId}', function (User $user, int $roomId) {
         if ($user->canJoinRoom($roomId)) {
             return ['id' => $user->id, 'name' => $user->name];
         }
@@ -804,11 +791,8 @@ So, for example, an update to the `App\Models\Post` model would broadcast an eve
 
 ```json
 {
-  "model": {
-    "id": 1,
-    "title": "My first post"
-    ...
-  },
+  "id": 1,
+  "title": "My first post",
   ...
   "socket": "someSocketId",
 }
@@ -859,4 +843,4 @@ To broadcast and listen for client events, you will need to use your chosen WebS
 
 By pairing event broadcasting with [notifications](/notifications), your JavaScript application may receive new notifications as they occur without needing to refresh the page. Before getting started, be sure to read over the documentation on using [the broadcast notification channel](/notifications#broadcast-notifications).
 
-Once you have configured a notification to use the broadcast channel, you may listen for the broadcast events using your frontend client. Remember, the channel name should match the class name of the entity receiving the notifications. A channel authorization callback for the `App.Models.User.{id}` channel is included in the default `BroadcastServiceProvider` that ships with the Framework framework.
+Once you have configured a notification to use the broadcast channel, you may listen for the broadcast events using your frontend client. Remember, the channel name should match the class name of the entity receiving the notifications. Framework does not ship a channel authorization callback for the `App.Models.User.{id}` channel, so you should register one yourself.

@@ -217,7 +217,7 @@ Framework also allows you to assign string keys to each process within a pipelin
 $result = app(\MacropaySolutions\Kernel\Process\Factory::class)->pipe(function (Pipe $pipe) {
     $pipe->as('first')->command('cat example.txt');
     $pipe->as('second')->command('grep -i "framework"');
-})->start(function (string $type, string $output, string $key) {
+}, function (string $type, string $output, string $key) {
     // ...
 });
 ```
@@ -485,16 +485,22 @@ For example, let's imagine the following route which interacts with an asynchron
 
 ```php
 
-$router->get('/import', function () {
-    $process = app(\MacropaySolutions\Kernel\Process\Factory::class)->start('bash import.sh');
+$router->get('/import', 'ImportController@import');
 
-    while ($process->running()) {
-        \app('log')->info($process->latestOutput());
-        \app('log')->info($process->latestErrorOutput());
+class ImportController extends Controller
+{
+    public function import(): string
+    {
+        $process = app(\MacropaySolutions\Kernel\Process\Factory::class)->start('bash import.sh');
+
+        while ($process->running()) {
+            \app('log')->info($process->latestOutput());
+            \app('log')->info($process->latestErrorOutput());
+        }
+
+        return 'Done';
     }
-
-    return 'Done';
-});
+}
 ```
 
 To properly fake this process, we need to be able to describe how many times the `running` method should return `true`. In addition, we may want to specify multiple lines of output that should be returned in sequence. To accomplish this, we can use the `app(\MacropaySolutions\Kernel\Process\Factory::class)`'s `describe` method:

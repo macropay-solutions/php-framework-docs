@@ -102,7 +102,7 @@ If you have a method that has the same name with a column from DB or with a meth
 
 The `Model::isRelation` and `Model::callSegregatedRelation` methods route relationship calls strictly through the segregated relations map.
 
-Because the `__call` magic method has been removed from Obvious models to strictly enforce static analysis, you **cannot** execute segregated relations dynamically via `$model->relationName()`. You must explicitly use `$model->r->relationName()` or `$model->callSegregatedRelation('relationName')`.
+Because the `__call` magic method has been disabled on Obvious models (it throws a `BadMethodCallException`) to strictly enforce static analysis, you **cannot** execute segregated relations dynamically via `$model->relationName()`. You must explicitly use `$model->r->relationName()` or `$model->callSegregatedRelation('relationName')`.
 
 > [!NOTE]
 > Defining relations as explicit methods on the model class will polute it but, will still work natively. When accessed as a property (`$model->r->relationName`), explicit methods will be auto-promoted into the segregated logic.
@@ -437,7 +437,7 @@ public function currentPricing(): HasOne
         'published_at' => 'max',
         'id' => 'max',
     ], function (Builder $query) {
-        $query->where('published_at', '<', now());
+        $query->where('published_at', '<', \appDate()->now());
     });
 }
 ```
@@ -740,7 +740,7 @@ If you have defined a many-to-many relationship that uses a custom pivot model, 
      *
      * @var bool
      */
-    public $incrementing = true;
+    public bool $incrementing = true;
 
 <a name="querying-relations"></a>
 ## Querying Relations
@@ -763,7 +763,7 @@ For example, imagine a blog application in which a `User` model has many associa
          */
         public function posts(): HasMany
         {
-            return $this->hasMany(Post::class);
+            return $this->hasMany(Post::class, 'user_id', 'id');
         }
     }
 
@@ -878,7 +878,7 @@ If you would like to query for a relationship's existence with a single, simple 
 Of course, like calls to the query builder's `where` method, you may also specify an operator:
 
     $posts = Post::query()->whereRelation(
-        'comments', 'created_at', '>=', now()->subHour()
+        'comments', 'created_at', '>=', \appDate()->now()->subHour()
     )->get();
 
 <a name="querying-relationship-absence"></a>
@@ -960,7 +960,7 @@ If you need to set additional query constraints on the count query, you may pass
 
     $book->loadCount(['reviews' => function (Builder $query) {
         $query->where('rating', 5);
-    }])
+    }]);
 
 <a name="relationship-counting-and-custom-select-statements"></a>
 #### Relationship Counting and Custom Select Statements
@@ -1026,7 +1026,7 @@ When accessing Obvious relationships as properties, the related models are "lazy
          */
         public function author(): BelongsTo
         {
-            return $this->belongsTo(Author::class);
+            return $this->belongsTo(Author::class, 'author_id', 'id');
         }
     }
 
@@ -1034,7 +1034,7 @@ Now, let's retrieve all books and their authors:
 
     use App\Models\Book;
 
-    $books = Book::query()->all();
+    $books = Book::query()->get();
 
     foreach ($books as $book) {
         echo $book->r->author->a->name;
@@ -1110,14 +1110,14 @@ Sometimes you might want to always load some relationships when retrieving a mod
          *
          * @var array
          */
-        protected $with = ['author'];
+        protected array $with = ['author'];
 
         /**
          * Get the author that wrote the book.
          */
         public function author(): BelongsTo
         {
-            return $this->belongsTo(Author::class);
+            return $this->belongsTo(Author::class, 'author_id', 'id');
         }
 
         /**
@@ -1125,7 +1125,7 @@ Sometimes you might want to always load some relationships when retrieving a mod
          */
         public function genre(): BelongsTo
         {
-            return $this->belongsTo(Genre::class);
+            return $this->belongsTo(Genre::class, 'genre_id', 'id');
         }
     }
 
@@ -1176,7 +1176,7 @@ Sometimes you may need to eager load a relationship after the parent model has a
 
     use App\Models\Book;
 
-    $books = Book::query()->all();
+    $books = Book::query()->get();
 
     if ($someCondition) {
         $books->load('author', 'publisher');
@@ -1213,7 +1213,7 @@ public function boot(): void
 
 After preventing lazy loading, Obvious will throw a `MacropaySolutions\Kernel\Database\LazyLoadingViolationException` exception when your application attempts to lazy load any Obvious relationship.
 
-You may customize the behavior of lazy loading violations using the `handleLazyLoadingViolationsUsing` method. For example, using this method, you may instruct lazy loading violations to only be logged instead of interrupting the application's execution with exceptions:
+You may customize the behavior of lazy loading violations using the `handleLazyLoadingViolationUsing` method. For example, using this method, you may instruct lazy loading violations to only be logged instead of interrupting the application's execution with exceptions:
 
 ```php
 Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation) {
@@ -1437,14 +1437,14 @@ For example, when a `Comment` model is updated, you may want to automatically "t
          *
          * @var array
          */
-        protected $touches = ['post'];
+        protected array $touches = ['post'];
 
         /**
          * Get the post that the comment belongs to.
          */
         public function post(): BelongsTo
         {
-            return $this->belongsTo(Post::class);
+            return $this->belongsTo(Post::class, 'post_id', 'id');
         }
     }
 

@@ -31,8 +31,8 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 
     public static function getBusDispatcher($app)
     {
-        return new Dispatcher($app, function ($connection = null) use ($app) {
-            return $app[QueueFactoryContract::class]->connection($connection);
+        return new Dispatcher($app, static function ($connection = null) use ($app) {
+            return $app->make(QueueFactoryContract::class)->connection($connection);
         });
     }
 
@@ -63,13 +63,11 @@ Instead, PHP-Framework advocates for strict, native class extension and Dependen
 > In this case you should replace in `\App\Application`:
 
     \MacropaySolutions\Kernel\Contracts\Console\Kernel::class => [
-        'concrete' => fn($app): \App\Console\Kernel => new \App\Console\Kernel($app), // replace with new ChildKernel($app)
+        'concrete' => [\App\Factories\ContainerBindingsFactory::class, 'createConsoleKernel'], // replace with new ChildKernel($app)
         'shared' => true
     ],
 
 > and in that child class override the `defineConsoleSchedule` method to instantiate the child class.
-
-> `\MacropaySolutions\Kernel\Database\Obvious\Builder` has its own macroable implementation without using the Macroable trait.
 
 > Use `\di(Class::class)` for Macroable classes to support advanced dependency injection.
 
@@ -251,9 +249,9 @@ Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::c
 > **WARNING**
 > The second argument of `deferredMacro` **must** be an array callable in `[Class::class, 'method']` format (using a class FQN string, not an instantiated object) that resolves to a static method and returns the macro callable. The closure will be bound to the target class on execution.
 > 
-> Passing an inline closure directly is strictly prevented (it will throw a `\RuntimeException`), as it would allocate memory immediately and defeat the purpose of deferring the macro resolution.
+> Passing an inline closure directly is strictly prevented (it will throw a `\TypeError`), as it would allocate memory immediately and defeat the purpose of deferring the macro resolution.
 > 
-> This applies also to the [Obvious Builder](/obvious#query-macros).
+> This applies also to the [Obvious Builder](/obvious#query-macros-extensions).
 
 <a name="extending-the-request-object"></a>
 ## Extending the Request Object

@@ -59,7 +59,6 @@ Name | Description
 `daily` | A `RotatingFileHandler` based Monolog driver which rotates daily
 `errorlog` | An `ErrorLogHandler` based Monolog driver
 `monolog` | A Monolog factory driver that may use any supported Monolog handler
-`papertrail` | A `SyslogUdpHandler` based Monolog driver
 `single` | A single file or path based logger channel (`StreamHandler`)
 `slack` | A `SlackWebhookHandler` based Monolog driver
 `stack` | A wrapper to facilitate creating "multi-channel" channels
@@ -84,7 +83,7 @@ Name | Description | Default
 ------------- | ------------- | -------------
 `bubble` | Indicates if messages should bubble up to other channels after being handled | `true`
 `locking` | Attempt to lock the log file before writing to it | `false`
-`permission` | The log file's permissions | `0644`
+`permission` | The log file's permissions | `null`
 
 </div>
 
@@ -101,7 +100,7 @@ Name | Description                                                       | Defau
 <a name="configuring-the-papertrail-channel"></a>
 #### Configuring the Papertrail Channel
 
-The `papertrail` channel requires the `host` and `port` configuration options. You can obtain these values from [Papertrail](https://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-php-apps/#send-events-from-php-app).
+The `papertrail` channel (a `monolog` driver channel using `SyslogUdpHandler`) requires the `host` and `port` options within its `handler_with` configuration. You can obtain these values from [Papertrail](https://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-php-apps/#send-events-from-php-app).
 
 <a name="configuring-the-slack-channel"></a>
 #### Configuring the Slack Channel
@@ -204,7 +203,7 @@ You may call any of these methods to log a message for the corresponding level. 
             \app('log')->info('Showing the user profile for user: {id}', ['id' => $id]);
 
             return view('user.profile', [
-                'user' => User::findOrFail($id)
+                'user' => User::query()->findOrFail($id)
             ]);
         }
     }
@@ -280,9 +279,6 @@ If you would like to share contextual information across _all_ logging channels,
         }
     }
 
-> [!NOTE]
-> If you need to share log context while processing queued jobs, you may utilize [job middleware](/queues#job-middleware).
-
 <a name="writing-to-specific-channels"></a>
 ### Writing to Specific Channels
 
@@ -330,7 +326,7 @@ To get started, define a `tap` array on the channel's configuration. The `tap` a
         'level' => 'debug',
     ],
 
-Once you have configured the `tap` option on your channel, you're ready to define the class that will customize your Monolog instance. This class only needs a single method: `__invoke`, which receives an `MacropaySolutions\Kernel\Log\Logger` instance. The `MacropaySolutions\Kernel\Log\Logger` instance proxies all method calls to the underlying Monolog instance:
+Once you have configured the `tap` option on your channel, you're ready to define the class that will customize your Monolog instance. This class only needs a single method: `__invoke`, which receives an `MacropaySolutions\Kernel\Log\Logger` instance. The `MacropaySolutions\Kernel\Log\Logger` instance does not proxy method calls magically; the underlying Monolog instance is accessed via its `fwd` method:
 
     <?php
 
@@ -346,7 +342,7 @@ Once you have configured the `tap` option on your channel, you're ready to defin
          */
         public function __invoke(Logger $logger): void
         {
-            foreach ($logger->getHandlers() as $handler) {
+            foreach ($logger->fwd()->getHandlers() as $handler) {
                 $handler->setFormatter(new LineFormatter(
                     '[%datetime%] %channel%.%level_name%: %message% %context% %extra%'
                 ));

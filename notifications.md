@@ -25,8 +25,6 @@
   - [Writing the Message](#writing-the-message)
   - [Customizing the Components](#customizing-the-components)
   - [Formatting Database Notifications](#formatting-database-notifications)
-  - [Accessing the Notifications](#accessing-the-notifications)
-  - [Marking Notifications as Read](#marking-notifications-as-read)
 - [Broadcast Notifications](#broadcast-notifications)
   - [Prerequisites](#broadcast-prerequisites)
   - [Formatting Broadcast Notifications](#formatting-broadcast-notifications)
@@ -58,7 +56,7 @@ This command will place a fresh notification class in your `app/Notifications` d
 <a name="using-the-notifiable-trait"></a>
 ### Using the Notifiable Trait
 
-Notifications may be sent in two ways: using the `notify` method of the `Notifiable` trait. The `Notifiable` trait is included on your application's `App\Models\User` model by default:
+Notifications may be sent in two ways: using the `notify` method of the `Notifiable` trait. The `Notifiable` trait can be added to your application's `App\Models\User` model:
 
     <?php
 
@@ -97,7 +95,7 @@ You can also send notifications immediately using the `sendNow` method. This met
 <a name="specifying-delivery-channels"></a>
 ### Specifying Delivery Channels
 
-Every notification class has a `via` method that determines on which channels the notification will be delivered. Notifications may be sent on the `mail`, `broadcast`, `vonage`, and `slack` channels.
+Every notification class has a `via` method that determines on which channels the notification will be delivered. Notifications may be sent on the `mail`, `database`, and `broadcast` channels.
 
 
 The `via` method receives a `$notifiable` instance, which will be an instance of the class to which the notification is being sent. You may use `$notifiable` to determine which channels the notification should be delivered on:
@@ -109,7 +107,7 @@ The `via` method receives a `$notifiable` instance, which will be an instance of
      */
     public function via(object $notifiable): array
     {
-        return $notifiable->prefers_sms ? ['vonage'] : ['mail'];
+        return $notifiable->prefers_sms ? ['database'] : ['mail'];
     }
 
 <a name="queueing-notifications"></a>
@@ -147,14 +145,14 @@ When queueing notifications, a queued job will be created for each recipient and
     $maillable = (new ChildMailable())->onQueue('emails');
 
     foreach ([...] as $email) {
-        Mail::to($email)->queue($maillable);
-        $message->to = []; // without this the emails will pile up in the $maillable object
+        \app('mailer')->to($email)->queue($maillable);
+        $maillable->to = []; // without this the emails will pile up in the $maillable object
     }
 
 or
 
     foreach ([...] as $email) {
-        Mail::to($email)->queue((new ChildMailable())->onQueue('emails'));
+        \app('mailer')->to($email)->queue((new ChildMailable())->onQueue('emails'));
     }
 
 <a name="model-serialization-and-rehydration"></a>
@@ -182,7 +180,7 @@ When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCo
 
 If you would like to delay the delivery of the notification, you may chain the `delay` method onto your notification instantiation:
 
-    $delay = now()->addMinutes(10);
+    $delay = \appDate()->now()->addMinutes(10);
 
     $user->notify((new InvoicePaid($invoice))->delay($delay));
 
@@ -192,8 +190,8 @@ If you would like to delay the delivery of the notification, you may chain the `
 You may pass an array to the `delay` method to specify the delay amount for specific channels:
 
     $user->notify((new InvoicePaid($invoice))->delay([
-        'mail' => now()->addMinutes(5),
-        'sms' => now()->addMinutes(10),
+        'mail' => \appDate()->now()->addMinutes(5),
+        'sms' => \appDate()->now()->addMinutes(10),
     ]));
 
 Alternatively, you may define a `withDelay` method on the notification class itself. The `withDelay` method should return an array of channel names and delay values:
@@ -206,8 +204,8 @@ Alternatively, you may define a `withDelay` method on the notification class its
     public function withDelay(object $notifiable): array
     {
         return [
-            'mail' => now()->addMinutes(5),
-            'sms' => now()->addMinutes(10),
+            'mail' => \appDate()->now()->addMinutes(5),
+            'sms' => \appDate()->now()->addMinutes(10),
         ];
     }
 
@@ -332,8 +330,6 @@ Sometimes you may need to send a notification to someone who is not stored as a 
 
     (new AnonymousNotifiable())
         ->route('mail', 'surname@example.com')
-        ->route('vonage', '5555555555')
-        ->route('slack', '#slack-channel')
         ->route('broadcast', [new Channel('channel-name')])
         ->notify(new InvoicePaid($invoice));
 
@@ -347,7 +343,6 @@ Using the `routes` method, you may provide ad-hoc routing information for multip
 
     (new AnonymousNotifiable())->routes([
         'mail' => ['barrett@example.com' => 'Barrett Blair'],
-        'vonage' => '5555555555',
     ])->notify(new InvoicePaid($invoice));
 
 <a name="mail-notifications"></a>
@@ -559,6 +554,7 @@ When attaching files to a message, you may also specify the display name and / o
 Unlike attaching files in mailable objects, you may not attach a file directly from a storage disk using `attachFromStorage`. You should rather use the `attach` method with an absolute path to the file on the storage disk. Alternatively, you could return a [mailable](/mail#generating-mailables) from the `toMail` method:
 
     use App\Mail\InvoicePaid as InvoicePaidMailable;
+    use MacropaySolutions\Kernel\Mail\Mailable;
 
     /**
      * Get the mail representation of the notification.

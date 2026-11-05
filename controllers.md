@@ -50,7 +50,7 @@ Now, when a request matches the specified route URI, the `show` method on the `U
 
 #### Controllers & Namespaces
 
-It is very important to note that we did not need to specify the full controller namespace when defining the controller route. We only defined the portion of the class name that comes after the `App\Http\Controllers` namespace "root". By default, the `bootstrap/app.php` file will load the `routes.php` file within a route group containing the root controller namespace.
+It is very important to note that we did not need to specify the full controller namespace when defining the controller route. We only defined the portion of the class name that comes after the `App\Http\Controllers` namespace "root". By default, the `bootstrap/app.php` file will load the `routes/web.php` file within a route group containing the root controller namespace.
 
 If you choose to nest or organize your controllers using PHP namespaces deeper into the `App\Http\Controllers` directory, simply use the specific class name relative to the `App\Http\Controllers` root namespace. So, if your full controller class is `App\Http\Controllers\Photos\AdminController`, you would register a route like so:
 
@@ -58,7 +58,7 @@ If you choose to nest or organize your controllers using PHP namespaces deeper i
 
 #### Naming Controller Routes
 
-Like Closure routes, you may specify names on controller routes:
+You may specify names on controller routes:
 
     $router->get('foo', ['uses' => 'FooController@method', 'as' => 'name']);
 
