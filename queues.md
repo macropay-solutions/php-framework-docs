@@ -957,7 +957,9 @@ When dispatching instantiated objects (such as `ShouldQueue` Notifications, Mail
 ### Specifying Max Job Attempts / Timeout Values
 
 > [!NOTE]
-> The job settings described below are copied from the job when it is dispatched, so they must be **public**. Only public `$tries`, `$timeout`, `$maxExceptions`, `$backoff`, `$retryUntil` and `$failOnTimeout` properties and public `tries`, `backoff`, `retryUntil` and `failed` methods are used. A `protected` or `private` property or method (for example `protected $tries = 5;`) is silently ignored.
+> The job settings described below are copied from the job when it is dispatched. Only public `$tries`, `$timeout`, `$maxExceptions`, `$backoff`, `$retryUntil`, `$failOnTimeout` and `$shouldBeEncrypted` properties are used. A `protected` or `private` property (for example `protected $tries = 5;`) is silently ignored.
+>
+> The `tries`, `backoff`, `retryUntil` and `failed` methods must be **public** or not exist. A `protected` or `private` `tries`, `backoff` or `retryUntil` method, or one that throws (including one that requires arguments), is silently ignored. A `protected` or `private` `failed` method is not registered as the failure handler.
 
 These class-level settings apply to job classes dispatched with `::new()->dispatch()`. A Storable Array Callable dispatched with `\dispatch([...])` does not read them from its target class. To configure one, set them on the queued callable before dispatching it:
 
