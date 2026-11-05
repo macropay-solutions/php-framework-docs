@@ -26,7 +26,7 @@ context: session
 
 Since HTTP driven applications are stateless, sessions provide a way to store information about the user across multiple requests. That user information is typically placed in a persistent store / backend that can be accessed from subsequent requests.
 
-PHP-Framework is built from the ground up as a stateless, performance-optimized micro-framework tailored for JSON APIs. Because of this lean, share-nothing architecture, HTTP sessions are completely disabled by default.
+PHP-Framework is built from the ground up as a stateless, performance-optimized framework tailored for JSON APIs. Because of this lean, share-nothing architecture, HTTP sessions are completely disabled by default.
 
 When explicitly enabled, sessions provide a structured way to store user data across requests. PHP-Framework ships with support for a variety of expressive backends, including [Memcached](https://memcached.org), [Redis](https://redis.io), and relational databases.
 
