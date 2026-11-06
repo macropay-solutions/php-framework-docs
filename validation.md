@@ -220,7 +220,7 @@ In this example, we are specifying that the `publish_at` field may be either `nu
 <a name="validation-error-response-format"></a>
 ### Validation Error Response Format
 
-When your application throws a `MacropaySolutions\Kernel\Validation\ValidationException` exception and the incoming HTTP request is expecting a JSON response, Framework will automatically format the error messages for you and return a `422 Unprocessable Entity` HTTP response.
+When your application throws a `MacropaySolutions\Kernel\Validation\ValidationException` exception, Framework will automatically format the error messages for you and return a `422 Unprocessable Entity` HTTP response, unless a form request [redirect](#customizing-the-redirect-location) applies.
 
 Below, you can review an example of the JSON response format for validation errors. Note that nested error keys are flattened into "dot" notation format:
 
@@ -241,6 +241,27 @@ Below, you can review an example of the JSON response format for validation erro
   ]
 }
 ```
+
+The same format is returned whether the exception is thrown by the `$this->validate` helper, a form request or a validator's `validate` method.
+
+<a name="customizing-the-validation-error-response-format"></a>
+#### Customizing the Response Format
+
+To return another format, such as `{"message": ..., "errors": ...}`, handle the `ValidationException` in the `render` method of your `App\Exceptions\Handler` before calling the parent method. The exception handler renders the exception for every validation path, so this change applies to all of them:
+
+    public function render($request, Throwable $e)
+    {
+        if ($e instanceof ValidationException) {
+            return \app(\MacropaySolutions\Kernel\Http\JsonResponse::class, [
+                ['message' => $e->getMessage(), 'errors' => $e->errors()],
+                $e->status,
+            ]);
+        }
+
+        return parent::render($request, $e);
+    }
+
+The application skeleton's `App\Exceptions\Handler` contains this block as a comment. The `message` is the first error message, followed by "(and 1 more error)" or "(and N more errors)" when there are more. Because your handler returns before the parent method, the form request [redirect](#customizing-the-redirect-location) is no longer performed.
 
 <a name="form-request-validation"></a>
 ## Form Request Validation
