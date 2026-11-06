@@ -139,6 +139,9 @@ Once the `ShouldQueue` interface has been added to your notification, you may se
 
 When queueing notifications, a queued job will be created for each recipient and channel combination. For example, six jobs will be dispatched to the queue if your notification has three recipients and two channels.
 
+> [!WARNING]  
+> Queued notifications can only be sent to `Notifiable` Obvious models (stored as their class and key and re-fetched on the worker) or to [on-demand](#on-demand-notifications) `AnonymousNotifiable` instances (stored as their routes). Queueing a notification for any other notifiable throws an `InvalidArgumentException` when it is dispatched.
+
 >[!NOTE]
 > Avoid piling up email addresses when sending emails in a loop via queue with the same mailable:
 
