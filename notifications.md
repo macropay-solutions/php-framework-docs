@@ -24,7 +24,6 @@
   - [Generating the Message](#generating-the-message)
   - [Writing the Message](#writing-the-message)
   - [Customizing the Components](#customizing-the-components)
-  - [Formatting Database Notifications](#formatting-database-notifications)
 - [Broadcast Notifications](#broadcast-notifications)
   - [Prerequisites](#broadcast-prerequisites)
   - [Formatting Broadcast Notifications](#formatting-broadcast-notifications)
@@ -95,7 +94,10 @@ You can also send notifications immediately using the `sendNow` method. This met
 <a name="specifying-delivery-channels"></a>
 ### Specifying Delivery Channels
 
-Every notification class has a `via` method that determines on which channels the notification will be delivered. Notifications may be sent on the `mail`, `database`, and `broadcast` channels.
+Every notification class has a `via` method that determines on which channels the notification will be delivered. Notifications may be sent on the `mail` and `broadcast` channels.
+
+> [!WARNING]  
+> The `database` channel is not supported out of the box because the morph relation it relied on was removed. To use it, your notifiable must define a `notifications()` method returning a relation or query builder with a `create(array $attributes)` method. The channel will call it with the `id`, `type` (from `databaseType()` or the notification class), `data` (from `toDatabase()` or `toArray()`) and `read_at` (`null`) attributes.
 
 
 The `via` method receives a `$notifiable` instance, which will be an instance of the class to which the notification is being sent. You may use `$notifiable` to determine which channels the notification should be delivered on:
@@ -107,7 +109,7 @@ The `via` method receives a `$notifiable` instance, which will be an instance of
      */
     public function via(object $notifiable): array
     {
-        return $notifiable->prefers_sms ? ['database'] : ['mail'];
+        return $notifiable->prefers_sms ? ['broadcast'] : ['mail'];
     }
 
 <a name="queueing-notifications"></a>
@@ -176,7 +178,7 @@ When passing Obvious ORM Models (`QueueableEntity`) or Collections (`QueueableCo
 > **The "Dumb" Constructor Caveat:** Because the worker passes `null` to build the initial shell, your constructor must *only* be used for property assignment. Do not execute database queries or business logic on the passed arguments inside the constructor, as it will crash the worker.
 >
 > **❌ BAD (Crashes on Worker):** `$this->amount = $invoice->calculateTotal();` // Crashes because $invoice is null on the worker!
-> **✅ GOOD (Safe):** Fetch the amounts and process logic inside the `toMail()` or `toDatabase()` methods. The framework will have fully hydrated the real `$invoice` property by the time those methods execute.
+> **✅ GOOD (Safe):** Fetch the amounts and process logic inside the `toMail()` or `toBroadcast()` methods. The framework will have fully hydrated the real `$invoice` property by the time those methods execute.
 
 <a name="delaying-notifications"></a>
 #### Delaying Notifications
