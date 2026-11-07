@@ -315,24 +315,36 @@ You may access the raw, underlying PDO instance of a connection using the `getPd
 <a name="listening-for-query-events"></a>
 ### Listening for Query Events
 
-If you would like to specify a closure that is invoked for each SQL query executed by your application, you may use the `listen` method. This method can be useful for logging queries or debugging. You may register your query listener closure in the `boot` method of a service provider:
+If you would like to specify a listener that is invoked for each SQL query executed by your application, you may use the `listen` method. This method can be useful for logging queries or debugging. The listener is a class with a `handle` method or a `[Class, method]` array, like any other event listener. You may register your query listener in the `boot` method of a service provider:
+
+    <?php
+
+    namespace App\Listeners;
+
+    use MacropaySolutions\Kernel\Database\Events\QueryExecuted;
+
+    class LogQuery
+    {
+        public function handle(QueryExecuted $query): void
+        {
+            // $query->sql;
+            // $query->bindings;
+            // $query->time;
+        }
+    }
 
     <?php
 
     namespace App\Providers;
 
-    use MacropaySolutions\Kernel\Database\Events\QueryExecuted;
+    use App\Listeners\LogQuery;
     use MacropaySolutions\Kernel\Support\ServiceProvider;
 
     class AppServiceProvider extends ServiceProvider
     {
         public function boot(): void
         {
-            app('db')->listen(function (QueryExecuted $query) {
-                // $query->sql;
-                // $query->bindings;
-                // $query->time;
-            });
+            app('db')->listen(LogQuery::class);
         }
     }
 
