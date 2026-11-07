@@ -1293,7 +1293,7 @@ When marking models as `Prunable`, you may also define a `pruning` method on the
         // ...
     }
 
-After configuring your prunable model, you should schedule the `model:prune` run command in your application's `App\Console\Kernel` class. You are free to choose the appropriate interval at which this command should be run:
+After configuring your prunable model, you should schedule the `model:prune` run command in your application's `App\Console\Kernel` class. The command is not registered by default; add `MacropaySolutions\Kernel\Database\Console\PruneCommand` to the `$commands` property of your `App\Console\Kernel`. You are free to choose the appropriate interval at which this command should be run:
 
     /**
      * Define the application's command schedule.
