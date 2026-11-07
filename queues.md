@@ -1439,7 +1439,7 @@ For convenience, Framework provides a `queue:retry-batch` Run command that allow
 <a name="pruning-batches"></a>
 ### Pruning Batches
 
-Without pruning, the `job_batches` table can accumulate records very quickly. To mitigate this, you should [schedule](/scheduling) the `queue:prune-batches` Run command to run daily:
+Without pruning, the `job_batches` table can accumulate records very quickly. To mitigate this, you should [schedule](/scheduling) the `queue:prune-batches` Run command to run daily. The command is not registered by default; add `MacropaySolutions\Kernel\Queue\Console\PruneBatchesCommand` to the `$commands` property of your `App\Console\Kernel`:
 
     $schedule->command('queue:prune-batches')->daily();
 
@@ -1797,7 +1797,7 @@ When this property is set to `true`, the queue worker will quietly discard the j
 <a name="pruning-failed-jobs"></a>
 ### Pruning Failed Jobs
 
-You may prune the records in your application's `failed_jobs` table by invoking the `queue:prune-failed` Run command:
+You may prune the records in your application's `failed_jobs` table by invoking the `queue:prune-failed` Run command. The command is not registered by default; add `MacropaySolutions\Kernel\Queue\Console\PruneFailedJobsCommand` to the `$commands` property of your `App\Console\Kernel`:
 
     php run queue:prune-failed
 
