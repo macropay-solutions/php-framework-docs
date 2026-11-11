@@ -233,6 +233,12 @@ You may also use the `prefix` parameter to specify common parameters for your gr
 >
 > **1. Trailing Slash Normalization**
 > Because the Trie walking mechanism evaluates string delimiters natively, endpoints like `/users/1` and `/users/1/` map to the identical execution leaf automatically without triggering extra middleware overhead.
+> Repeated slashes are collapsed the same way: `/users//1` matches `/users/{id}`.
+>
+> **Case Sensitivity and Path Normalization**
+> Matching is case-sensitive: `/Users/1` does not match `/users/{id}` (unlike ASP.NET Core, where routing is case-insensitive).
+> Static segments are compared as received: they are not URL-decoded (`/%75sers/1` does not match `users`) and `.`/`..` segments are not resolved. Only parameter values are URL-decoded.
+> Middleware that makes security decisions from the raw path (e.g. blocking a prefix) must normalize it the same way or stricter (lowercase, decode, drop empty and `.` segments, resolve `..`), because a parameter route at that position would capture variants such as `/ADMIN`.
 >
 > **2. The 404 Firewall & 405 Behavior**
 > To maximize network scanning defense and eliminate lookup leaks, basic and dynamic routes handled by the native Trie engine will return a `404 Not Found` instead of `405 Method Not Allowed`.
