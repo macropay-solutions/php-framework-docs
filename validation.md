@@ -129,6 +129,9 @@ To get a better understanding of the `validate` method, let's jump back into the
         return redirect('/posts');
     }
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 As you can see, the validation rules are passed into the `validate` method. Don't worry - all available validation rules are [documented](#available-validation-rules). Again, if the validation fails, the proper response will automatically be generated. If the validation passes, our controller will continue executing normally.
 
 Alternatively, validation rules may be specified as arrays of rules instead of a single `|` delimited string:
@@ -154,6 +157,9 @@ Sometimes you may wish to stop running validation rules on an attribute after th
         'body' => 'required',
     ]);
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 In this example, if the `unique` rule on the `title` attribute fails, the `max` rule will not be checked. Rules will be validated in the order they are assigned.
 
 > [!NOTE]
@@ -173,6 +179,9 @@ If the incoming HTTP request contains "nested" field data, you may specify these
         'author.name' => 'required',
         'author.description' => 'required',
     ]);
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 On the other hand, if your field name contains a literal period, you can explicitly prevent this from being interpreted as "dot" syntax by escaping the period with a backslash:
 
@@ -214,6 +223,9 @@ Framework includes the `TrimStrings` and `ConvertEmptyStringsToNull` middleware,
         'body' => 'required',
         'publish_at' => 'nullable|date',
     ]);
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 In this example, we are specifying that the `publish_at` field may be either `null` or a valid date representation. If the `nullable` modifier is not added to the rule definition, the validator would consider `null` an invalid date.
 
@@ -291,6 +303,9 @@ As you might have guessed, the `authorize` method is responsible for determining
             'body' => 'required',
         ];
     }
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 > [!NOTE]  
 > You may type-hint any dependencies you require within the `rules` method's signature. They will automatically be resolved via the Framework [service container](/container).
@@ -594,6 +609,9 @@ If you do not want to use the `validate` method of the controller, you may creat
         }
     }
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 The first argument passed to the `make` method is the data under validation. The second argument is an array of the validation rules that should be applied to the data.
 
 After determining whether the request validation failed, you may use the `withErrors` method to flash the error messages to the session. The `withErrors` method accepts a validator, a `MessageBag`, or a PHP `array`.
@@ -674,6 +692,9 @@ If you would like to create a validator instance manually but still take advanta
         'title' => 'required|unique:posts|max:255',
         'body' => 'required',
     ])->validate();
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 You may use the `validateWithBag` method to store the error messages in a [named error bag](#named-error-bags) if validation fails:
 
@@ -894,6 +915,9 @@ Some of Framework's built-in validation rule error messages contain a `:value` p
         'credit_card_number' => 'required_if:payment_type,cc'
     ]);
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 If this validation rule fails, it will produce the following error message:
 
 ```none
@@ -919,6 +943,11 @@ The credit card number field is required when payment type is credit card.
 
 <a name="available-validation-rules"></a>
 ## Available Validation Rules
+
+<a name="rule-string-injection"></a>
+### Rule string injection
+> [!WARNING]
+> **Never concatenate user-controlled input into a rule string.** Rule strings are split on `|` (rules) and `,` (parameters), so input such as `1|exclude` or `1,0` would add rules or parameters, e.g. `'required_if:is_admin,' . $request->input('x')`. Only the [`unique`](#rule-unique) and [`exists`](#rule-exists) rules are hardened against this. For every other rule, use rule objects with values computed by your code, e.g. `Rule::requiredIf($request->input('is_admin') === '1')` or `Rule::in(['a', 'b'])`.
 
 Below is a list of all available validation rules and their function:
 
@@ -1063,6 +1092,9 @@ The field under validation must be a value after a given date. The dates will be
 
     'start_date' => 'required|date|after:tomorrow'
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 Instead of passing a date string to be evaluated by `strtotime`, you may specify another field to compare against the date:
 
     'finish_date' => 'required|date|after:start_date'
@@ -1083,6 +1115,9 @@ To restrict this validation rule to characters in the ASCII range (`a-z` and `A-
 'username' => 'alpha:ascii',
 ```
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 <a name="rule-alpha-dash"></a>
 #### alpha_dash
 
@@ -1094,6 +1129,9 @@ To restrict this validation rule to characters in the ASCII range (`a-z` and `A-
 'username' => 'alpha_dash:ascii',
 ```
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 <a name="rule-alpha-num"></a>
 #### alpha_num
 
@@ -1104,6 +1142,9 @@ To restrict this validation rule to characters in the ASCII range (`a-z` and `A-
 ```php
 'username' => 'alpha_num:ascii',
 ```
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-array"></a>
 #### array
@@ -1123,6 +1164,9 @@ When additional values are provided to the `array` rule, each key in the input a
     validator()->make($input, [
         'user' => 'array:name,username',
     ]);
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 In general, you should always specify the array keys that are allowed to be present within your array.
 
@@ -1174,6 +1218,9 @@ The field under validation must match the authenticated user's password. You may
 
     'password' => 'current_password:api'
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 <a name="rule-date"></a>
 #### date
 
@@ -1199,6 +1246,9 @@ The field under validation must be numeric and must contain the specified number
 
     // Must have between 2 and 4 decimal places...
     'price' => 'decimal:2,4'
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-declined"></a>
 #### declined
@@ -1232,6 +1282,9 @@ The file under validation must be an image meeting the dimension constraints as 
 
     'avatar' => 'dimensions:min_width=100,min_height=200'
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 Available constraints are: _min\_width_, _max\_width_, _min\_height_, _max\_height_, _width_, _height_, _ratio_.
 
 A _ratio_ constraint should be represented as width divided by height. This can be specified either by a fraction like `3/2` or a float like `1.5`:
@@ -1260,6 +1313,9 @@ Distinct uses loose variable comparisons by default. To use strict comparisons, 
 
     'foo.*.id' => 'distinct:strict'
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 You may add `ignore_case` to the validation rule's arguments to make the rule ignore capitalization differences:
 
     'foo.*.id' => 'distinct:ignore_case'
@@ -1280,6 +1336,9 @@ The field under validation must not end with one of the given values.
 The field under validation must be formatted as an email address. This validation rule utilizes the [`egulias/email-validator`](https://github.com/egulias/EmailValidator) package for validating the email address. By default, the `RFCValidation` validator is applied, but you can apply other validation styles as well:
 
     'email' => 'email:rfc,dns'
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 The example above will apply the `RFCValidation` and `DNSCheckValidation` validations. Here's a full list of validation styles you can apply:
 
@@ -1562,6 +1621,9 @@ The file under validation must match one of the given MIME types:
 
     'video' => 'mimetypes:video/avi,video/mpeg,video/quicktime'
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 To determine the MIME type of the uploaded file, the file's contents will be read and the framework will attempt to guess the MIME type, which may be different from the client's provided MIME type.
 
 <a name="rule-mimes"></a>
@@ -1570,6 +1632,9 @@ To determine the MIME type of the uploaded file, the file's contents will be rea
 The file under validation must have a MIME type corresponding to one of the listed extensions:
 
     'photo' => 'mimes:jpg,bmp,png'
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 Even though you only need to specify the extensions, this rule actually validates the MIME type of the file by reading the file's contents and guessing its MIME type. A full listing of MIME types and their corresponding extensions may be found at the following location:
 
@@ -1640,6 +1705,9 @@ The field under validation must not be included in the given list of values. The
 The field under validation must not match the given regular expression.
 
 Internally, this rule uses the PHP `preg_match` function. The pattern specified should obey the same formatting required by `preg_match` and thus also include valid delimiters. For example: `'email' => 'not_regex:/^.+$/i'`.
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 > [!WARNING]  
 > When using the `regex` / `not_regex` patterns, it may be necessary to specify your validation rules using an array instead of using `|` delimiters, especially if the regular expression contains a `|` character.
@@ -1754,6 +1822,9 @@ The field under validation must match the given regular expression.
 
 Internally, this rule uses the PHP `preg_match` function. The pattern specified should obey the same formatting required by `preg_match` and thus also include valid delimiters. For example: `'email' => 'regex:/^.+@.+$/i'`.
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 > [!WARNING]  
 > When using the `regex` / `not_regex` patterns, it may be necessary to specify rules in an array instead of using `|` delimiters, especially if the regular expression contains a `|` character.
 
@@ -1845,6 +1916,9 @@ The field under validation must have a size matching the given _value_. For stri
     // Validate that an uploaded file is exactly 512 kilobytes...
     'image' => 'file|size:512';
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 <a name="rule-starts-with"></a>
 #### starts_with:_foo_,_bar_,...
 
@@ -1868,8 +1942,13 @@ The arguments [accepted by the `DateTimeZone::listIdentifiers` method](https://w
 
     'timezone' => 'required|timezone:per_country,US';
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 <a name="rule-unique"></a>
-#### unique:_table_,_column_
+#### Rule unique
+    
+    unique:_table_,_column_
 
 > [!WARNING]  
 > **Security Restriction:** For security reasons, the `unique` rule strictly accepts a maximum of two string parameters (`table` and `column`). Attempting to pass an ignored ID or additional query conditions via comma-separated string parameters will instantly trigger a `RuntimeException`. All exclusions and query constraints must be applied fluently using the `Rule::unique` object method.
@@ -1946,6 +2025,9 @@ If you would like to specify the URL protocols that should be considered valid, 
 'game' => 'url:minecraft,steam',
 ```
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 <a name="rule-ulid"></a>
 #### ulid
 
@@ -1970,6 +2052,9 @@ You may occasionally wish to not validate a given field if another field has a g
         'doctor_name' => 'exclude_if:has_appointment,false|required|string',
     ]);
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 Alternatively, you may use the `exclude_unless` rule to not validate a given field unless another field has a given value:
 
     $validator = validator()->make($data, [
@@ -1987,6 +2072,9 @@ In some situations, you may wish to run validation checks against a field **only
         'email' => 'sometimes|required|email',
     ]);
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 In the example above, the `email` field will only be validated if it is present in the `$data` array.
 
 > [!NOTE]  
@@ -2001,6 +2089,9 @@ Sometimes you may wish to add validation rules based on more complex conditional
         'email' => 'required|email',
         'games' => 'required|numeric',
     ]);
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 Let's assume our web application is for game collectors. If a game collector registers with our application and they own more than 100 games, we want them to explain why they own so many games. For example, perhaps they run a game resale shop, or maybe they just enjoy collecting games. To conditionally add this requirement, we can use the `sometimes` method on the `Validator` instance.
 
@@ -2045,6 +2136,9 @@ Sometimes you may want to validate a field based on another field in the same ne
         return $item->type !== 'email';
     });
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 Like the `$input` parameter passed to the closure, the `$item` parameter is an instance of `MacropaySolutions\Kernel\Support\Fluent` when the attribute data is an array; otherwise, it is a string.
 
 <a name="validating-arrays"></a>
@@ -2064,6 +2158,9 @@ As discussed in the [`array` validation rule documentation](#rule-array), the `a
         'user' => 'array:name,username',
     ]);
 
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
+
 In general, you should always specify the array keys that are allowed to be present within your array. Otherwise, the validator's `validate` and `validated` methods will return all the validated data, including the array and all of its keys, even if those keys were not validated by other nested array validation rules.
 
 <a name="validating-nested-array-input"></a>
@@ -2074,6 +2171,9 @@ Validating nested array based form input fields doesn't have to be a pain. You m
     $validator = validator()->make($request->all(), [
         'photos.profile' => 'required|image',
     ]);
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 You may also validate each element of an array. For example, to validate that each email in a given array input field is unique, you may do the following:
 
@@ -2438,6 +2538,9 @@ By default, when an attribute being validated is not present ~~or contains an em
     $input = ['name' => ''];
 
     validator()->make($input, $rules)->passes(); // false
+
+> [!WARNING]
+> Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 ~~For a custom rule to run even when an attribute is empty, the rule must imply that the attribute is required.~~ To quickly generate a new implicit rule object, you may use the `make:rule` Run command with the `--implicit` option:
 
