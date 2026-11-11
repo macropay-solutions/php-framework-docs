@@ -8,10 +8,10 @@ context: basics
 
 - [Introduction](#introduction)
 - [Validation Quickstart](#validation-quickstart)
-  - [Defining the Routes](#quick-defining-the-routes)
-  - [Creating the Controller](#quick-creating-the-controller)
-  - [Writing the Validation Logic](#quick-writing-the-validation-logic)
-  - [Displaying the Validation Errors](#quick-displaying-the-validation-errors)
+  - [Defining the Routes](#defining-the-routes)
+  - [Creating the Controller](#creating-the-controller)
+  - [Writing the Validation Logic](#writing-the-validation-logic)
+  - [Displaying the Validation Errors](#displaying-the-validation-errors)
   - [A Note on Optional Fields](#a-note-on-optional-fields)
   - [Validation Error Response Format](#validation-error-response-format)
 - [Form Request Validation](#form-request-validation)
@@ -19,18 +19,18 @@ context: basics
   - [Form Request Autowiring](#form-request-autowiring)
   - [Manual Form Request Instantiation](#manual-form-request-instantiation)
   - [Authorizing Form Requests](#authorizing-form-requests)
-  - [Customizing the Error Messages](#customizing-the-error-messages)
+  - [Customizing the Error Messages](#customizing-the-error-messages-1)
   - [Preparing Input for Validation](#preparing-input-for-validation)
 - [Manually Creating Validators](#manually-creating-validators)
   - [Manually Flashing Errors and Input](#manually-flashing-errors-and-input)
   - [Automatic Exception Throwing](#automatic-exception-throwing)
   - [Named Error Bags](#named-error-bags)
-  - [Customizing the Error Messages](#manual-customizing-the-error-messages)
-  - [Performing Additional Validation](#performing-additional-validation)
+  - [Customizing the Error Messages](#customizing-the-error-messages-2)
+  - [Performing Additional Validation](#performing-additional-validation-1)
 - [Working With Validated Input](#working-with-validated-input)
 - [Working With Error Messages](#working-with-error-messages)
   - [Specifying Custom Messages in Language Files](#specifying-custom-messages-in-language-files)
-  - [Specifying Attributes in Language Files](#specifying-attribute-in-language-files)
+  - [Specifying Attributes in Language Files](#specifying-attributes-in-language-files)
   - [Specifying Values in Language Files](#specifying-values-in-language-files)
 - [Available Validation Rules](#available-validation-rules)
 - [Conditionally Adding Rules](#conditionally-adding-rules)
@@ -1071,22 +1071,30 @@ Below is a list of all available validation rules and their function:
 </div>
 
 <a name="rule-accepted"></a>
-#### accepted
+#### Rule accepted
+    
+    accepted
 
 The field under validation must be `"yes"`, `"on"`, `1`, `"1"`, `true`, or `"true"`. This is useful for validating "Terms of Service" acceptance or similar fields.
 
 <a name="rule-accepted-if"></a>
-#### accepted_if:anotherfield,value,...
+#### Rule accepted-if
+    
+    accepted_if:anotherfield,value,...
 
 The field under validation must be `"yes"`, `"on"`, `1`, `"1"`, `true`, or `"true"` if another field under validation is equal to a specified value. This is useful for validating "Terms of Service" acceptance or similar fields.
 
 <a name="rule-active-url"></a>
-#### active_url
+#### Rule active-url
+    
+    active_url
 
 The field under validation must have a valid A or AAAA record according to the `dns_get_record` PHP function. The hostname of the provided URL is extracted using the `parse_url` PHP function before being passed to `dns_get_record`.
 
 <a name="rule-after"></a>
-#### after:_date_
+#### Rule after
+    
+    after:_date_
 
 The field under validation must be a value after a given date. The dates will be passed into the `strtotime` PHP function in order to be converted to a valid `DateTime` instance:
 
@@ -1100,12 +1108,16 @@ Instead of passing a date string to be evaluated by `strtotime`, you may specify
     'finish_date' => 'required|date|after:start_date'
 
 <a name="rule-after-or-equal"></a>
-#### after\_or\_equal:_date_
+#### Rule after-or-equal
+    
+    after\_or\_equal:_date_
 
 The field under validation must be a value after or equal to the given date. For more information, see the [after](#rule-after) rule.
 
 <a name="rule-alpha"></a>
-#### alpha
+#### Rule alpha
+    
+    alpha
 
 The field under validation must be entirely Unicode alphabetic characters contained in [`\p{L}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AL%3A%5D&g=&i=) and [`\p{M}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AM%3A%5D&g=&i=).
 
@@ -1119,7 +1131,9 @@ To restrict this validation rule to characters in the ASCII range (`a-z` and `A-
 > Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-alpha-dash"></a>
-#### alpha_dash
+#### Rule alpha-dash
+    
+    alpha_dash
 
 The field under validation must be entirely Unicode alpha-numeric characters contained in [`\p{L}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AL%3A%5D&g=&i=), [`\p{M}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AM%3A%5D&g=&i=), [`\p{N}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AN%3A%5D&g=&i=), as well as ASCII dashes (`-`) and ASCII underscores (`_`).
 
@@ -1133,7 +1147,9 @@ To restrict this validation rule to characters in the ASCII range (`a-z` and `A-
 > Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-alpha-num"></a>
-#### alpha_num
+#### Rule alpha-num
+    
+    alpha_num
 
 The field under validation must be entirely Unicode alpha-numeric characters contained in [`\p{L}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AL%3A%5D&g=&i=), [`\p{M}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AM%3A%5D&g=&i=), and [`\p{N}`](https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5B%3AN%3A%5D&g=&i=).
 
@@ -1147,7 +1163,9 @@ To restrict this validation rule to characters in the ASCII range (`a-z` and `A-
 > Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-array"></a>
-#### array
+#### Rule array
+    
+    array
 
 The field under validation must be a PHP `array`.
 
@@ -1171,12 +1189,16 @@ When additional values are provided to the `array` rule, each key in the input a
 In general, you should always specify the array keys that are allowed to be present within your array.
 
 <a name="rule-ascii"></a>
-#### ascii
+#### Rule ascii
+    
+    ascii
 
 The field under validation must be entirely 7-bit ASCII characters.
 
 <a name="rule-bail"></a>
-#### bail
+#### Rule bail
+    
+    bail
 
 Stop running validation rules for the field after the first validation failure.
 
@@ -1187,32 +1209,44 @@ While the `bail` rule will only stop validating a specific field when it encount
     }
 
 <a name="rule-before"></a>
-#### before:_date_
+#### Rule before
+    
+    before:_date_
 
 The field under validation must be a value preceding the given date. The dates will be passed into the PHP `strtotime` function in order to be converted into a valid `DateTime` instance. In addition, like the [`after`](#rule-after) rule, the name of another field under validation may be supplied as the value of `date`.
 
 <a name="rule-before-or-equal"></a>
-#### before\_or\_equal:_date_
+#### Rule before-or-equal
+    
+    before\_or\_equal:_date_
 
 The field under validation must be a value preceding or equal to the given date. The dates will be passed into the PHP `strtotime` function in order to be converted into a valid `DateTime` instance. In addition, like the [`after`](#rule-after) rule, the name of another field under validation may be supplied as the value of `date`.
 
 <a name="rule-between"></a>
-#### between:_min_,_max_
+#### Rule between
+    
+    between:_min_,_max_
 
 The field under validation must have a size between the given _min_ and _max_ (inclusive). Strings, numerics, arrays, and files are evaluated in the same fashion as the [`size`](#rule-size) rule.
 
 <a name="rule-boolean"></a>
-#### boolean
+#### Rule boolean
+    
+    boolean
 
 The field under validation must be able to be cast as a boolean. Accepted input are `true`, `false`, `1`, `0`, `"1"`, and `"0"`.
 
 <a name="rule-confirmed"></a>
-#### confirmed
+#### Rule confirmed
+    
+    confirmed
 
 The field under validation must have a matching field of `{field}_confirmation`. For example, if the field under validation is `password`, a matching `password_confirmation` field must be present in the input.
 
 <a name="rule-current-password"></a>
-#### current_password
+#### Rule current-password
+    
+    current_password
 
 The field under validation must match the authenticated user's password. You may specify an [authentication guard](/authentication) using the rule's first parameter:
 
@@ -1222,22 +1256,30 @@ The field under validation must match the authenticated user's password. You may
 > Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-date"></a>
-#### date
+#### Rule date
+    
+    date
 
 The field under validation must be a valid, non-relative date according to the `strtotime` PHP function.
 
 <a name="rule-date-equals"></a>
-#### date_equals:_date_
+#### Rule date-equals
+    
+    date_equals:_date_
 
 The field under validation must be equal to the given date. The dates will be passed into the PHP `strtotime` function in order to be converted into a valid `DateTime` instance.
 
 <a name="rule-date-format"></a>
-#### date_format:_format_,...
+#### Rule date-format
+    
+    date_format:_format_,...
 
 The field under validation must match one of the given _formats_. You should use **either** `date` or `date_format` when validating a field, not both. This validation rule supports all formats supported by PHP's [DateTime](https://www.php.net/manual/en/class.datetime.php) class.
 
 <a name="rule-decimal"></a>
-#### decimal:_min_,_max_
+#### Rule decimal
+    
+    decimal:_min_,_max_
 
 The field under validation must be numeric and must contain the specified number of decimal places:
 
@@ -1251,32 +1293,44 @@ The field under validation must be numeric and must contain the specified number
 > Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-declined"></a>
-#### declined
+#### Rule declined
+    
+    declined
 
 The field under validation must be `"no"`, `"off"`, `0`, `"0"`, `false`, or `"false"`.
 
 <a name="rule-declined-if"></a>
-#### declined_if:anotherfield,value,...
+#### Rule declined-if
+    
+    declined_if:anotherfield,value,...
 
 The field under validation must be `"no"`, `"off"`, `0`, `"0"`, `false`, or `"false"` if another field under validation is equal to a specified value.
 
 <a name="rule-different"></a>
-#### different:_field_
+#### Rule different
+    
+    different:_field_
 
 The field under validation must have a different value than _field_.
 
 <a name="rule-digits"></a>
-#### digits:_value_
+#### Rule digits
+    
+    digits:_value_
 
 The integer under validation must have an exact length of _value_.
 
 <a name="rule-digits-between"></a>
-#### digits_between:_min_,_max_
+#### Rule digits-between
+    
+    digits_between:_min_,_max_
 
 The integer validation must have a length between the given _min_ and _max_.
 
 <a name="rule-dimensions"></a>
-#### dimensions
+#### Rule dimensions
+    
+    dimensions
 
 The file under validation must be an image meeting the dimension constraints as specified by the rule's parameters:
 
@@ -1303,7 +1357,9 @@ Since this rule requires several arguments, you may use the `Rule::dimensions` m
     ]);
 
 <a name="rule-distinct"></a>
-#### distinct
+#### Rule distinct
+    
+    distinct
 
 When validating arrays, the field under validation must not have any duplicate values:
 
@@ -1321,17 +1377,23 @@ You may add `ignore_case` to the validation rule's arguments to make the rule ig
     'foo.*.id' => 'distinct:ignore_case'
 
 <a name="rule-doesnt-start-with"></a>
-#### doesnt_start_with:_foo_,_bar_,...
+#### Rule doesnt-start-with
+    
+    doesnt_start_with:_foo_,_bar_,...
 
 The field under validation must not start with one of the given values.
 
 <a name="rule-doesnt-end-with"></a>
-#### doesnt_end_with:_foo_,_bar_,...
+#### Rule doesnt-end-with
+    
+    doesnt_end_with:_foo_,_bar_,...
 
 The field under validation must not end with one of the given values.
 
 <a name="rule-email"></a>
-#### email
+#### Rule email
+    
+    email
 
 The field under validation must be formatted as an email address. This validation rule utilizes the [`egulias/email-validator`](https://github.com/egulias/EmailValidator) package for validating the email address. By default, the `RFCValidation` validator is applied, but you can apply other validation styles as well:
 
@@ -1359,12 +1421,16 @@ The `filter` validator, which uses PHP's `filter_var` function, ships with Frame
 > The `dns` and `spoof` validators require the PHP `intl` extension.
 
 <a name="rule-ends-with"></a>
-#### ends_with:_foo_,_bar_,...
+#### Rule ends-with
+    
+    ends_with:_foo_,_bar_,...
 
 The field under validation must end with one of the given values.
 
 <a name="rule-enum"></a>
-#### enum
+#### Rule enum
+    
+    enum
 
 The `Enum` rule is a class based rule that validates whether the field under validation contains a valid enum value. The `Enum` rule accepts the name of the enum as its only constructor argument. When validating primitive values, a backed Enum should be provided to the `Enum` rule:
 
@@ -1397,12 +1463,16 @@ Rule::enum(ServerStatus::class)
 ```
 
 <a name="rule-exclude"></a>
-#### exclude
+#### Rule exclude
+    
+    exclude
 
 The field under validation will be excluded from the request data returned by the `validate` and `validated` methods.
 
 <a name="rule-exclude-if"></a>
-#### exclude_if:_anotherfield_,_value_
+#### Rule exclude-if
+    
+    exclude_if:_anotherfield_,_value_
 
 The field under validation will be excluded from the request data returned by the `validate` and `validated` methods if the _anotherfield_ field is equal to _value_.
 
@@ -1419,22 +1489,30 @@ If complex conditional exclusion logic is required, you may utilize the `Rule::e
     ]);
 
 <a name="rule-exclude-unless"></a>
-#### exclude_unless:_anotherfield_,_value_
+#### Rule exclude-unless
+    
+    exclude_unless:_anotherfield_,_value_
 
 The field under validation will be excluded from the request data returned by the `validate` and `validated` methods unless _anotherfield_'s field is equal to _value_. If _value_ is `null` (`exclude_unless:name,null`), the field under validation will be excluded unless the comparison field is `null` or the comparison field is missing from the request data.
 
 <a name="rule-exclude-with"></a>
-#### exclude_with:_anotherfield_
+#### Rule exclude-with
+    
+    exclude_with:_anotherfield_
 
 The field under validation will be excluded from the request data returned by the `validate` and `validated` methods if the _anotherfield_ field is present.
 
 <a name="rule-exclude-without"></a>
-#### exclude_without:_anotherfield_
+#### Rule exclude-without
+    
+    exclude_without:_anotherfield_
 
 The field under validation will be excluded from the request data returned by the `validate` and `validated` methods if the _anotherfield_ field is not present.
 
 <a name="rule-exists"></a>
-#### exists:_table_,_column_
+#### Rule exists
+    
+    exists:_table_,_column_
 
 > [!WARNING]  
 > **Security Restriction:** For security reasons, the `exists` rule strictly accepts a maximum of two string parameters (`table` and `column`). Attempting to pass additional query conditions via comma-separated string parameters will instantly trigger a `RuntimeException`. All additional query constraints must be applied fluently using the `Rule::exists` object method.
@@ -1482,7 +1560,9 @@ You may explicitly specify the database column name that should be used by the `
     'state' => Rule::exists('states', 'abbreviation'),
 
 <a name="rule-extensions"></a>
-#### extensions:_foo_,_bar_,...
+#### Rule extensions
+    
+    extensions:_foo_,_bar_,...
 
 The file under validation must have a user-assigned extension corresponding to one of the listed extensions:
 
@@ -1492,37 +1572,51 @@ The file under validation must have a user-assigned extension corresponding to o
 > You should never rely on validating a file by its user-assigned extension alone. This rule should typically always be used in combination with the [`mimes`](#rule-mimes) or [`mimetypes`](#rule-mimetypes) rules.
 
 <a name="rule-file"></a>
-#### file
+#### Rule file
+    
+    file
 
 The field under validation must be a successfully uploaded file.
 
 <a name="rule-filled"></a>
-#### filled
+#### Rule filled
+    
+    filled
 
 The field under validation must not be empty when it is present.
 
 <a name="rule-gt"></a>
-#### gt:_field_
+#### Rule gt
+    
+    gt:_field_
 
 The field under validation must be greater than the given _field_ or _value_. The two fields must be of the same type. Strings, numerics, arrays, and files are evaluated using the same conventions as the [`size`](#rule-size) rule.
 
 <a name="rule-gte"></a>
-#### gte:_field_
+#### Rule gte
+    
+    gte:_field_
 
 The field under validation must be greater than or equal to the given _field_ or _value_. The two fields must be of the same type. Strings, numerics, arrays, and files are evaluated using the same conventions as the [`size`](#rule-size) rule.
 
 <a name="rule-hex-color"></a>
-#### hex_color
+#### Rule hex-color
+    
+    hex_color
 
 The field under validation must contain a valid color value in [hexadecimal](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color) format.
 
 <a name="rule-image"></a>
-#### image
+#### Rule image
+    
+    image
 
 The file under validation must be an image (jpg, jpeg, png, bmp, gif, svg, or webp).
 
 <a name="rule-in"></a>
-#### in:_foo_,_bar_,...
+#### Rule in
+    
+    in:_foo_,_bar_,...
 
 The field under validation must be included in the given list of values. Since this rule often requires you to `implode` an array, the `Rule::in` method may be used to fluently construct the rule:
 
@@ -1552,12 +1646,16 @@ When the `in` rule is combined with the `array` rule, each value in the input ar
     ]);
 
 <a name="rule-in-array"></a>
-#### in_array:_anotherfield_.*
+#### Rule in-array
+    
+    in_array:_anotherfield_.*
 
 The field under validation must exist in _anotherfield_'s values.
 
 <a name="rule-integer"></a>
-#### integer
+#### Rule integer
+    
+    integer
 
 The field under validation must be an integer.
 
@@ -1565,7 +1663,9 @@ The field under validation must be an integer.
 > This validation rule does not verify that the input is of the "integer" variable type, only that the input is of a type accepted by PHP's `FILTER_VALIDATE_INT` rule. If you need to validate the input as being a number please use this rule in combination with [the `numeric` validation rule](#rule-numeric).
 
 <a name="rule-ip"></a>
-#### ip
+#### Rule ip
+    
+    ip
 
 The field under validation must be an IP address.
 
@@ -1580,42 +1680,58 @@ The field under validation must be an IPv4 address.
 The field under validation must be an IPv6 address.
 
 <a name="rule-json"></a>
-#### json
+#### Rule json
+    
+    json
 
 The field under validation must be a valid JSON string.
 
 <a name="rule-lt"></a>
-#### lt:_field_
+#### Rule lt
+    
+    lt:_field_
 
 The field under validation must be less than the given _field_. The two fields must be of the same type. Strings, numerics, arrays, and files are evaluated using the same conventions as the [`size`](#rule-size) rule.
 
 <a name="rule-lte"></a>
-#### lte:_field_
+#### Rule lte
+    
+    lte:_field_
 
 The field under validation must be less than or equal to the given _field_. The two fields must be of the same type. Strings, numerics, arrays, and files are evaluated using the same conventions as the [`size`](#rule-size) rule.
 
 <a name="rule-lowercase"></a>
-#### lowercase
+#### Rule lowercase
+    
+    lowercase
 
 The field under validation must be lowercase.
 
 <a name="rule-mac"></a>
-#### mac_address
+#### Rule mac
+    
+    mac_address
 
 The field under validation must be a MAC address.
 
 <a name="rule-max"></a>
-#### max:_value_
+#### Rule max
+    
+    max:_value_
 
 The field under validation must be less than or equal to a maximum _value_. Strings, numerics, arrays, and files are evaluated in the same fashion as the [`size`](#rule-size) rule.
 
 <a name="rule-max-digits"></a>
-#### max_digits:_value_
+#### Rule max-digits
+    
+    max_digits:_value_
 
 The integer under validation must have a maximum length of _value_.
 
 <a name="rule-mimetypes"></a>
-#### mimetypes:_text/plain_,...
+#### Rule mimetypes
+    
+    mimetypes:_text/plain_,...
 
 The file under validation must match one of the given MIME types:
 
@@ -1627,7 +1743,9 @@ The file under validation must match one of the given MIME types:
 To determine the MIME type of the uploaded file, the file's contents will be read and the framework will attempt to guess the MIME type, which may be different from the client's provided MIME type.
 
 <a name="rule-mimes"></a>
-#### mimes:_foo_,_bar_,...
+#### Rule mimes
+    
+    mimes:_foo_,_bar_,...
 
 The file under validation must have a MIME type corresponding to one of the listed extensions:
 
@@ -1646,47 +1764,65 @@ Even though you only need to specify the extensions, this rule actually validate
 This validation rule does not verify agreement between the MIME type and the extension the user assigned to the file. For example, the `mimes:png` validation rule would consider a file containing valid PNG content to be a valid PNG image, even if the file is named `photo.txt`. If you would like to validate the user-assigned extension of the file, you may use the [`extensions`](#rule-extensions) rule.
 
 <a name="rule-min"></a>
-#### min:_value_
+#### Rule min
+    
+    min:_value_
 
 The field under validation must have a minimum _value_. Strings, numerics, arrays, and files are evaluated in the same fashion as the [`size`](#rule-size) rule.
 
 <a name="rule-min-digits"></a>
-#### min_digits:_value_
+#### Rule min-digits
+    
+    min_digits:_value_
 
 The integer under validation must have a minimum length of _value_.
 
 <a name="rule-multiple-of"></a>
-#### multiple_of:_value_
+#### Rule multiple-of
+    
+    multiple_of:_value_
 
 The field under validation must be a multiple of _value_.
 
 <a name="rule-missing"></a>
-#### missing
+#### Rule missing
+    
+    missing
 
 The field under validation must not be present in the input data.
 
 <a name="rule-missing-if"></a>
-#### missing_if:_anotherfield_,_value_,...
+#### Rule missing-if
+    
+    missing_if:_anotherfield_,_value_,...
 
 The field under validation must not be present if the _anotherfield_ field is equal to any _value_.
 
 <a name="rule-missing-unless"></a>
-#### missing_unless:_anotherfield_,_value_
+#### Rule missing-unless
+    
+    missing_unless:_anotherfield_,_value_
 
 The field under validation must not be present unless the _anotherfield_ field is equal to any _value_.
 
 <a name="rule-missing-with"></a>
-#### missing_with:_foo_,_bar_,...
+#### Rule missing-with
+    
+    missing_with:_foo_,_bar_,...
 
 The field under validation must not be present _only if_ any of the other specified fields are present.
 
 <a name="rule-missing-with-all"></a>
-#### missing_with_all:_foo_,_bar_,...
+#### Rule missing-with-all
+    
+    missing_with_all:_foo_,_bar_,...
 
 The field under validation must not be present _only if_ all the other specified fields are present.
 
 <a name="rule-not-in"></a>
-#### not_in:_foo_,_bar_,...
+#### Rule not-in
+    
+    not_in:_foo_,_bar_,...
 
 The field under validation must not be included in the given list of values. The `Rule::notIn` method may be used to fluently construct the rule:
 
@@ -1700,7 +1836,9 @@ The field under validation must not be included in the given list of values. The
     ]);
 
 <a name="rule-not-regex"></a>
-#### not_regex:_pattern_
+#### Rule not-regex
+    
+    not_regex:_pattern_
 
 The field under validation must not match the given regular expression.
 
@@ -1713,42 +1851,58 @@ Internally, this rule uses the PHP `preg_match` function. The pattern specified 
 > When using the `regex` / `not_regex` patterns, it may be necessary to specify your validation rules using an array instead of using `|` delimiters, especially if the regular expression contains a `|` character.
 
 <a name="rule-nullable"></a>
-#### nullable
+#### Rule nullable
+    
+    nullable
 
 The field under validation may be `null`.
 
 <a name="rule-numeric"></a>
-#### numeric
+#### Rule numeric
+    
+    numeric
 
 The field under validation must be [numeric](https://www.php.net/manual/en/function.is-numeric.php).
 
 <a name="rule-present"></a>
-#### present
+#### Rule present
+    
+    present
 
 The field under validation must exist in the input data.
 
 <a name="rule-present-if"></a>
-#### present_if:_anotherfield_,_value_,...
+#### Rule present-if
+    
+    present_if:_anotherfield_,_value_,...
 
 The field under validation must be present if the _anotherfield_ field is equal to any _value_.
 
 <a name="rule-present-unless"></a>
-#### present_unless:_anotherfield_,_value_
+#### Rule present-unless
+    
+    present_unless:_anotherfield_,_value_
 
 The field under validation must be present unless the _anotherfield_ field is equal to any _value_.
 
 <a name="rule-present-with"></a>
-#### present_with:_foo_,_bar_,...
+#### Rule present-with
+    
+    present_with:_foo_,_bar_,...
 
 The field under validation must be present _only if_ any of the other specified fields are present.
 
 <a name="rule-present-with-all"></a>
-#### present_with_all:_foo_,_bar_,...
+#### Rule present-with-all
+    
+    present_with_all:_foo_,_bar_,...
 
 The field under validation must be present _only if_ all the other specified fields are present.
 
 <a name="rule-prohibited"></a>
-#### prohibited
+#### Rule prohibited
+    
+    prohibited
 
 The field under validation must be missing or empty. A field is "empty" if it meets one of the following criteria:
 
@@ -1762,7 +1916,9 @@ The field under validation must be missing or empty. A field is "empty" if it me
 </div>
 
 <a name="rule-prohibited-if"></a>
-#### prohibited_if:_anotherfield_,_value_,...
+#### Rule prohibited-if
+    
+    prohibited_if:_anotherfield_,_value_,...
 
 The field under validation must be missing or empty if the _anotherfield_ field is equal to any _value_. A field is "empty" if it meets one of the following criteria:
 
@@ -1788,7 +1944,9 @@ If complex conditional prohibition logic is required, you may utilize the `Rule:
     ]);
 
 <a name="rule-prohibited-unless"></a>
-#### prohibited_unless:_anotherfield_,_value_,...
+#### Rule prohibited-unless
+    
+    prohibited_unless:_anotherfield_,_value_,...
 
 The field under validation must be missing or empty unless the _anotherfield_ field is equal to any _value_. A field is "empty" if it meets one of the following criteria:
 
@@ -1802,7 +1960,9 @@ The field under validation must be missing or empty unless the _anotherfield_ fi
 </div>
 
 <a name="rule-prohibits"></a>
-#### prohibits:_anotherfield_,...
+#### Rule prohibits
+    
+    prohibits:_anotherfield_,...
 
 If the field under validation is not missing or empty, all fields in _anotherfield_ must be missing or empty. A field is "empty" if it meets one of the following criteria:
 
@@ -1816,7 +1976,9 @@ If the field under validation is not missing or empty, all fields in _anotherfie
 </div>
 
 <a name="rule-regex"></a>
-#### regex:_pattern_
+#### Rule regex
+    
+    regex:_pattern_
 
 The field under validation must match the given regular expression.
 
@@ -1829,7 +1991,9 @@ Internally, this rule uses the PHP `preg_match` function. The pattern specified 
 > When using the `regex` / `not_regex` patterns, it may be necessary to specify rules in an array instead of using `|` delimiters, especially if the regular expression contains a `|` character.
 
 <a name="rule-required"></a>
-#### required
+#### Rule required
+    
+    required
 
 The field under validation must be present in the input data and not empty. A field is "empty" if it meets one of the following criteria:
 
@@ -1843,7 +2007,9 @@ The field under validation must be present in the input data and not empty. A fi
 </div>
 
 <a name="rule-required-if"></a>
-#### required_if:_anotherfield_,_value_,...
+#### Rule required-if
+    
+    required_if:_anotherfield_,_value_,...
 
 The field under validation must be present and not empty if the _anotherfield_ field is equal to any _value_.
 
@@ -1860,47 +2026,65 @@ If you would like to construct a more complex condition for the `required_if` ru
     ]);
 
 <a name="rule-required-if-accepted"></a>
-#### required_if_accepted:_anotherfield_,...
+#### Rule required-if-accepted
+    
+    required_if_accepted:_anotherfield_,...
 
 The field under validation must be present and not empty if the _anotherfield_ field is equal to `"yes"`, `"on"`, `1`, `"1"`, `true`, or `"true"`.
 
 <a name="rule-required-unless"></a>
-#### required_unless:_anotherfield_,_value_,...
+#### Rule required-unless
+    
+    required_unless:_anotherfield_,_value_,...
 
 The field under validation must be present and not empty unless the _anotherfield_ field is equal to any _value_. This also means _anotherfield_ must be present in the request data unless _value_ is `null`. If _value_ is `null` (`required_unless:name,null`), the field under validation will be required unless the comparison field is `null` or the comparison field is missing from the request data.
 
 <a name="rule-required-with"></a>
-#### required_with:_foo_,_bar_,...
+#### Rule required-with
+    
+    required_with:_foo_,_bar_,...
 
 The field under validation must be present and not empty _only if_ any of the other specified fields are present and not empty.
 
 <a name="rule-required-with-all"></a>
-#### required_with_all:_foo_,_bar_,...
+#### Rule required-with-all
+    
+    required_with_all:_foo_,_bar_,...
 
 The field under validation must be present and not empty _only if_ all the other specified fields are present and not empty.
 
 <a name="rule-required-without"></a>
-#### required_without:_foo_,_bar_,...
+#### Rule required-without
+    
+    required_without:_foo_,_bar_,...
 
 The field under validation must be present and not empty _only when_ any of the other specified fields are empty or not present.
 
 <a name="rule-required-without-all"></a>
-#### required_without_all:_foo_,_bar_,...
+#### Rule required-without-all
+    
+    required_without_all:_foo_,_bar_,...
 
 The field under validation must be present and not empty _only when_ all the other specified fields are empty or not present.
 
 <a name="rule-required-array-keys"></a>
-#### required_array_keys:_foo_,_bar_,...
+#### Rule required-array-keys
+    
+    required_array_keys:_foo_,_bar_,...
 
 The field under validation must be an array and must contain at least the specified keys.
 
 <a name="rule-same"></a>
-#### same:_field_
+#### Rule same
+    
+    same:_field_
 
 The given _field_ must match the field under validation.
 
 <a name="rule-size"></a>
-#### size:_value_
+#### Rule size
+    
+    size:_value_
 
 The field under validation must have a size matching the given _value_. For string data, _value_ corresponds to the number of characters. For numeric data, _value_ corresponds to a given integer value (the attribute must also have the `numeric` or `integer` rule). For an array, _size_ corresponds to the `count` of the array. For files, _size_ corresponds to the file size in kilobytes. Let's look at some examples:
 
@@ -1920,17 +2104,23 @@ The field under validation must have a size matching the given _value_. For stri
 > Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-starts-with"></a>
-#### starts_with:_foo_,_bar_,...
+#### Rule starts-with
+    
+    starts_with:_foo_,_bar_,...
 
 The field under validation must start with one of the given values.
 
 <a name="rule-string"></a>
-#### string
+#### Rule string
+    
+    string
 
 The field under validation must be a string. If you would like to allow the field to also be `null`, you should assign the `nullable` rule to the field.
 
 <a name="rule-timezone"></a>
-#### timezone
+#### Rule timezone
+    
+    timezone
 
 The field under validation must be a valid timezone identifier according to the `DateTimeZone::listIdentifiers` method.
 
@@ -2008,12 +2198,16 @@ You may specify additional query conditions by customizing the query using the `
     'email' => Rule::unique('users')->where(fn (Builder $query) => $query->where('account_id', 1))
 
 <a name="rule-uppercase"></a>
-#### uppercase
+#### Rule uppercase
+    
+    uppercase
 
 The field under validation must be uppercase.
 
 <a name="rule-url"></a>
-#### url
+#### Rule url
+    
+    url
 
 The field under validation must be a valid URL.
 
@@ -2029,12 +2223,16 @@ If you would like to specify the URL protocols that should be considered valid, 
 > Never concatenate user-controlled input into a rule string. See [rule string injection](#rule-string-injection).
 
 <a name="rule-ulid"></a>
-#### ulid
+#### Rule ulid
+    
+    ulid
 
 The field under validation must be a valid [Universally Unique Lexicographically Sortable Identifier](https://github.com/ulid/spec) (ULID).
 
 <a name="rule-uuid"></a>
-#### uuid
+#### Rule uuid
+    
+    uuid
 
 The field under validation must be a valid RFC 4122 (version 1, 3, 4, or 5) universally unique identifier (UUID).
 
@@ -2211,7 +2409,7 @@ Sometimes you may need to access the value for a given nested array element when
 <a name="error-message-indexes-and-positions"></a>
 ### Error Message Indexes and Positions
 
-When validating arrays, you may want to reference the index or position of a particular item that failed validation within the error message displayed by your application. To accomplish this, you may include the `:index` (starts from `0`) and `:position` (starts from `1`) placeholders within your [custom validation message](#manual-customizing-the-error-messages):
+When validating arrays, you may want to reference the index or position of a particular item that failed validation within the error message displayed by your application. To accomplish this, you may include the `:index` (starts from `0`) and `:position` (starts from `1`) placeholders within your [custom validation message](#customizing-the-error-messages-2):
 
     $input = [
         'photos' => [
