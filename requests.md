@@ -13,6 +13,7 @@ context: requests
   - [Content Negotiation](#content-negotiation)
   - [PSR-7 Requests](#psr-7-requests)
 - [Retrieving Input](#retrieving-input)
+  - [Where Each Accessor Reads From](#where-each-accessor-reads-from)
   - [Automatic Stream Wrapper Protection (Security)](#automatic-stream-wrapper-protection-security)
   - [Input Presence and Mutation](#input-presence-and-mutation)
   - [Cookies](#cookies)
@@ -165,7 +166,7 @@ Type-hint the compliant PSR-7 interface directly on your controller definitions:
 
 #### Retrieving Input Values
 
-Access user payload components across all HTTP verbs using `input`, `get` or `getFiltered`:
+Access user payload components across all HTTP verbs using `input`, `get` or `getFiltered`. They do not read the same sources in the same order: see [Where Each Accessor Reads From](#where-each-accessor-reads-from) before choosing one.
 
     $name = $request->input('name');
     $name = $request->get('name');
@@ -175,14 +176,57 @@ Safely sanitize parameters with `getFiltered`, which implements native `filter_v
 
     $sanitized = $request->getFiltered('queryParam');
 
-This will return a valid string or false (it uses `filter_var` in the background). See `Request::getFiltered` for more details.
-Also when the field is missing it will return empty string not null!
+It uses `filter_var` in the background (see `Request::getFiltered` for details). With the default filter:
+
+| Input | Result |
+|---|---|
+| a string | the string |
+| a scalar (`5`, `true` from JSON) | the value as a string (`"5"`, `"1"`) |
+| an array or object | `false`, or `null` with `options: \FILTER_NULL_ON_FAILURE` |
+| missing | `''` (empty string, not `null`) |
+
+So `(string)$request->getFiltered('name')` is always a string, and an array sent instead of a string becomes `''`.
 
 Restrict data retrieval explicitly to query string values using the `query` method:
 
     $search = $request->query('search');
     $search = $request->query('search', 'default_term');
     $allQuery = $request->query(); // Returns entire query array
+
+<a name="where-each-accessor-reads-from"></a>
+### Where Each Accessor Reads From
+
+A request carries values from four sources: the client input (body and query string), uploaded files, the route parameters (path) and the request attributes (data set by your middleware, never by the client). The accessors do not combine them the same way:
+
+| Accessor | Attributes | Body / query                                                                  | Files | Route parameters | Dot notation |
+|---|---|-------------------------------------------------------------------------------|---|---|---|
+| `get()`, `getFiltered()` | **first** | when: POST/PUT/PATCH/QUERY body before query, other methods query before body | no | **never** | no |
+| `input()` | no | body merged over query (GET/HEAD: query only)                                 | no | no | yes |
+| `query()` | no | query only                                                                    | no | no | no |
+| `all()`, `only()`, `except()`, `has()`, `filled()` | no | as `input()`                                                                  | **yes** (a file wins over a field with the same name) | no | yes |
+| `$request->name`, `$request['name']` | no | as `all()`                                                                    | yes | **last** (fallback) | yes |
+| `isset($request['name'])` | no | as `all()`                                                                    | yes | yes | yes |
+| `route('name')` | no | no                                                                            | no | only | no |
+| `file('name')`, `hasFile('name')` | no | no                                                                            | only | no | yes |
+| `attributes->get('name')` | only | no                                                                            | no | no | no |
+
+Route parameters are never stored in the attributes: the router keeps the current route as `[status, action, parameters]` and `route()` reads it. Without a route (console, queue workers) `route()` returns `null` and `route('name', $default)` returns `$default`.
+
+Consequences to keep in mind:
+
+- For `/users/{id}?id=5`, `$request->id` returns the query's `5`, `getFiltered('id')` returns `5` and `route('id')` returns the path value.
+- An attribute set by middleware overrides client input with the same name in `get()` and `getFiltered()`, but not in `input()`, `all()` or `$request->name`. Prefix your attribute keys so they never match an input name.
+- `getFiltered('id')` returns `''` when `id` is only in the path; it never falls back to the route.
+- `$request->photo` returns the `UploadedFile` when a file was sent, while `getFiltered('photo')` returns `''`; use `hasFile()` to check for files.
+
+**Read every value from its own source:**
+
+    $id = $request->route('id');                         // path
+    $name = (string)$request->getFiltered('name');       // client input
+    $photo = $request->file('photo');                    // uploaded file
+    $clientId = $request->attributes->get('_client_id'); // set by your middleware
+
+Avoid dynamic properties (`$request->name`) and array access (`$request['name']`): they merge input, files and route parameters, return untyped values, and rebuild the merged input on every call.
 
 #### Native JSON Ingestion (Zero-Overhead)
 
