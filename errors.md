@@ -14,6 +14,7 @@ context: errors
     - [Ignoring Exceptions by Type](#ignoring-exceptions-by-type)
     - [Rendering Exceptions](#rendering-exceptions)
     - [Reportable and Renderable Exceptions](#reportable-and-renderable-exceptions)
+    - [Status Codes on APIs](#status-codes-on-apis)
 - [HTTP Exceptions](#http-exceptions)
     - [The `abort` Helper](#the-abort-helper)
     - [HTTP Response Formatting](#http-response-formatting)
@@ -153,6 +154,22 @@ class CustomApiException extends Exception implements Responsable
     }
 }
 ```
+
+<a name="status-codes-on-apis"></a>
+### Status Codes on APIs
+
+Framework keeps the set of HTTP status codes an API returns small, on purpose:
+
+* Fewer codes mean less for API clients to handle.
+* Fine-grained codes tell a scanner more than a legitimate client needs. A missing model, missing records and a suspicious request all answer `404 Not Found`, so they cannot be told apart from the outside.
+
+Applications may go further. For example, an API may answer failed authentication with `404 Not Found` as well, so that a scanner cannot tell which routes exist.
+
+Validation failures answer `422 Unprocessable Entity` by default. To answer `400 Bad Request` instead, handle the `ValidationException` in the `render` method of your `App\Exceptions\Handler`, as shown in [Customizing the Response Format](/validation#customizing-the-validation-error-response-format), and pass `400` instead of `$e->status`.
+
+Resources built with [php-crufd-wizard](https://github.com/macropay-solutions/php-crufd-wizard) follow the same policy: their failures answer `400 Bad Request`, and their list requests never fail, so an invalid list query returns an empty page.
+
+Document the status codes your API uses for its clients, so a `400` or a `404` is read as a choice, not as a bug.
 
 <a name="http-exceptions"></a>
 ## HTTP Exceptions

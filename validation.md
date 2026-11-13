@@ -275,6 +275,8 @@ To return another format, such as `{"message": ..., "errors": ...}`, handle the 
 
 The application skeleton's `App\Exceptions\Handler` contains this block as a comment. The `message` is the first error message, followed by "(and 1 more error)" or "(and N more errors)" when there are more. Because your handler returns before the parent method, the form request [redirect](#customizing-the-redirect-location) is no longer performed.
 
+To answer validation failures with `400 Bad Request` instead of `422`, pass `400` instead of `$e->status` in the block above. See [Status Codes on APIs](/errors#status-codes-on-apis) for why an API may prefer fewer status codes.
+
 <a name="form-request-validation"></a>
 ## Form Request Validation
 
