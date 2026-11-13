@@ -17,6 +17,7 @@ When generating code, you MUST adhere strictly to these native components and na
 - **NO Static Proxies:** You must use pure Constructor Injection, the `\app()` helper, or container resolution.
 - **NO Closures in Payloads:** Closure serialization is unsupported and forbidden. You MUST use Storable Array Callables (e.g., `[Class::class, 'method']`) for queued jobs definitions.
 - **NO PHP Attributes:** Do not use PHP Attributes for ORM casting, observing, or scoping.
+- **Request Values From Their Source:** Read each request value from exactly one source: route parameters with `$request->route('id')`, client input with `(string)$request->getFiltered('name')` (it checks request attributes first, so never set an attribute with an input's name: prefix attribute keys), uploaded files with `$request->file('photo')`, middleware data with `$request->attributes->get('key')`. NEVER use `$request->name`, `$request['name']` or `isset($request['name'])`: they merge input, files and route parameters and return untyped values. See https://macropay-solutions.github.io/php-framework-docs/1.x/requests#where-each-accessor-reads-from
 - **Stateless Execution ONLY:** The router utilizes high-performance, zero-allocation `strtok()` loops. This framework MUST run in an isolated PHP-FPM environment. DO NOT suggest multithreaded or coroutine-based application servers (e.g., Swoole, OpenSwoole, RoadRunner).
 
 ## Key Mechanisms
