@@ -206,6 +206,7 @@ A request carries values from four sources: the client input (body and query str
 | `all()`, `only()`, `except()`, `has()`, `filled()` | no | as `input()`                                                                  | **yes** (a file wins over a field with the same name) | no | yes |
 | `$request->name`, `$request['name']` | no | as `all()`                                                                    | yes | **last** (fallback) | yes |
 | `isset($request['name'])` | no | as `all()`                                                                    | yes | yes | yes |
+| `isset($request->name)` | no | as `$request->name` | yes | yes | yes |
 | `route('name')` | no | no                                                                            | no | only | no |
 | `file('name')`, `hasFile('name')` | no | no                                                                            | only | no | yes |
 | `attributes->get('name')` | only | no                                                                            | no | no | no |
@@ -218,6 +219,7 @@ Consequences to keep in mind:
 - An attribute set by middleware overrides client input with the same name in `get()` and `getFiltered()`, but not in `input()`, `all()` or `$request->name`. Prefix your attribute keys so they never match an input name.
 - `getFiltered('id')` returns `''` when `id` is only in the path; it never falls back to the route.
 - `$request->photo` returns the `UploadedFile` when a file was sent, while `getFiltered('photo')` returns `''`; use `hasFile()` to check for files.
+- The two `isset()` forms disagree: `isset($request->name)` is `false` when the value is `null`, like normal PHP, while `isset($request['name'])` is `true` whenever the key exists, even with a `null` value. To check whether a value was sent, use `has()` (the key exists) or `filled()` (it exists and is not empty) instead of either.
 
 **Read every value from its own source:**
 
