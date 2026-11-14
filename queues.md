@@ -1239,6 +1239,20 @@ The batch's ID, which may be accessed via the `$batch->id` property, may be used
 > [!WARNING]  
 > Since batch callbacks are serialized and executed at a later time by the Framework queue, you should not use the `$this` variable within the callbacks.
 
+> [!WARNING]  
+> A batch without jobs never finishes: no job runs, so the batch is never marked as finished and its `then`, `catch` and `finally` callbacks are never called. Check that the list of jobs is not empty before dispatching the batch:
+>
+> ```php
+> if ([] === $jobs) {
+>     // nothing to process: run the completion logic directly
+>     return;
+> }
+>
+> \app(\MacropaySolutions\Kernel\Bus\Dispatcher::class)->batch($jobs)
+>     ->then([BatchCallbacks::class, 'onSuccess'])
+>     ->dispatch();
+> ```
+
 <a name="naming-batches"></a>
 #### Naming Batches
 
