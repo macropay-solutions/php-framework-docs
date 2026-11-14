@@ -966,7 +966,17 @@ When dispatching instantiated objects (such as `ShouldQueue` Notifications, Mail
 >
 > The `tries`, `backoff`, `retryUntil` and `failed` methods must be **public** or not exist. A `protected` or `private` `tries`, `backoff` or `retryUntil` method, or one that throws (including one that requires arguments), is silently ignored. A `protected` or `private` `failed` method is not registered as the failure handler.
 
-These class-level settings apply to job classes dispatched with `::new()->dispatch()`. A Storable Array Callable dispatched with `\dispatch([...])` does not read them from its target class. To configure one, set them on the queued callable before dispatching it:
+These class-level settings apply to job classes dispatched with `::new()->dispatch()`. A Storable Array Callable dispatched with `\dispatch([...])` does not read them from its target class. To configure one, chain them on the dispatch:
+
+    \dispatch([ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]])
+        ->tries(3)
+        ->timeout(120)
+        ->maxExceptions(2)
+        ->backoff([10, 60])            // seconds, or one value for every retry
+        ->retryUntil(\appDate()->now()->addHour())
+        ->failOnTimeout();
+
+Or set them on the queued callable before dispatching it:
 
     $job = \MacropaySolutions\Kernel\Queue\CallQueuedCallable::create(
         [ProcessPodcast::class, 'handle', ['podcastId' => $podcast->id]]
