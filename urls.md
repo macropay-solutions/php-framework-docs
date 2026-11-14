@@ -95,6 +95,14 @@ For a readable URL, build the path from its segments with the `url` helper inste
 
     // http://example.com/docs/guide/intro
 
+The `url` helper uses the current request's host. For a route restricted to another [domain](/routing#domain-routing), pass the full URL; the segments are appended before any query string:
+
+    echo url('https://api.example.com/docs', ['guide', 'intro']);
+
+    // https://api.example.com/docs/guide/intro
+
+The `route` helper already generates absolute URLs for domain routes, with the value encoded as a single parameter.
+
 > [!WARNING]  
 > Segments that contain only `.` or `..` are not encoded, and the browser resolves them: `url('docs', ['..', 'admin'])` produces `/docs/../admin`, which the browser requests as `/admin`. When the segments come from user input, drop the empty, `.` and `..` segments first:
 >
