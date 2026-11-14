@@ -534,6 +534,9 @@ The `Arr::map` method iterates through the array and passes each value and key t
 
     // ['first' => 'James', 'last' => 'Kirk']
 
+> [!WARNING]  
+> The callback receives the value and the key. If it throws an `ArgumentCountError`, the whole map is run again, passing only the value. This lets internal functions that accept a single argument (such as `'strtoupper'`) be used as callbacks, but an `ArgumentCountError` thrown from inside your callback also triggers the retry, so the callback runs again for the items it already processed. If your callback has side effects, use a closure that does not throw `ArgumentCountError`.
+
 <a name="method-array-map-with-keys"></a>
 #### `Arr::mapWithKeys()`
 

@@ -94,6 +94,9 @@ Before using a Redis cache with Framework, you will need to either install the P
 
 For more information on configuring Redis, consult its [Framework documentation page](/redis#configuration).
 
+> [!WARNING]  
+> The Redis connection used by the cache store must not use a PhpRedis `serializer` or `compression` option. See [PhpRedis Serialization and Compression](/redis#phpredis-serialization).
+
 <a name="dynamodb"></a>
 #### DynamoDB
 
@@ -385,6 +388,9 @@ When using the `database` cache driver, you will need to setup a table to contai
 
 > [!NOTE]  
 > If you used the `cache:table` Run command to create the database driver's cache table, the migration created by that command already includes a definition for the `cache_locks` table.
+
+> [!WARNING]  
+> **PostgreSQL transactions:** a database lock is acquired by inserting its row and, when the row already exists (the lock is held or expired), by updating it. On PostgreSQL, the failed `INSERT` aborts the open transaction, so the following `UPDATE` throws and the transaction can only be rolled back. Do not acquire database locks inside a transaction on the same connection: acquire the lock before starting the transaction, or point the store's `lock_connection` option to a separate connection name in `config/cache.php`. A separate connection also keeps the lock from being rolled back together with your transaction.
 
 <a name="managing-locks"></a>
 ### Managing Locks
