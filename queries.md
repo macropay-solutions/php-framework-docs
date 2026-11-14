@@ -201,6 +201,15 @@ Of course, you may combine these methods with other clauses to fine-tune how you
                     ->where('finalized', 1)
                     ->avg('price');
 
+> [!WARNING]  
+> When the query has a `groupBy` clause, aggregate methods return the value of the **first group** only, not a total over all groups. To count the groups or aggregate across them, wrap the grouped query in a subquery:
+>
+> ```php
+> $groups = app('db')->query()
+>     ->fromSub(app('db')->table('orders')->select('customer_id')->groupBy('customer_id'), 'grouped')
+>     ->count();
+> ```
+
 <a name="determining-if-records-exist"></a>
 #### Determining if Records Exist
 
