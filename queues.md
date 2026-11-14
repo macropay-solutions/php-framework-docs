@@ -108,6 +108,9 @@ In order to use the `database` queue driver, you will need a database table to h
 
     php run migrate
 
+> [!WARNING]  
+> Tables created with an older `queue:table` migration store `attempts` as an unsigned tiny integer (max 255). A job that is retried indefinitely (`--tries=0`) and reaches 255 attempts can no longer be reserved: the update fails, the job stays first in line and the worker processes nothing else from that queue. Widen the column to an unsigned integer, for example `ALTER TABLE jobs MODIFY attempts INT UNSIGNED NOT NULL` on MySQL / MariaDB.
+
 Finally, don't forget to instruct your application to use the `database` driver by updating the `QUEUE_CONNECTION` variable in your application's `.env` file:
 
     QUEUE_CONNECTION=database
