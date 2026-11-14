@@ -142,7 +142,7 @@ Route parameters are always encased within "curly" braces. The parameters will b
 > **Note:** Route parameters cannot contain the `-` character. Use an underscore (`_`) instead.
 
 > [!WARNING]  
-> Parameter values are URL-decoded (`rawurldecode`) before they reach the controller: a request to `user/a%20b` passes `a b`, and `docs/{path:.+}` with `docs/a%2Fb` passes `a/b`. Do not decode them again. The `route` helper does not encode parameter values; see [URLs for Named Routes](/urls#urls-for-named-routes).
+> Parameter values are URL-decoded (`rawurldecode`) before they reach the controller: a request to `user/a%20b` passes `a b`, and `docs/{path:.+}` with `docs/a%2Fb` passes `a/b`. Do not decode them again. The `route` helper encodes parameter values; see [URLs for Named Routes](/urls#urls-for-named-routes).
 
 <a name="optional-parameters"></a>
 ### Optional Parameters

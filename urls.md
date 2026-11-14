@@ -76,11 +76,5 @@ Any additional array elements that do not correspond to the route's definition p
 
     // http://example.com/post/1?search=rocket
 
-> [!WARNING]  
-> Values of route parameters are inserted into the path as they are; only the extra query string values are encoded. A value containing `/`, `?`, `#` or `..` changes the generated URL: `route('post.show', ['post' => 'a/b?x=1'])` produces `/post/a/b?x=1`, and `../admin` lets the browser resolve the link to `/admin`. Encode values that come from user data yourself:
->
-> ```php
-> echo route('user.show', ['name' => \rawurlencode($user->name)]);
-> ```
->
-> The router decodes each parameter (`rawurldecode`), so the controller receives the original value.
+> [!NOTE]  
+> Route parameter values are URL-encoded (`rawurlencode`), so a value containing `/`, `?`, `#` or `..` stays inside its parameter: `route('post.show', ['post' => 'a/b?x=1'])` produces `/post/a%2Fb%3Fx%3D1`. The router decodes each parameter, so the controller receives the original value. Do not encode the values yourself, or they will be encoded twice.
