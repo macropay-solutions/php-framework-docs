@@ -1433,6 +1433,9 @@ The `map` method iterates through the collection and passes each value to the gi
 > [!WARNING]  
 > Like most other collection methods, `map` returns a new collection instance; it does not modify the collection it is called on. If you want to transform the original collection, use the [`transform`](#method-transform) method.
 
+> [!WARNING]  
+> `map` uses [`Arr::map`](/helpers#method-array-map): if the callback throws an `ArgumentCountError`, the whole map is run again passing only the value, so a callback with side effects runs again for the items it already processed. Lazy collections call the callback once per item and do not retry.
+
 <a name="method-mapinto"></a>
 #### `mapInto()`
 

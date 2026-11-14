@@ -197,6 +197,9 @@ Currently supported serializers include: `Redis::SERIALIZER_NONE` (default), `Re
 
 Supported compression algorithms include: `Redis::COMPRESSION_NONE` (default), `Redis::COMPRESSION_LZF`, `Redis::COMPRESSION_ZSTD`, and `Redis::COMPRESSION_LZ4`.
 
+> [!WARNING]  
+> Do not configure a serializer or compression on a Redis connection used by the [cache](/cache), cache locks or the queue. PhpRedis does not apply them to the arguments of `eval` (Lua scripts), so values written by `\app('cache')->add()` are stored raw and can no longer be read by `get()`, and counters stored as raw integers (used by `increment`, `decrement` and the queue's `maxExceptions`) can no longer be incremented. The cache store already serializes its values itself; use a dedicated connection if other parts of your application need PhpRedis serialization.
+
 <a name="interacting-with-redis"></a>
 ## Interacting With Redis
 
