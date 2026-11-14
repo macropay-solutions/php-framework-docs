@@ -10,6 +10,7 @@ context: urls
   - [Generating URLs](#generating-urls)
   - [Accessing the Current URL](#accessing-the-current-url)
 - [URLs for Named Routes](#urls-for-named-routes)
+  - [Wildcard Routes](#urls-for-wildcard-routes)
 
 <a name="introduction"></a>
 ## Introduction
@@ -78,3 +79,30 @@ Any additional array elements that do not correspond to the route's definition p
 
 > [!NOTE]  
 > Route parameter values are URL-encoded (`rawurlencode`), so a value containing `/`, `?`, `#` or `..` stays inside its parameter: `route('post.show', ['post' => 'a/b?x=1'])` produces `/post/a%2Fb%3Fx%3D1`. The router decodes each parameter, so the controller receives the original value. Do not encode the values yourself, or they will be encoded twice.
+
+<a name="urls-for-wildcard-routes"></a>
+#### Wildcard Routes
+
+A route whose parameter may contain slashes, such as `docs/{path:.+}`, can also be generated with `route`, but the slashes in the value are encoded: `route('docs.show', ['path' => 'guide/intro'])` produces `/docs/guide%2Fintro`. The route matches it and the controller receives `guide/intro`.
+
+For a readable URL, build the path from its segments with the `url` helper instead. Each extra segment is encoded on its own and the segments are joined with `/`:
+
+    $router->get('/docs/{path:.+}', , [
+        'as' => 'doc.show', 'uses' => 'DocsController@show'
+    ]);
+
+    echo url('docs', ['guide', 'intro']);
+
+    // http://example.com/docs/guide/intro
+
+> [!WARNING]  
+> Segments that contain only `.` or `..` are not encoded, and the browser resolves them: `url('docs', ['..', 'admin'])` produces `/docs/../admin`, which the browser requests as `/admin`. When the segments come from user input, drop the empty, `.` and `..` segments first:
+>
+> ```php
+> $segments = \array_filter(
+>     \explode('/', $path),
+>     static fn(string $segment): bool => '' !== $segment && '.' !== $segment && '..' !== $segment
+> );
+>
+> echo url('docs', $segments);
+> ```
