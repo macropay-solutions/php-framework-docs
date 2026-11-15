@@ -389,8 +389,8 @@ When using the `database` cache driver, you will need to setup a table to contai
 > [!NOTE]  
 > If you used the `cache:table` Run command to create the database driver's cache table, the migration created by that command already includes a definition for the `cache_locks` table.
 
-> [!WARNING]  
-> **PostgreSQL transactions:** a database lock is acquired by inserting its row and, when the row already exists (the lock is held or expired), by updating it. On PostgreSQL, the failed `INSERT` aborts the open transaction, so the following `UPDATE` throws and the transaction can only be rolled back. Do not acquire database locks inside a transaction on the same connection: acquire the lock before starting the transaction, or point the store's `lock_connection` option to a separate connection name in `config/cache.php`. A separate connection also keeps the lock from being rolled back together with your transaction.
+> [!NOTE]  
+> **Transactions:** a database lock may be acquired inside an open transaction. On PostgreSQL the lock row is inserted with `ON CONFLICT DO NOTHING`, so a held lock does not abort the transaction. If the lock should outlive a rollback of your transaction, point the store's `lock_connection` option to a separate connection name in `config/cache.php`.
 
 <a name="managing-locks"></a>
 ### Managing Locks
