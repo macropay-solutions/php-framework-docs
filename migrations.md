@@ -170,7 +170,7 @@ php run migrate --isolated
 > To utilize this feature, your application must be using the `memcached`, `redis`, `dynamodb`, `database`, `file`, or `array` cache driver as your application's default cache driver. In addition, all servers must be communicating with the same central cache server.
 
 > [!NOTE]
-> Even without the `isolated` option, the `migrate` command always acquires its own `framework_migrate_lock` cache lock (held for `database.migrations_lock_ttl` seconds, `300` by default). If that lock is already held, the command does not run and exits with status code `1`.
+> Even without the `isolated` option, the `migrate` and `migrate:rollback` commands always acquire their own `framework_migrate_lock` cache lock (held for `database.migrations_lock_ttl` seconds, `300` by default). If that lock is already held, the command does not run and exits with status code `1`. This lock is skipped when the default cache store (`CACHE_DRIVER`) uses the `database` driver, because its `cache_locks` table may not exist before the migrations run.
 
 <a name="forcing-migrations-to-run-in-production"></a>
 #### Forcing Migrations to Run in Production
