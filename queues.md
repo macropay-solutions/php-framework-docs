@@ -115,6 +115,9 @@ Finally, don't forget to instruct your application to use the `database` driver 
 
     QUEUE_CONNECTION=database
 
+> [!WARNING]  
+> The `database` queue driver is meant for local development and testing, not for production. Its workers poll the jobs table and lock rows to reserve jobs, which puts the queue's load on your database and does not scale with more workers. In production, use the `redis` or `sqs` driver.
+
 <a name="redis"></a>
 #### Redis
 
@@ -299,6 +302,9 @@ Only Storable Array Callables, objects implementing the `StorableCallable` contr
         CallQueuedCallable::create([ImageProcessor::class, 'optimize', ['path' => 'photo1.jpg']])->onQueue('images'),
         CallQueuedCallable::create([ReportGenerator::class, 'run', ['reportId' => 10]]),
     ]);
+
+> [!WARNING]  
+> **`bulk()` on the Database Driver:** the `database` queue (meant for development, see [Database](#database)) inserts all the jobs of a `bulk()` call with a single query. Unlike `push()`, it does not dispatch the `JobQueueing` and `JobQueued` events for each job, and it ignores `after_commit`. When the jobs table uses the same database connection as the surrounding transaction, the insert is part of that transaction, so workers do not see the jobs before the commit and a rollback removes them. When the queue uses another connection, the jobs are visible to workers immediately: call `bulk()` after the commit, or use `push()` for each job.
 
 #### Passing JSON-Ready Objects and DTOs
 
