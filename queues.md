@@ -1795,6 +1795,9 @@ The `queue:failed` command will list the job ID, connection, queue, failure time
 
     php run queue:retry ce7bb17c-cdd8-41f0-a8ec-7b4fef4e5ece
 
+> [!NOTE]
+> With the `database-uuids`, `file` and `dynamodb` failed job drivers, the ID of a failed job is the job's own UUID (`$job->uuid()`, also available as `$event->job->uuid()` on the `JobFailed` event), so it may be passed to `queue:retry` and `queue:forget` without looking it up first. A retried job that fails again is stored under the same UUID.
+
 If necessary, you may pass multiple IDs to the command:
 
     php run queue:retry ce7bb17c-cdd8-41f0-a8ec-7b4fef4e5ece 91401d2c-0784-4f43-824c-34f94a33c24d
