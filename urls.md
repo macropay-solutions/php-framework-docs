@@ -87,7 +87,7 @@ A route whose parameter may contain slashes, such as `docs/{path:.+}`, can also 
 
 For a readable URL, build the path from its segments with the `url` helper instead. Each extra segment is encoded on its own and the segments are joined with `/`:
 
-    $router->get('/docs/{path:.+}', , [
+    $router->get('/docs/{path:.+}', [
         'as' => 'doc.show', 'uses' => 'DocsController@show'
     ]);
 
