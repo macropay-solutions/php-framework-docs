@@ -290,6 +290,16 @@ When the background worker picks up the job, it automatically queries the databa
 
 Only Storable Array Callables, objects implementing the `StorableCallable` contract, traditional string-based jobs (`Class@method`), and primitive data types (strings, integers, floats, booleans, arrays) are permitted in the queue payload.
 
+> [!NOTE]  
+> **Pushing Directly to a Queue:** `\dispatch()`, batches and chains wrap array callables for you. The low-level `push()` and `bulk()` methods of a queue connection (`\app('queue')`) do not: they expect an already built job, either a `CallQueuedCallable` created with `CallQueuedCallable::create([...])` or a `Class@method` string. When `bulk()` is called without a queue name, every job is pushed to its own queue and with its own delay.
+
+    use MacropaySolutions\Kernel\Queue\CallQueuedCallable;
+
+    \app('queue')->bulk([
+        CallQueuedCallable::create([ImageProcessor::class, 'optimize', ['path' => 'photo1.jpg']])->onQueue('images'),
+        CallQueuedCallable::create([ReportGenerator::class, 'run', ['reportId' => 10]]),
+    ]);
+
 #### Passing JSON-Ready Objects and DTOs
 
 Because the transport engine utilizes `json_encode()`, you can pass rich Data Transfer Objects (DTOs) or custom value objects within your job arguments, provided they implement the native `JsonSerializable` interface. 
