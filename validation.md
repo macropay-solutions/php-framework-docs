@@ -1613,7 +1613,20 @@ The field under validation must contain a valid color value in [hexadecimal](htt
     
     image
 
-The file under validation must be an image (jpg, jpeg, png, bmp, gif, svg, or webp).
+The file under validation must be an image (jpg, jpeg, png, bmp, gif or webp).
+
+> [!WARNING]
+> SVG is not accepted by `image` (nor by `File::image()`): an SVG file can contain scripts (`<script>`, `onload` attributes, `javascript:` links) that run when the file is opened from your domain. If you need SVG uploads, list it explicitly and serve the files safely:
+>
+>     'logo' => 'file|mimes:jpg,jpeg,png,gif,bmp,webp,svg',
+>     // or
+>     'logo' => [File::types(['jpg', 'png', 'webp', 'svg'])],
+>
+> - display uploaded SVGs only through `<img src="...">`, where browsers do not run scripts;
+> - serve them with `Content-Security-Policy: script-src 'none'` or `Content-Disposition: attachment`, or from a separate domain without your cookies;
+> - or sanitize them on upload with an SVG sanitizer library before storing them.
+>
+> Detecting scripts inside an SVG with your own checks is not reliable: an SVG can hide active content in many ways (entities, animations, external references).
 
 <a name="rule-in"></a>
 #### Rule in
