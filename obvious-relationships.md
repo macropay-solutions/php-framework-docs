@@ -730,6 +730,9 @@ When defining the `RoleUser` model, you should extend the `MacropaySolutions\Ker
 > [!WARNING]  
 > Pivot models may not use the `SoftDeletes` trait. If you need to soft delete pivot records consider converting your pivot model to an actual Obvious model.
 
+> [!NOTE]
+> When the relationship filters the intermediate table (`wherePivot*` or `withPivotValue`), `detach()`, `updateExistingPivot()` and `sync()` run a direct query limited to the filtered rows, so the custom pivot model's events do not fire. If you need them, load the pivot records and `delete()` or `save()` them yourself; a pivot without its own `id` is deleted or saved by the two key columns only, so all rows of that pair are hit, inside the filter or not.
+
 <a name="custom-pivot-models-and-incrementing-ids"></a>
 #### Custom Pivot Models and Incrementing IDs
 
