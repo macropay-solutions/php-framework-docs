@@ -177,6 +177,28 @@ You may use the `bindIf` method to register a container binding only if a bindin
 > *Do not use `static` closures for Obvious Model accessors/mutators or dynamic Macros, as those features rely on `Closure::bindTo()` to bind `$this` at runtime.*
 > There is no need to bind classes into the container if they do not depend on any interfaces. The container does not need to be instructed on how to build these objects, since it can automatically resolve these objects using reflection during `autowiring:cache`. Just make sure to include those FQNs into the `app.autowiring` config.
 
+> [!NOTE]
+> **Manager `extend()` creators**
+>
+> Driver creators registered with a manager's `extend()` method receive what they need as arguments, so declare them `static` or pass a first-class callable (`DriverFactory::create(...)`).
+>
+> Some managers bind a non-static creator to the manager before calling it (so `$this` is the manager inside it), others call it as given:
+>
+> | Manager | Creator arguments | Non-static creator bound to the manager |
+> | :--- | :--- | :--- |
+> | Cache (`cache`) | `$app, array $config` | Yes |
+> | Log (`log`) | `$app, array $config` | Yes |
+> | Redis (`redis`) | none (returns a connector) | Yes |
+> | Classes extending `MultipleInstanceManager` | `$app, array $config` | Yes |
+> | Session (`session`), Hash (`hash`), Notifications (`ChannelManager`), other `Manager` subclasses | `$app` | No |
+> | Mail (`mail.manager`) | `array $config` | No |
+> | Filesystem (`filesystem`) | `$app, array $config` | No |
+> | Auth (`auth`) | `$app, string $name, array $config` | No |
+> | Broadcasting | `$app, array $config` | No |
+> | Queue (`queue`, `addConnector()`) | none (returns a connector) | No |
+>
+> Static closures and first-class callables are never bound (PHP does not allow it), so they behave the same in every manager. Rely on `$this` being the manager only in the managers marked "Yes", and only with a non-static closure.
+
 <a name="binding-a-singleton"></a>
 #### Binding A Singleton
 
