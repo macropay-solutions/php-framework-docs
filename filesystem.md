@@ -683,7 +683,7 @@ Next, you can register the driver within the `boot` method of one of your applic
          */
         public function boot(): void
         {
-            app('filesystem')->extend('dropbox', function (Application $app, array $config) {
+            \app('filesystem')->extend('dropbox', static function (Application $app, array $config) {
                 $adapter = new DropboxAdapter(new DropboxClient(
                     $config['authorization_token']
                 ));

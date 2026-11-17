@@ -1210,7 +1210,7 @@ Once you've defined your custom transport, you may register it via the `extend` 
      */
     public function boot(): void
     {
-        \app('mail.manager')->extend('mailchimp', function (array $config = []) {
+        \app('mail.manager')->extend('mailchimp', static function (array $config = []) {
             return new MailchimpTransport(/* ... */);
         });
     }
@@ -1247,7 +1247,7 @@ Next, you may use the mail manager's `extend` method to register the transport w
      */
     public function boot(): void
     {
-        \app('mail.manager')->extend('brevo', function () {
+        \app('mail.manager')->extend('brevo', static function () {
             return (new BrevoTransportFactory)->create(
                 new Dsn(
                     'brevo+api',
