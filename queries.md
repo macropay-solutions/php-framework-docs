@@ -1059,6 +1059,11 @@ In addition, you may increment or decrement multiple columns at once using the `
         'balance' => 100,
     ]);
 
+> [!NOTE]
+> On an Obvious model query, `increment` and `decrement` also set the model's `updated_at` column, while `incrementEach` and `decrementEach` run as a plain query builder update and leave it unchanged (useful for counters). To set it, pass it in the second argument:
+>
+>     User::query()->whereKey($id)->incrementEach(['votes' => 1], ['updated_at' => \date('Y-m-d H:i:s')]);
+
 <a name="delete-statements"></a>
 ## Delete Statements
 
