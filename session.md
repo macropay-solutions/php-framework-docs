@@ -396,7 +396,7 @@ You must interact directly with the underlying session manager resolved out of t
         public function boot(): void
         {
             // Accessing the manager instance directly via the app container helper
-            \app('session')->extend('mongo', function ($app) {
+            \app('session')->extend('mongo', static function ($app) {
                 return new MongoSessionHandler();
             });
         }

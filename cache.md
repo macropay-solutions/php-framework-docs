@@ -506,8 +506,8 @@ To create our custom cache driver, we first need to implement the `MacropaySolut
 
 We just need to implement each of these methods using a MongoDB connection. For an example of how to implement each of these methods, take a look at the `MacropaySolutions\Kernel\Cache\MemcachedStore` in the [PHP-Kernel source code](https://github.com/macropay-solutions/php-kernel). Once our implementation is complete, we can finish our custom driver registration by extending the cache manager:
 
-    \app('cache')->extend('mongo', function ($app) {
-        return \app('cache')->repository(new MongoStore);
+    \app('cache')->extend('mongo', static function ($app, array $config) {
+        return $app->make('cache')->repository(new MongoStore);
     });
 
 > [!NOTE]  
@@ -532,8 +532,8 @@ To register the custom cache driver with Framework, we will use the `extend` met
          */
         public function register(): void
         {
-            $this->app->make('cache')->extend('mongo', function ($app) {
-                return $this->app->make('cache')->repository(new MongoStore);
+            $this->app->make('cache')->extend('mongo', static function ($app, array $config) {
+                return $app->make('cache')->repository(new MongoStore);
             });
         }
 
@@ -545,6 +545,9 @@ To register the custom cache driver with Framework, we will use the `extend` met
             // ...
         }
     }
+
+> [!NOTE]
+> Driver creators receive what they need as arguments (`$app`, `$config`), so declare them `static` (see the closure guidelines in the container documentation) or pass a first-class callable such as `MongoStoreFactory::create(...)`. A non-static closure is bound to the cache manager before it is called.
 
 The first argument passed to the `extend` method is the name of the driver. This will correspond to your `driver` option in the `config/cache.php` configuration file. The second argument is a closure that should return an `MacropaySolutions\Kernel\Cache\Repository` instance. The closure will be passed an `$app` instance, which is an instance of the [service container](/container).
 
