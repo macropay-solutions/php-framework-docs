@@ -41,6 +41,9 @@ Almost every modern web application interacts with a database. PHP-Framework mak
 
 </div>
 
+> [!NOTE]
+> MariaDB works with the `mysql` driver or with the dedicated `mariadb` driver (`'driver' => 'mariadb'`, see the `mariadb` connection in `config/database.php`). The `mariadb` driver skips the server version lookup, uses the `mariadb` / `mariadb-dump` clients for `schema:dump` / `schema:load` and `db`, and fails early on lateral joins, which MariaDB does not support.
+
 <a name="configuration"></a>
 ### Configuration
 
