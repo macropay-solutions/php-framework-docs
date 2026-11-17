@@ -394,9 +394,20 @@ When running applications behind network load balancers terminating TLS certific
             Request::HEADER_X_FORWARDED_PROTO;
     }
 
-To trust all forwarding cloud network components unconditionally where absolute backend subnets are unknown, utilize wildcard markers:
+When a single proxy sits in front of the application (one load balancer) and its address is unknown, use the wildcard. It trusts only the directly connected address (`REMOTE_ADDR`), not the whole chain:
 
     protected $proxies = '*';
+
+Behind more than one proxy (for example a CDN in front of a load balancer), `'*'` resolves the client IP to the outer proxy's address. List every proxy instead, as IPs or CIDR ranges; `'PRIVATE_SUBNETS'` covers the private networks:
+
+    protected $proxies = ['PRIVATE_SUBNETS', '173.245.48.0/20', '2400:cb00::/32'];
+
+To trust every address, list all ranges explicitly:
+
+    protected $proxies = ['0.0.0.0/0', '::/0'];
+
+> [!WARNING]
+> With every address trusted, the client IP is the leftmost `X-Forwarded-For` value, which the client can send itself (`X-Forwarded-For: 1.2.3.4`). Use it only when the application is reachable through your proxies alone and the outermost one replaces the `X-Forwarded-For` header instead of appending to it. Otherwise rate limiting, IP logs and IP allowlists see a forged IP.
 
 <a name="configuring-trusted-hosts"></a>
 ## Configuring Trusted Hosts
