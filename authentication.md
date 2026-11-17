@@ -166,7 +166,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \app('auth')->extend('jwt', function ($app, string $name, array $config): Guard {
+        \app('auth')->extend('jwt', static function ($app, string $name, array $config): Guard {
             $provider = \app('auth')->createUserProvider($config['provider']);
 
             return new JwtGuard($provider);
