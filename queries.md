@@ -239,6 +239,9 @@ The `distinct` method allows you to force the query to return distinct results:
 
     $users = app('db')->table('users')->distinct()->get();
 
+> [!WARNING]
+> Columns passed to `distinct` are used in a select only by PostgreSQL, which compiles `distinct('email')` to `select distinct on ("email") ...`. MySQL, MariaDB, SQLite and SQL Server ignore them in a select: `distinct('email')` is the same as `distinct()`, distinct over all the selected columns (`select distinct *` without `select`), so select the columns you want distinct, e.g. `select('email')->distinct()`. `count()` uses them on every database: `distinct('email')->count()` compiles to `count(distinct email)`; with several columns, `count(distinct a, b)` is accepted only by MySQL and MariaDB.
+
 If you already have a query builder instance and you wish to add a column to its existing select clause, you may use the `addSelect` method:
 
     $query = app('db')->table('users')->select('name');
