@@ -123,6 +123,17 @@ The `$action` parameter can be a simple controller mapping string, or an array c
         'domain' => 'https://api.example.com'
     ]);
 
+    // Array Callable Action
+    $router->get('users', [UserController::class, 'index']);
+
+    // Array Callable As "uses"
+    $router->get('users', [
+        'uses' => [UserController::class, 'index'],
+        'as' => 'users.index',
+    ]);
+
+The array callable must be `[Controller::class, 'method']`: a two-item list or a `uses` array of another shape (empty class, invalid method name, string keys) throws an `InvalidArgumentException` when the route is added. It is stored as the `Controller@method` string, so route caching works the same for both forms.
+
 <a name="route-parameters"></a>
 ## Route Parameters
 
@@ -214,6 +225,8 @@ Another common use-case for route groups is assigning the same PHP namespace to 
             // Using The "App\Http\Controllers\Admin\User" Namespace...
         });
     });
+
+> **NOTE:** The group namespace is prepended to controller mapping strings only. An array callable such as `[UserController::class, 'index']` already holds the fully qualified class name, so the namespace is not prepended to it.
 
 <a name="route-group-prefixes"></a>
 ### Route Prefixes
