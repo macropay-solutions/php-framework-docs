@@ -270,6 +270,13 @@ Failing to rotate the `remember_token` when updating a password will result in:
 - **Global logout bypass:** Because the password hash derivative was removed from the cookie and `AuthenticateSession` no longer compares the cookie against the database password, the `remember_token` in the database is now the sole gatekeeper for persistent sessions. If it does not change, changing the password does nothing to revoke existing sessions.
 - **No automatic session termination on credential compromise:** If an account is reset due to being compromised, the attacker retains access indefinitely until their local cookie reaches its natural expiration (e.g., 400 days) or the user explicitly clicks "Log out" to invoke `cycleRememberToken()`.
 
+> [!NOTE]
+> **Overriding `setAttribute()`**
+> `Authenticatable::setAttribute()` is `final`: a model extending your User model cannot override it.
+>
+> - Your User model itself must not declare `setAttribute()`. A class method replaces the trait's method, so the `remember_token` would no longer be rotated. Use mutators for custom attribute writes.
+> - A base model between `Model` and your User model may declare it, with the same signature `setAttribute(string $key, mixed $value): static`, and must call `parent::setAttribute()`. The trait's method runs first and calls it.
+
 <a name="events"></a>
 ## Events
 
