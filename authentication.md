@@ -277,6 +277,25 @@ Failing to rotate the `remember_token` when updating a password will result in:
 > - Your User model itself must not declare `setAttribute()`. A class method replaces the trait's method, so the `remember_token` would no longer be rotated. Use mutators for custom attribute writes.
 > - A base model between `Model` and your User model may declare it, with the same signature `setAttribute(string $key, mixed $value): static`, and must call `parent::setAttribute()`. The trait's method runs first and calls it.
 
+    use MacropaySolutions\Kernel\Auth\Authenticatable;
+    use MacropaySolutions\Kernel\Contracts\Auth\Authenticatable as AuthenticatableContract;
+    use MacropaySolutions\Kernel\Database\Obvious\Model;
+
+    abstract class BaseUser extends Model
+    {
+        public function setAttribute(string $key, mixed $value): static
+        {
+            // custom logic
+
+            return parent::setAttribute($key, $value);
+        }
+    }
+
+    class User extends BaseUser implements AuthenticatableContract
+    {
+        use Authenticatable;
+    }
+
 <a name="events"></a>
 ## Events
 
