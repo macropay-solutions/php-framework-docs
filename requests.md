@@ -18,6 +18,7 @@ context: requests
   - [Input Presence and Mutation](#input-presence-and-mutation)
   - [Cookies](#cookies)
   - [Files](#files)
+  - [Fields Sent Twice (HTTP Parameter Pollution)](#fields-sent-twice)
 - [Configuring Trusted Proxies](#configuring-trusted-proxies)
 - [Configuring Trusted Hosts](#configuring-trusted-hosts)
 
@@ -369,6 +370,27 @@ To move files strictly bypassing storage manager virtualization abstraction logi
 
     $request->file('photo')->move($destinationPath);
     $request->file('photo')->move($destinationPath, $fileName);
+
+<a name="fields-sent-twice"></a>
+### Fields Sent Twice (HTTP Parameter Pollution)
+
+A client can send the same field both in the query string and in the body, or both as a value and as a file (e.g. a text `avatar` and a file `avatar`, even an empty text field). `all()`, `input()` and `get()` pick or merge these sources differently, so validation could check another value than the one your code reads.
+
+Such a request is detected when it is created and the result is kept in `$request->keysCollisionException`: a `MacropaySolutions\Kernel\Http\Exceptions\HttpRequestException` (a `400 Bad Request`) with the message `A field was sent both in query and body.` or `A field was sent both as a value and as a file.`, or `null`.
+
+To reject such requests right away, override the constant in your `\App\Request`:
+
+    public const REQUEST_THROWS_ON_KEYS_COLLISION = true;
+
+Otherwise, throw it yourself where it matters, e.g. before validating; a list can catch it and return no results:
+
+    $request->validateHttpParameterPollutionRequest();
+
+- The strict same scalar value sent twice (`?page=1` and `page=1` in the body) is not a collision.
+- Different keys are merged as before, also inside the same array (`profile[name]` as input, `profile[photo]` as a file). A file field left empty in the form sends no file, so it never collides.
+- `merge()`, `replace()` and `$request['key'] = ...` check again and throw when the constant is `true`. A collision found once is kept, even if the field is removed later.
+- `forceReplace()` clears the collision of the query string and the body, which it empties, and checks the new data against the files.
+- Changes made directly on the bags (`$request->request->add()`, `$request->files->set()`, ...) are not checked; call `$request->recheckHttpParameterPollution()` after them.
 
 <a name="configuring-trusted-proxies"></a>
 ## Configuring Trusted Proxies

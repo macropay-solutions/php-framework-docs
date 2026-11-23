@@ -503,6 +503,17 @@ If some of your class's dependencies are not resolvable via the container, you m
 > If you pass custom parameters to a service that is registered as a **singleton** (e.g., via `makeWith` or the `$parameters` array), the container will intentionally bypass the shared singleton cache. It will construct and return a completely new instance using your provided parameters, and it will **not** save this customized instance back into the container's shared memory. This safeguard ensures that custom configurations do not silently overwrite the global state for the rest of the application.
 > `beforeResolving`, `resolving` and `afterResolving` events will be fired only on the first resolve for a singleton and never for a prepopulated instance (when no parameters are given).
 
+The `make` method also accepts an array callable, static (`[Class::class, 'method']`) or bound to an object (`[$object, 'method']`). The container calls it with itself and the given parameters and returns its result, without caching it:
+
+    use App\Services\TransistorFactory;
+
+    $transistor = $this->app->make([TransistorFactory::class, 'create']);
+    $transistor = $this->app->make([$transistorFactory, 'create']);
+
+    // TransistorFactory::create(\MacropaySolutions\Kernel\Contracts\Foundation\Application $app, array $parameters)
+
+Only the global `resolving` and `afterResolving` callbacks fire for its result. Typed callbacks and `beforeResolving` callbacks match string ids only, so they do not fire. Closures are not accepted and throw a `TypeError`, the same as for the binding methods.
+
 The `bound` method may be used to determine if a class or interface has been explicitly bound in the container:
 
     if ($this->app->bound(Transistor::class)) {
@@ -684,6 +695,12 @@ The `beforeResolving` method fires right before the container begins looking up 
     {
         // Executed immediately before the container starts building "Transistor"...
     }
+
+    // Global listener: Called before any string id is built...
+    $this->app->beforeResolving([\App\Listeners\GlobalContainerListener::class, 'onBeforeAny']);
+
+`beforeResolving` callbacks, global ones included, fire for string ids only. They work on the id as a class or binding name, which an array callable passed to `make` does not have.
+
 #### Resolving
 
 The `resolving` method fires immediately after the object has been successfully instantiated and after any extender decorators are applied. It passes the fully constructed instance and the container:
