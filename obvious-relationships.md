@@ -21,6 +21,7 @@ context: obvious-relationships
   - [Ordering Queries via Intermediate Table Columns](#ordering-queries-via-intermediate-table-columns)
   - [Defining Custom Intermediate Table Models](#defining-custom-intermediate-table-models)
 - [Querying Relations](#querying-relations)
+  - [Cloning Relationship Queries](#cloning-relationship-queries)
   - [Relationship Methods vs. Dynamic Properties](#relationship-methods-vs-dynamic-properties)
   - [Querying Relationship Existence](#querying-relationship-existence)
   - [Querying Relationship Absence](#querying-relationship-absence)
@@ -816,6 +817,21 @@ select *
 from posts
 where user_id = ? and (active = 1 or votes >= 100)
 ```
+
+<a name="cloning-relationship-queries"></a>
+### Cloning Relationship Queries
+
+Calling `clone()` on a relationship does not copy the relationship. It returns a clone of the relationship's underlying `MacropaySolutions\Kernel\Database\Obvious\Builder`, constrained to the parent model:
+
+    $query = $user->r->posts()->clone(); // MacropaySolutions\Kernel\Database\Obvious\Builder
+
+The returned builder keeps the relationship constraint (`where user_id = ?`), but not the logic of the relationship itself, such as the intermediate table columns a many-to-many relationship selects, or its `save`, `create` and `make` methods. Use it where a plain query builder is expected, for example in a function type-hinted with `MacropaySolutions\Kernel\Database\Obvious\Builder`. The explicit form is `$user->r->posts()->getQuery()->clone()`.
+
+To copy the relationship itself, use PHP's `clone` keyword or the relationship's `cloneRelation()` method. The copy is the same relationship class with its own query, so constraints added to it do not reach the original:
+
+    $posts = $user->r->posts();
+    $activePosts1 = (clone $posts)->where('active', 1); // HasMany
+    $activePosts2 = $posts->cloneRelation()->where('active', 1); // HasMany
 
 <a name="relationship-methods-vs-dynamic-properties"></a>
 ### Relationship Methods vs. Dynamic Properties
