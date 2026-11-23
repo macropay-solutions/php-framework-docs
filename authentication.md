@@ -45,7 +45,9 @@ While Framework is optimized for stateless JSON APIs by default, stateful sessio
 
 By default, Framework includes an `App\Models\User` Obvious model in your `app/Models` directory. This model may be used with the default Obvious authentication driver. If your application is not using Obvious, you may use the `database` authentication provider which uses the database query builder.
 
-When building the database schema for the `App\Models\User` model, ensure the password column is at least 60 characters in length. If utilizing stateful session authentication with "Remember Me" support, your table must also include a nullable string column named `remember_token` (e.g., `VARCHAR(100)`).
+When building the database schema for the `App\Models\User` model, ensure the password column is at least 60 characters in length.
+
+A model using the `Authenticatable` trait writes `remember_token` whenever its password changes (see [Automatic Remember Token Rotation](#the-authenticatable-trait-and-token-rotation)), even if you never use "Remember Me". Either include a nullable string column named `remember_token` (e.g., `VARCHAR(100)`, `$table->rememberToken()`), or [disable remember-me tokens](#disabling-remember-me-tokens) on the model.
 
 <a name="getting-started"></a>
 ## Getting Started
@@ -243,7 +245,7 @@ interface Authenticatable
 <a name="the-authenticatable-trait-and-token-rotation"></a>
 ### The Authenticatable Trait and Token Rotation
 
-Framework provides the `MacropaySolutions\Kernel\Auth\Authenticatable` trait to satisfy the `Authenticatable` contract on your Obvious models>.
+Framework provides the `MacropaySolutions\Kernel\Auth\Authenticatable` trait to satisfy the `Authenticatable` contract on your Obvious models.
 
 #### Automatic Remember Token Rotation
 
@@ -295,6 +297,27 @@ Failing to rotate the `remember_token` when updating a password will result in:
     {
         use Authenticatable;
     }
+
+<a name="disabling-remember-me-tokens"></a>
+#### Disabling Remember-Me Tokens
+
+If your users table has no `remember_token` column, disable remember-me tokens on the model. Otherwise, the first password change fails with `Unknown column 'remember_token'`.
+
+Set the trait's `$rememberTokenName` property to an empty string in the model's constructor. `setRememberToken()` then does nothing and the rotation is skipped:
+
+    class User extends Model implements AuthenticatableContract
+    {
+        use Authenticatable;
+
+        public function __construct(array $attributes = [])
+        {
+            $this->rememberTokenName = '';
+            parent::__construct($attributes);
+        }
+    }
+
+> [!WARNING]
+> Do not redeclare the property (`protected $rememberTokenName = '';`). PHP does not allow a class to redeclare a trait property with a different default value, and the class fails to load with *"define the same property ($rememberTokenName) in the composition of App\Models\User ... incompatible"*.
 
 <a name="events"></a>
 ## Events
