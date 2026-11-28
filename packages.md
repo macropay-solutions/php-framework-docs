@@ -8,6 +8,8 @@ context: packages
 
 - [Introduction](#introduction)
 - [Service Providers](#service-providers)
+  - [Bindings Without a Provider](#bindings-without-a-provider)
+  - [When a Provider Is Needed](#when-a-provider-is-needed)
   - [Registering Your Package Provider](#registering-your-package-provider)
 - [Autowiring Discovery](#autowiring-discovery)
 - [Resources](#resources)
@@ -30,8 +32,10 @@ Packages should include copyable asset directories for consumers to easily publi
 
     my-org/my-package/
     ├── src/
-    │   ├── MyPackageProvider.php
+    │   ├── Factories/
     │   └── Services/
+    ├── routes/
+    │   └── api.php
     ├── config/
     │   └── my-package.php
     ├── resources/
@@ -49,30 +53,66 @@ Packages should include copyable asset directories for consumers to easily publi
 
 ## Service Providers
 
-Service providers are the connection point between your package and PHP-Framework. A service provider is responsible for binding things into the framework's service container (which directly manages its own explicit `$availableBindings` map) and informing PHP-Framework where to load package resources.
+Service providers are optional and not encouraged. Instantiating a provider and calling its methods on every request adds boot overhead, and a package does not need one for its bindings, routes or commands (see the sections below).
 
-A service provider extends the `MacropaySolutions\Kernel\Support\ServiceProvider` class and contains two methods: `register` and `boot`.
+### Bindings Without a Provider
 
-### What Works vs. What Does NOT Work
-
-Because the framework is heavily optimized for zero-overhead boot times, dynamic asset registration methods have been removed.
-
-**What Works (Do This):**
-Only use the `register()` method with OPcache-friendly array callables or strings:
+Ship your factories as array callables and document the entries consumers must add to their `App\Application::$bindings` property:
 
 ```php
-public function register(): void
-{
-    $this->app->singleton(InvoiceService::class, [\Vendor\Package\Factories\InvoiceFactory::class, 'create']);
-}
+// App\Application
+protected array $bindings = [
+    // ...
+    \Vendor\Package\InvoiceService::class => [
+        'concrete' => [\Vendor\Package\Factories\InvoiceFactory::class, 'create'],
+        'shared' => true,
+    ],
+];
+```
 
-public static function create()
+```php
+// Vendor\Package\Factories\InvoiceFactory
+public static function create(): InvoiceService
 {
-    return new InvoiceService(config('my-package'));
+    return new InvoiceService(\config('my-package'));
 }
 ```
 
-**What Does NOT Work (MISSING Methods):**
+These bindings are resolved only when the service is requested, so they cost nothing during boot. See [Service Providers & Container Bindings](providers#zero-overhead-container-bindings).
+
+### When a Provider Is Needed
+
+Write a provider only when your package must configure a service as it is created, such as adding a failure listener to the queue or a guard to auth. Make it deferred and put that logic in `register()` behind `afterResolving()`, like the template's `App\Providers\AuthServiceProvider`. It then runs once, the first time the service is resolved, and never on requests that do not use the service:
+
+```php
+<?php
+
+namespace Vendor\Package;
+
+use MacropaySolutions\Kernel\Container\Container;
+use MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider;
+use MacropaySolutions\Kernel\Queue\QueueManager;
+use MacropaySolutions\Kernel\Support\ServiceProvider;
+
+class PackageServiceProvider extends ServiceProvider implements DeferrableProvider
+{
+    public function register(): void
+    {
+        // instances/singletons run their resolving events only once
+        $this->app->afterResolving('queue', [$this, 'configureQueue']);
+    }
+
+    public function configureQueue(QueueManager $queue, Container $app): void
+    {
+        $queue->failing([\Vendor\Package\Listeners\QueueFailureListener::class, 'handle']);
+    }
+}
+```
+
+Avoid `boot()`: a booted provider runs on every request, whether the request needs the package or not.
+
+Because the framework is heavily optimized for zero-overhead boot times, dynamic asset registration methods have been removed:
+
 - ❌ `loadViewsFrom()` — Use manual file copying instead.
 - ❌ `loadTranslationsFrom()` — Use manual file copying instead.
 - ❌ `loadJsonTranslationsFrom()` — Use manual file copying instead.
@@ -81,15 +121,18 @@ public static function create()
 
 ### Registering Your Package Provider
 
-For consumers to use your package, they must explicitly register your service provider in their application. This is done in `bootstrap/app.php`:
+Providers are never discovered automatically. Consumers register a deferred provider from the `App\Application` method that registers the service it configures, the way the template registers `App\Providers\AuthServiceProvider` in `registerAuthBindings()`. The provider is then loaded only when that service is first needed:
 
 ```php
-$app->register(\Vendor\Package\PackageServiceProvider::class);
+// App\Application
+protected function registerQueueBindings()
+{
+    parent::registerQueueBindings();
+    $this->register(\Vendor\Package\PackageServiceProvider::class);
+}
 ```
 
-This ensures full control over package initialization and avoids automatic discovery that could introduce performance overhead or unwanted side effects.
-
-If your service provider's boot method is empty, it can be registered as a deferred provider analog to `\MacropaySolutions\Kernel\Mail\MailServiceProvider`. See `\App\Application::registerMailBindings`. Alternatively, the bindings can be manually registered into the `\App\Application::$bindings` array.
+Do not register it in `bootstrap/app.php` with `$app->register()`, which would load it on every request.
 
 ## Autowiring Discovery
 
@@ -116,6 +159,8 @@ While service providers must be manually registered, PHP-Framework does support 
 
 When users deploy their application and run `php run autowiring:cache`, the framework will read these paths and cache the reflection data for all specified constructors and methods. See `app.autowiring` config for more details.
 
+The same command writes the [OPcache preload](deployment#opcache-preloading) script. It lists the `MacropaySolutions\` and `App\` classes plus every autowired class, so declaring your classes here also preloads them in PHP-FPM, whatever their namespace.
+
 ## Resources
 
 ### Configuration
@@ -136,21 +181,30 @@ The consumer can then manually copy the package's configuration file to their ap
 
 ### Routes
 
-If your package contains routes, you may load them using the `loadRoutesFrom` method. This method will automatically determine if the application's routes are cached and will not load your routes file if the routes have already been cached:
+Ship your routes in a file and have consumers require it from their `App\Router::registerRoutes()` method, next to their own routes file. This needs no provider, and `route:cache` includes the package routes:
 
 ```php
-public function boot(): void
+// App\Router
+public function registerRoutes(): void
 {
-    $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+    $this->group([
+        'namespace' => 'App\Http\Controllers',
+    ], static function (\App\Router $router): void {
+        require $router->app->basePath('routes/web.php');
+        require $router->app->basePath('vendor/vendor/package/routes/api.php');
+    });
 }
 ```
 
-**Strict Architectural Constraint:** Route Closures are completely forbidden by the internal engine backed by `fast-route` and will throw a `RuntimeException`. All routes defined in your package MUST point to a Controller class method. Using an absolute namespace is recommended to prevent namespace grouping collisions:
+**Strict Architectural Constraint:** Route Closures are completely forbidden by the internal engine backed by `fast-route` and will throw a `RuntimeException`. All routes defined in your package MUST point to a Controller class method. Use array callables: they hold the fully qualified class name, so the consumer's group namespace is never prepended to them:
 
 ```php
 // routes/api.php
-$router->post('/package/action', '\Vendor\Package\Http\Controllers\PackageController@action');
+/** @var \App\Router $router */
+$router->post('/package/action', [\Vendor\Package\Http\Controllers\PackageController::class, 'action']);
 ```
+
+A `Controller@method` string also works, but only with an absolute namespace (a leading `\`); otherwise the group namespace is prepended to it.
 
 ### Migrations
 
@@ -192,21 +246,15 @@ View files in the application space are then rendered using standard dot-notatio
     return view('vendor.my-package.invoice', $data);
 
 ### Commands
-To register your package's console commands, you may use the `commands` method in your service provider's `boot` method when the application is running in console mode:
+
+Consumers list your package's console commands in the `$commands` property of their `App\Console\Kernel`, so no provider is needed:
 
 ```php
-use Vendor\Package\Console\Commands\InstallCommand;
-use Vendor\Package\Console\Commands\NetworkCommand;
-
-public function boot(): void
-{
-    if ($this->app->runningInConsole()) {
-        $this->commands([
-            InstallCommand::class,
-            NetworkCommand::class,
-        ]);
-    }
-}
+// App\Console\Kernel
+protected $commands = [
+    \Vendor\Package\Console\Commands\InstallCommand::class,
+    \Vendor\Package\Console\Commands\NetworkCommand::class,
+];
 ```
 
 > **NOTE:** Please register these commands in your `composer.json` for the autowiring cache to optimize their execution.
