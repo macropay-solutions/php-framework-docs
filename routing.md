@@ -52,7 +52,7 @@ These commands are available in PHP-Framework template. Routes are auto-cached o
     php run route:clear
 
 > [!WARNING]
-> `route:cache` builds a new router and runs only `App\Router::registerRoutes()`. Routes added anywhere else, such as from a service provider with `loadRoutesFrom()`, are not stored in the cache, and `loadRoutesFrom()` skips them once routes are cached. Use `loadRoutesFrom()` only in local development without the route cache, and require every routes file from `App\Router::registerRoutes()`.
+> `route:cache` builds a new router and runs only `App\Router::registerRoutes()`. Routes added anywhere else, such as from a service provider with `loadRoutesFrom()`, are not stored in the cache, and `loadRoutesFrom()` skips them once routes are cached. Use `loadRoutesFrom()` only in local development and tests, where routes are not cached (run `php run route:clear` first if they are), and require every routes file from `App\Router::registerRoutes()`.
 
 ## Domain Routing
 
