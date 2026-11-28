@@ -109,7 +109,7 @@ class PackageServiceProvider extends ServiceProvider implements DeferrableProvid
 }
 ```
 
-Avoid `boot()`: a booted provider runs on every request, whether the request needs the package or not.
+Only deferred providers are recommended. The `boot()` method of a provider runs only if the developer passes the provider to `$app->boot(...)` in `bootstrap/app.php`, and then it runs on every request, whether the request needs the package or not. Registering a provider never boots it.
 
 Because the framework is heavily optimized for zero-overhead boot times, dynamic asset registration methods have been removed:
 
