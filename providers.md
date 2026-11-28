@@ -128,6 +128,16 @@ protected function registerQueueBindings()
 
 Calling `\app('queue')->failing(...)` from `boot()` instead would resolve the queue on every request, even on requests that never dispatch a job.
 
+Keep the logic that really must run on every request in a single booted provider, normally `App\Providers\AppServiceProvider`. Every provider passed to `$app->boot(...)` costs an object and a `boot()` call on each request, so one provider pays that once. Packages with such logic expose a static method that this provider calls:
+
+```php
+// App\Providers\AppServiceProvider
+public function boot(): void
+{
+    \Vendor\Package\PackageBootstrap::boot($this->app);
+}
+```
+
 <a name="deferred-providers"></a>
 ### Deferred Providers
 
