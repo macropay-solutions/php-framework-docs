@@ -21,7 +21,9 @@ In this Framework, **Service Providers are completely optional** and stripped of
 
 Because instantiating provider classes and executing `register()` methods on every request adds unnecessary filesystem and boot overhead, the framework natively defers container resolution by default at the application level.
 
-Instead of writing boilerplate `DeferrableProvider` classes, you can map container bindings directly within the `App\Application::$bindings` property or `App\Application::$availableBindings`. Service providers are only required when explicit `boot()` lifecycle hooks are needed.
+Instead of writing providers for bindings, you can map container bindings directly within the `App\Application::$bindings` property or `App\Application::$availableBindings`. When a provider is needed, only [deferred providers](#deferred-providers) are recommended.
+
+Only the providers passed to `$app->boot(...)` in `bootstrap/app.php` are booted. Registering a provider, with `$app->register()` or from a deferred binding, never calls its `boot()` method.
 
 <a name="zero-overhead-container-bindings"></a>
 ## Zero-Overhead Container Bindings (Recommended)
@@ -85,7 +87,7 @@ class RiakServiceProvider extends ServiceProvider
 <a name="the-boot-method"></a>
 ### The Boot Method
 
-The `boot` method is called after all container bindings are available. This is where cross-cutting concerns and event listeners should be registered:
+The `boot` method runs only for the providers passed to `$app->boot(...)`, after all container bindings are available, and it runs on every request. Prefer a [deferred provider](#deferred-providers) that does this work in `register()` behind `afterResolving()`, so it runs only when the service is used. Use `boot()` only for logic that must run on every request. For example, a queue failure listener belongs in a deferred provider:
 
 ```php
 <?php
@@ -93,38 +95,65 @@ The `boot` method is called after all container bindings are available. This is 
 namespace App\Providers;
 
 use App\Listeners\QueueFailureListener;
+use MacropaySolutions\Kernel\Container\Container;
+use MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider;
+use MacropaySolutions\Kernel\Queue\QueueManager;
 use MacropaySolutions\Kernel\Support\ServiceProvider;
 
-class AppServiceProvider extends ServiceProvider
+class QueueServiceProvider extends ServiceProvider implements DeferrableProvider
 {
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
+    public function register(): void
     {
-        \app('queue')->failing([QueueFailureListener::class, 'handle']);
+        // instances/singletons run their resolving events only once
+        $this->app->afterResolving('queue', [$this, 'configureQueue']);
+    }
+
+    public function configureQueue(QueueManager $queue, Container $app): void
+    {
+        $queue->failing([QueueFailureListener::class, 'handle']);
     }
 }
 ```
 
+Register it from the `App\Application` method that registers the queue, so it is loaded only when the queue is first resolved:
+
+```php
+// App\Application
+protected function registerQueueBindings()
+{
+    parent::registerQueueBindings();
+    $this->register(\App\Providers\QueueServiceProvider::class);
+}
+```
+
+Calling `\app('queue')->failing(...)` from `boot()` instead would resolve the queue on every request, even on requests that never dispatch a job.
+
 <a name="deferred-providers"></a>
 ### Deferred Providers
 
-If your provider is **only** registering bindings in the service container or performing component registration (such as calling `loadViewComponentsAs()`), you should defer its registration until one of the provided services is actually needed. Deferring the loading of such a provider will improve the performance of your application because it is not loaded from the filesystem on every request.
+Deferred providers are the recommended kind. If your provider is registering bindings in the service container, configuring a service when it is created, or performing component registration (such as calling `loadViewComponentsAs()`), you should defer its registration until one of the provided services is actually needed. Deferring the loading of such a provider will improve the performance of your application because it is not loaded from the filesystem on every request.
 
 To defer a provider you must follow the logic of `MailServiceProvider` from your `\App\Application` file and DO NOT register it in bootstrap/app.php via $app->register(...).
-Implement the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface and define a `provides(): array` method. Deferred providers are skipped by `Application::boot()` and will never have their `boot()` method called automatically. If a deferred provider requires JIT setup logic upon resolution, register an `$this->app->afterResolving()` array callable inside its `register()` method.
+Implement the `MacropaySolutions\Kernel\Contracts\Support\DeferrableProvider` interface and define a `provides(): array` method. Deferred providers are skipped by `Application::boot()` and will never have their `boot()` method called automatically. If a deferred provider requires JIT setup logic upon resolution, register an `$this->app->afterResolving()` array callable inside its `register()` method, like the template's `App\Providers\AuthServiceProvider`, which `App\Application::registerAuthBindings()` registers when auth is first resolved:
+
+```php
+public function register(): void
+{
+    // instances/singletons run their resolving events only once
+    $this->app->afterResolving('auth', [$this, 'configureAuthGuard']);
+}
+```
 
 <a name="registering-providers"></a>
 ## Registering Providers
 
-If your provider **is non-deferrable**, register it directly on the `$app` instance inside `bootstrap/app.php`:
+Prefer deferred providers (see above). If your provider **is non-deferrable**, register it directly on the `$app` instance inside `bootstrap/app.php`:
 
 ```php
 $app->register(\App\Providers\AppServiceProvider::class);
 ```
 
-If your provider **has a `boot` method defined**, execute it by passing its class name directly into the variadic `$app->boot(...)` method inside `bootstrap/app.php`:
+Registering does not boot a provider. If your provider **has a `boot` method defined**, execute it by passing its class name directly into the variadic `$app->boot(...)` method inside `bootstrap/app.php`; only the providers listed there are booted:
 
 ```php
 return $app->boot(
