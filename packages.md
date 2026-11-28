@@ -206,6 +206,16 @@ $router->post('/package/action', [\Vendor\Package\Http\Controllers\PackageContro
 
 A `Controller@method` string also works, but only with an absolute namespace (a leading `\`); otherwise the group namespace is prepended to it.
 
+`ServiceProvider::loadRoutesFrom()` is meant only for local development without the route cache. `route:cache` builds a new router and runs only `App\Router::registerRoutes()`, so routes loaded from a provider are missing once routes are cached. `loadRoutesFrom()` requires the file inside the provider, where `$this` is the provider and there is no `$router` variable, so the file must use `$this->app->router`. To keep one file that works both ways, start it with:
+
+```php
+// routes/api.php
+/** @var \App\Router $router */
+$router ??= $this->app->router;
+```
+
+From `registerRoutes()` the `$router` of the group is used; from `loadRoutesFrom()` it falls back to the application router.
+
 ### Migrations
 
 Because `loadMigrationsFrom()` does NOT exist in `ServiceProvider`, package migrations must reside in the application's `database/migrations` directory.
