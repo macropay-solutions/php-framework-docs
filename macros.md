@@ -10,6 +10,7 @@ context: macros
 - [Dedicated Trait Architecture & AOT Compilation](#dedicated-trait-architecture--aot-compilation)
 - [Package Commands & Traitables Architecture](#package-commands--traitables-architecture)
 - [Deferred Macros](#deferred-macros)
+  - [Mapping Deferred Macros (Recommended)](#mapping-deferred-macros)
 - [Extending the Request Object](#extending-the-request-object)
 - [Avoiding Macros via Dependency Injection](#avoiding-macros-via-dependency-injection)
 
@@ -235,16 +236,37 @@ use MacropaySolutions\Kernel\Support\Collection;
 // The macro closure will only be resolved if 'customFilter' is actually called
 Collection::deferredMacro('customFilter', [\App\Macros\CollectionMacroFactory::class, 'getClosure']);
 ```
+
+<a name="mapping-deferred-macros"></a>
+### Mapping Deferred Macros (Recommended)
+
+From php-kernel 1.10.0, deferred macros can be mapped in the `$deferredMacros` property of `App\Application` instead of being registered with `deferredMacro()`:
+
+```php
+// App\Application
+protected array $deferredMacros = [
+    \MacropaySolutions\Kernel\Support\Collection::class => [
+        'customFilter' => [\App\Macros\CollectionMacroFactory::class, 'getClosure'],
+    ],
+];
+```
+
+Nothing is registered while the application boots, in any environment:
+
+* **Production:** `macro:cache` compiles the mapped macros into the class traits, exactly like registered ones. The map is a constant array in OPcache and costs nothing per request.
+* **Local development:** without the compiled traits, the `Macroable` trait looks the macro up in the map the first time it is called.
+
+No service provider is needed, and a mapped macro exists as soon as its class is used. A macro cannot be both mapped and registered with `deferredMacro()` under the same name: `deferredMacro()` throws `Method already exists`, and `macro:cache` reports the conflict. `macro:cache` also reports a mapped class that is not a macroable class of the framework.
 > [!CRITICAL]
 > **Registration-Phase Only**
-> All macros must be registered strictly during the application's registration phase (e.g., inside a Service Provider's `register` method). Registering macros dynamically at runtime during HTTP request handling or console command execution breaks AOT compilation guarantees and is strictly forbidden.
+> All macros must be mapped in `App\Application::$deferredMacros` or registered strictly during the application's registration phase (e.g., inside a Service Provider's `register` method). Registering macros dynamically at runtime during HTTP request handling or console command execution breaks AOT compilation guarantees and is strictly forbidden.
 
 > [!WARNING]
 > Instance macro closures must not be declared static, because they are bound to the target object using Closure::call(). Static macro closures may be declared static, because they are invoked without object binding.
 
 > **WARNING**
 > **Deferred Providers & Macros**
-> Do not register macros inside a `DeferrableProvider` unless you are registering the provider *before* the target class is instantiated via Application::availableBindings. If the provider has not been registered, the macro will not be registered and will throw an error when called. For global availability, always register macros inside a **non-deferrable** Service Provider (like `AppServiceProvider`).
+> Do not register macros inside a `DeferrableProvider` unless you are registering the provider *before* the target class is instantiated via Application::availableBindings. If the provider has not been registered, the macro will not be registered and will throw an error when called. For global availability, [map the macros](#mapping-deferred-macros) in `App\Application::$deferredMacros` instead of registering them in a non-deferrable provider, which would run on every request.
 
 > **WARNING**
 > The second argument of `deferredMacro` **must** be an array callable in `[Class::class, 'method']` format (using a class FQN string, not an instantiated object) that resolves to a static method and returns the macro callable. The closure will be bound to the target class on execution.

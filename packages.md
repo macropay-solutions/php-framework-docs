@@ -273,6 +273,21 @@ View files in the application space are then rendered using standard dot-notatio
 
     return view('vendor.my-package.invoice', $data);
 
+### Macros
+
+Document your package's deferred macros as entries consumers add to the `$deferredMacros` property of their `App\Application`, like `$bindings`:
+
+```php
+// App\Application
+protected array $deferredMacros = [
+    \MacropaySolutions\Kernel\Support\Collection::class => [
+        'toCsv' => [\Vendor\Package\Macros\CollectionMacros::class, 'toCsv'],
+    ],
+];
+```
+
+`macro:cache` compiles them with the application's own macros, and nothing is registered while the application boots. See [Mapping Deferred Macros](macros#mapping-deferred-macros).
+
 ### Commands
 
 Consumers list your package's console commands in the `$commands` property of their `App\Console\Kernel`, so no provider is needed:
