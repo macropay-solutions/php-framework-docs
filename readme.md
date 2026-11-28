@@ -7,11 +7,7 @@ layout: default
 
 > [PHP framework v1.x Documentation](https://macropay-solutions.github.io/php-framework-docs/1.x/).
 
-You can find the online version of the PHP Framework documentation at [https://macropay-solutions.github.io/php-framework-docs](https://macropay-solutions.github.io/php-framework-docs)
-
-Please consult the wiki pages also:
-- [PHP Framework Wiki](https://github.com/macropay-solutions/php-framework/wiki)
-- [PHP Kernel Wiki](https://github.com/macropay-solutions/php-kernel/wiki)
+You can find the online version of the PHP Framework documentation at [https://macropay-solutions.com/docs](https://macropay-solutions.com/docs)
 
 ## CrufadQL/CrufdQL Interactive demos
 
