@@ -111,6 +111,24 @@ class PackageServiceProvider extends ServiceProvider implements DeferrableProvid
 
 Only deferred providers are recommended. The `boot()` method of a provider runs only if the developer passes the provider to `$app->boot(...)` in `bootstrap/app.php`, and then it runs on every request, whether the request needs the package or not. Registering a provider never boots it.
 
+If your package has logic that really must run on every request, do not ship a provider for consumers to boot. Expose a static method instead, and have consumers call it from their single booted provider, normally `App\Providers\AppServiceProvider`, so every package shares one booted provider:
+
+```php
+// Vendor\Package\PackageBootstrap
+public static function boot(\MacropaySolutions\Kernel\Contracts\Foundation\Application $app): void
+{
+    // per-request logic
+}
+```
+
+```php
+// App\Providers\AppServiceProvider
+public function boot(): void
+{
+    \Vendor\Package\PackageBootstrap::boot($this->app);
+}
+```
+
 Because the framework is heavily optimized for zero-overhead boot times, dynamic asset registration methods have been removed:
 
 - ❌ `loadViewsFrom()` — Use manual file copying instead.
